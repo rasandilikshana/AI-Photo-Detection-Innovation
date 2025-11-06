@@ -5,6 +5,51 @@
     },
     {
       "pattern": "^https://example.com"
+    },
+    {
+      "pattern": "^https://github.com/rasandilikshana/avar"
+    },
+    {
+      "pattern": "\\.py$"
+    },
+    {
+      "pattern": "\\.sh$"
+    },
+    {
+      "pattern": "\\.yml$"
+    },
+    {
+      "pattern": "\\.md$"
+    },
+    {
+      "pattern": "\\.ini$"
+    },
+    {
+      "pattern": "^documents/"
+    },
+    {
+      "pattern": "^src/"
+    },
+    {
+      "pattern": "^tests/"
+    },
+    {
+      "pattern": "^\\.env"
+    },
+    {
+      "pattern": "^\\.git"
+    },
+    {
+      "pattern": "^Makefile$"
+    },
+    {
+      "pattern": "^docker-compose"
+    },
+    {
+      "pattern": "^quickstart"
+    },
+    {
+      "pattern": "^[A-Z_]+\\.md$"
     }
   ],
   "replacementPatterns": [],

@@ -4,13 +4,14 @@ Forensically proves that a submitted JPG is derived from the submitted RAW file
 Uses PRNU (Photo Response Non-Uniformity) analysis and perceptual hashing
 """
 
-import cv2
-import numpy as np
-from PIL import Image
-import imagehash
-import rawpy
-from typing import Dict, Tuple
 import logging
+from typing import Dict, Tuple
+
+import cv2
+import imagehash
+import numpy as np
+import rawpy
+from PIL import Image
 from skimage.metrics import structural_similarity as ssim
 
 logger = logging.getLogger(__name__)
@@ -55,7 +56,7 @@ class RAWJPGLinkageAnalyzer:
                     "verdict": "ERROR",
                     "confidence": 0.0,
                     "flags": ["Failed to load RAW file"],
-                    "method": "linkage_analysis"
+                    "method": "linkage_analysis",
                 }
 
             # Load JPG file
@@ -65,7 +66,7 @@ class RAWJPGLinkageAnalyzer:
                     "verdict": "ERROR",
                     "confidence": 0.0,
                     "flags": ["Failed to load JPG file"],
-                    "method": "linkage_analysis"
+                    "method": "linkage_analysis",
                 }
 
             # Resize images to same dimensions for comparison
@@ -88,9 +89,7 @@ class RAWJPGLinkageAnalyzer:
             flags.append(f"Histogram correlation: {hist_corr:.4f}")
 
             # Determine verdict based on all three methods
-            verdict, confidence = self._determine_verdict(
-                phash_match, phash_distance, ssim_score, hist_corr
-            )
+            verdict, confidence = self._determine_verdict(phash_match, phash_distance, ssim_score, hist_corr)
 
             if verdict == "REJECT":
                 flags.append("CRITICAL: RAW and JPG files are not linked - possible submission forgery")
@@ -103,7 +102,7 @@ class RAWJPGLinkageAnalyzer:
                 "phash_distance": float(phash_distance),
                 "ssim_score": float(ssim_score),
                 "histogram_correlation": float(hist_corr),
-                "analysis": self._generate_analysis_summary(verdict, phash_distance, ssim_score, hist_corr)
+                "analysis": self._generate_analysis_summary(verdict, phash_distance, ssim_score, hist_corr),
             }
 
         except Exception as e:
@@ -112,7 +111,7 @@ class RAWJPGLinkageAnalyzer:
                 "verdict": "ERROR",
                 "confidence": 0.0,
                 "flags": [f"Analysis error: {str(e)}"],
-                "method": "linkage_analysis"
+                "method": "linkage_analysis",
             }
 
     def _load_raw_image(self, raw_path: str) -> np.ndarray:
@@ -128,12 +127,7 @@ class RAWJPGLinkageAnalyzer:
         try:
             with rawpy.imread(raw_path) as raw:
                 # Demosaic RAW to RGB using default settings
-                rgb = raw.postprocess(
-                    use_camera_wb=True,
-                    half_size=False,
-                    no_auto_bright=True,
-                    output_bps=8
-                )
+                rgb = raw.postprocess(use_camera_wb=True, half_size=False, no_auto_bright=True, output_bps=8)
             return cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
 
         except Exception as e:
@@ -232,11 +226,7 @@ class RAWJPGLinkageAnalyzer:
             return 0.0
 
     def _determine_verdict(
-        self,
-        phash_match: bool,
-        phash_distance: int,
-        ssim_score: float,
-        hist_corr: float
+        self, phash_match: bool, phash_distance: int, ssim_score: float, hist_corr: float
     ) -> Tuple[str, float]:
         """
         Determine verdict based on all three comparison methods
@@ -282,13 +272,7 @@ class RAWJPGLinkageAnalyzer:
 
         return verdict, confidence
 
-    def _generate_analysis_summary(
-        self,
-        verdict: str,
-        phash_distance: int,
-        ssim_score: float,
-        hist_corr: float
-    ) -> str:
+    def _generate_analysis_summary(self, verdict: str, phash_distance: int, ssim_score: float, hist_corr: float) -> str:
         """Generate human-readable analysis summary"""
         if verdict == "REJECT":
             return f"RAW-JPG linkage FAILED: Files are not linked (pHash dist={phash_distance}, SSIM={ssim_score:.2f}, Hist={hist_corr:.2f})"

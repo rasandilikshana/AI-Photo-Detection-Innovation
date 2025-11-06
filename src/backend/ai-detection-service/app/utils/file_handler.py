@@ -2,12 +2,13 @@
 File handling utilities for A.V.A.R. AI Detection Service
 """
 
-from fastapi import UploadFile
-from pathlib import Path
-import aiofiles
-import os
 import logging
+import os
+from pathlib import Path
 from typing import Optional
+
+import aiofiles
+from fastapi import UploadFile
 
 logger = logging.getLogger(__name__)
 
@@ -17,20 +18,24 @@ class FileHandler:
 
     # Supported RAW file extensions
     RAW_EXTENSIONS = {
-        '.cr2', '.cr3',  # Canon
-        '.nef', '.nrw',  # Nikon
-        '.arw', '.srf', '.sr2',  # Sony
-        '.orf',  # Olympus
-        '.rw2',  # Panasonic
-        '.dng',  # Adobe Digital Negative (universal)
-        '.raf',  # Fujifilm
-        '.pef',  # Pentax
-        '.raw',  # Generic
-        '.rwl',  # Leica
-        '.3fr',  # Hasselblad
-        '.mrw',  # Minolta
-        '.dcr',  # Kodak
-        '.erf',  # Epson
+        ".cr2",
+        ".cr3",  # Canon
+        ".nef",
+        ".nrw",  # Nikon
+        ".arw",
+        ".srf",
+        ".sr2",  # Sony
+        ".orf",  # Olympus
+        ".rw2",  # Panasonic
+        ".dng",  # Adobe Digital Negative (universal)
+        ".raf",  # Fujifilm
+        ".pef",  # Pentax
+        ".raw",  # Generic
+        ".rwl",  # Leica
+        ".3fr",  # Hasselblad
+        ".mrw",  # Minolta
+        ".dcr",  # Kodak
+        ".erf",  # Epson
     }
 
     def __init__(self, upload_dir: str = "uploads"):
@@ -42,12 +47,7 @@ class FileHandler:
         ext = Path(filename).suffix.lower()
         return ext in self.RAW_EXTENSIONS
 
-    async def save_upload(
-        self,
-        upload_file: UploadFile,
-        submission_id: str,
-        file_type: str
-    ) -> str:
+    async def save_upload(self, upload_file: UploadFile, submission_id: str, file_type: str) -> str:
         """
         Save uploaded file to disk
 
@@ -69,7 +69,7 @@ class FileHandler:
             file_path = submission_dir / f"{file_type}{ext}"
 
             # Save file
-            async with aiofiles.open(file_path, 'wb') as f:
+            async with aiofiles.open(file_path, "wb") as f:
                 content = await upload_file.read()
                 await f.write(content)
 

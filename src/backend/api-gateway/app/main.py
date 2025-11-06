@@ -3,14 +3,15 @@ A.V.A.R. API Gateway
 Central routing and load balancing for microservices
 """
 
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-import httpx
+import logging
 import os
 from datetime import datetime
 from typing import Optional
-import logging
+
+import httpx
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="A.V.A.R. API Gateway",
     description="Central API gateway for routing requests to microservices",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # CORS middleware
@@ -46,10 +47,7 @@ async def root():
         "service": "A.V.A.R. API Gateway",
         "version": "1.0.0",
         "status": "operational",
-        "services": {
-            "ai_detection": AI_DETECTION_URL,
-            "competition_management": COMPETITION_SERVICE_URL
-        }
+        "services": {"ai_detection": AI_DETECTION_URL, "competition_management": COMPETITION_SERVICE_URL},
     }
 
 
@@ -57,11 +55,7 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     # Check if backend services are reachable
-    services_health = {
-        "gateway": "healthy",
-        "ai_detection": "unknown",
-        "competition_service": "unknown"
-    }
+    services_health = {"gateway": "healthy", "ai_detection": "unknown", "competition_service": "unknown"}
 
     try:
         response = await http_client.get(f"{AI_DETECTION_URL}/health", timeout=5.0)
@@ -75,14 +69,11 @@ async def health_check():
     except Exception:
         services_health["competition_service"] = "unreachable"
 
-    return {
-        "status": "healthy",
-        "timestamp": datetime.utcnow(),
-        "services": services_health
-    }
+    return {"status": "healthy", "timestamp": datetime.utcnow(), "services": services_health}
 
 
 # === AI Detection Service Routes ===
+
 
 @app.api_route("/api/v1/detect/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_ai_detection(path: str, request: Request):
@@ -101,14 +92,18 @@ async def proxy_ai_detection(path: str, request: Request):
         response = await http_client.request(
             method=request.method,
             url=url,
-            headers={k: v for k, v in request.headers.items() if k.lower() != 'host'},
+            headers={k: v for k, v in request.headers.items() if k.lower() != "host"},
             content=body,
-            params=request.query_params
+            params=request.query_params,
         )
 
         return JSONResponse(
             status_code=response.status_code,
-            content=response.json() if response.headers.get('content-type') == 'application/json' else {"response": response.text}
+            content=(
+                response.json()
+                if response.headers.get("content-type") == "application/json"
+                else {"response": response.text}
+            ),
         )
 
     except Exception as e:
@@ -117,6 +112,7 @@ async def proxy_ai_detection(path: str, request: Request):
 
 
 # === Competition Service Routes ===
+
 
 @app.api_route("/api/v1/competitions/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
 async def proxy_competition_service(path: str, request: Request):
@@ -132,14 +128,18 @@ async def proxy_competition_service(path: str, request: Request):
         response = await http_client.request(
             method=request.method,
             url=url,
-            headers={k: v for k, v in request.headers.items() if k.lower() != 'host'},
+            headers={k: v for k, v in request.headers.items() if k.lower() != "host"},
             content=body,
-            params=request.query_params
+            params=request.query_params,
         )
 
         return JSONResponse(
             status_code=response.status_code,
-            content=response.json() if response.headers.get('content-type') == 'application/json' else {"response": response.text}
+            content=(
+                response.json()
+                if response.headers.get("content-type") == "application/json"
+                else {"response": response.text}
+            ),
         )
 
     except Exception as e:
@@ -151,10 +151,7 @@ async def proxy_competition_service(path: str, request: Request):
 async def global_exception_handler(request: Request, exc: Exception):
     """Global exception handler"""
     logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error", "error": str(exc)}
-    )
+    return JSONResponse(status_code=500, content={"detail": "Internal server error", "error": str(exc)})
 
 
 @app.on_event("shutdown")
@@ -165,4 +162,5 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

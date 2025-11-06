@@ -3,14 +3,10 @@ A.V.A.R. AI Detection Service - Main Application
 Forensic analysis service for detecting AI-generated images
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from typing import Optional, List
 import logging
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import List, Optional
 
 from app.services.layer1_metadata import MetadataAnalyzer
 from app.services.layer2_fingerprint import DigitalFingerprintAnalyzer
@@ -18,6 +14,10 @@ from app.services.layer3_api import ThirdPartyAPIVerifier
 from app.services.raw_jpg_linkage import RAWJPGLinkageAnalyzer
 from app.utils.file_handler import FileHandler
 from app.utils.logger import setup_logger
+from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 # Initialize logger
 logger = setup_logger(__name__)
@@ -28,7 +28,7 @@ app = FastAPI(
     description="Forensic analysis service for detecting AI-generated synthetic images",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # CORS middleware
@@ -39,6 +39,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Response Models
 class AnalysisResult(BaseModel):
@@ -53,10 +54,12 @@ class AnalysisResult(BaseModel):
     flags: List[str]
     processing_time_ms: float
 
+
 class HealthResponse(BaseModel):
     status: str
     service: str
     timestamp: datetime
+
 
 # Initialize services
 metadata_analyzer = MetadataAnalyzer()
@@ -73,29 +76,21 @@ async def root():
         "service": "A.V.A.R. AI Detection Service",
         "version": "1.0.0",
         "status": "operational",
-        "endpoints": {
-            "health": "/health",
-            "docs": "/docs",
-            "analyze": "/api/v1/analyze"
-        }
+        "endpoints": {"health": "/health", "docs": "/docs", "analyze": "/api/v1/analyze"},
     }
 
 
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint for container orchestration"""
-    return HealthResponse(
-        status="healthy",
-        service="ai-detection-service",
-        timestamp=datetime.utcnow()
-    )
+    return HealthResponse(status="healthy", service="ai-detection-service", timestamp=datetime.utcnow())
 
 
 @app.post("/api/v1/analyze", response_model=AnalysisResult)
 async def analyze_submission(
     jpg_file: UploadFile = File(..., description="JPG submission file"),
     raw_file: Optional[UploadFile] = File(None, description="RAW file (optional but recommended)"),
-    background_tasks: BackgroundTasks = None
+    background_tasks: BackgroundTasks = None,
 ):
     """
     Main analysis endpoint - Multi-layered AI detection pipeline
@@ -115,7 +110,7 @@ async def analyze_submission(
 
     try:
         # Validate file types
-        if not jpg_file.filename.lower().endswith(('.jpg', '.jpeg')):
+        if not jpg_file.filename.lower().endswith((".jpg", ".jpeg")):
             raise HTTPException(status_code=400, detail="JPG file must be .jpg or .jpeg")
 
         if raw_file and not file_handler.is_valid_raw_extension(raw_file.filename):
@@ -155,7 +150,7 @@ async def analyze_submission(
                 layer3_result=None,
                 raw_jpg_linkage=None,
                 flags=flags,
-                processing_time_ms=processing_time
+                processing_time_ms=processing_time,
             )
 
         # === RAW-JPG LINKAGE ANALYSIS ===
@@ -184,7 +179,7 @@ async def analyze_submission(
                     layer3_result=None,
                     raw_jpg_linkage=raw_jpg_linkage,
                     flags=flags,
-                    processing_time_ms=processing_time
+                    processing_time_ms=processing_time,
                 )
 
         # === LAYER 2: DIGITAL FINGERPRINT ANALYSIS ===
@@ -233,7 +228,7 @@ async def analyze_submission(
             layer3_result=layer3_result,
             raw_jpg_linkage=raw_jpg_linkage,
             flags=flags,
-            processing_time_ms=processing_time
+            processing_time_ms=processing_time,
         )
 
     except Exception as e:
@@ -242,9 +237,7 @@ async def analyze_submission(
 
 
 @app.post("/api/v1/analyze/metadata-only")
-async def analyze_metadata_only(
-    jpg_file: UploadFile = File(..., description="JPG submission file")
-):
+async def analyze_metadata_only(jpg_file: UploadFile = File(..., description="JPG submission file")):
     """Quick metadata-only analysis (Layer 1 only)"""
     submission_id = str(uuid.uuid4())
 
@@ -264,12 +257,10 @@ async def analyze_metadata_only(
 async def global_exception_handler(request, exc):
     """Global exception handler"""
     logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error", "error": str(exc)}
-    )
+    return JSONResponse(status_code=500, content={"detail": "Internal server error", "error": str(exc)})
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8001)

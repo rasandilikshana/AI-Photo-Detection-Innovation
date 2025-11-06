@@ -4,8 +4,8 @@ Logging configuration for A.V.A.R. AI Detection Service
 
 import logging
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
@@ -34,8 +34,7 @@ def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
     console_handler.setLevel(log_level)
 
     formatter = logging.Formatter(
-        fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
     console_handler.setFormatter(formatter)
 

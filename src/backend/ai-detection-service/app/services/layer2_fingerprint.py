@@ -3,12 +3,13 @@ Layer 2: Digital Fingerprint Analysis Service
 Core innovation: PRNU, ELA, and FFT analysis for detecting AI-generated images
 """
 
+import logging
+from typing import Dict, List, Optional, Tuple
+
 import cv2
 import numpy as np
 import pywt
 from PIL import Image
-from typing import Dict, List, Tuple, Optional
-import logging
 from scipy import fftpack
 from skimage.filters import wiener
 
@@ -32,11 +33,7 @@ class DigitalFingerprintAnalyzer:
         self.ela_threshold = 30.0  # ELA uniformity threshold
         self.fft_threshold = 0.15  # High-frequency content threshold
 
-    async def analyze(
-        self,
-        jpg_path: str,
-        raw_path: Optional[str] = None
-    ) -> Dict:
+    async def analyze(self, jpg_path: str, raw_path: Optional[str] = None) -> Dict:
         """
         Perform comprehensive digital fingerprint analysis
 
@@ -60,18 +57,18 @@ class DigitalFingerprintAnalyzer:
 
             # === Analysis 1: PRNU Extraction and Analysis ===
             prnu_result = await self._analyze_prnu(image)
-            scores['prnu'] = prnu_result['score']
-            flags.extend(prnu_result['flags'])
+            scores["prnu"] = prnu_result["score"]
+            flags.extend(prnu_result["flags"])
 
             # === Analysis 2: Error Level Analysis (ELA) ===
             ela_result = await self._analyze_ela(jpg_path)
-            scores['ela'] = ela_result['score']
-            flags.extend(ela_result['flags'])
+            scores["ela"] = ela_result["score"]
+            flags.extend(ela_result["flags"])
 
             # === Analysis 3: Frequency Domain Analysis (FFT) ===
             fft_result = await self._analyze_fft(image)
-            scores['fft'] = fft_result['score']
-            flags.extend(fft_result['flags'])
+            scores["fft"] = fft_result["score"]
+            flags.extend(fft_result["flags"])
 
             # Calculate overall confidence and verdict
             verdict, confidence = self._calculate_verdict(scores)
@@ -80,13 +77,13 @@ class DigitalFingerprintAnalyzer:
                 "verdict": verdict,
                 "confidence": confidence,
                 "flags": flags,
-                "prnu_score": scores['prnu'],
-                "ela_score": scores['ela'],
-                "fft_score": scores['fft'],
-                "prnu_energy": prnu_result.get('energy', 0.0),
-                "ela_uniformity": ela_result.get('uniformity', 0.0),
-                "fft_high_freq_ratio": fft_result.get('high_freq_ratio', 0.0),
-                "analysis": self._generate_summary(verdict, scores)
+                "prnu_score": scores["prnu"],
+                "ela_score": scores["ela"],
+                "fft_score": scores["fft"],
+                "prnu_energy": prnu_result.get("energy", 0.0),
+                "ela_uniformity": ela_result.get("uniformity", 0.0),
+                "fft_high_freq_ratio": fft_result.get("high_freq_ratio", 0.0),
+                "analysis": self._generate_summary(verdict, scores),
             }
 
         except Exception as e:
@@ -120,20 +117,20 @@ class DigitalFingerprintAnalyzer:
             # === PRNU Extraction using Wavelet Denoising ===
 
             # 1. Apply 2D Discrete Wavelet Transform
-            coeffs = pywt.dwt2(img_float, 'db8')
+            coeffs = pywt.dwt2(img_float, "db8")
             cA, (cH, cV, cD) = coeffs
 
             # 2. Denoise using soft thresholding
             sigma = self._estimate_noise(cD)
             threshold = sigma * np.sqrt(2 * np.log(img_float.size))
 
-            cH_denoised = pywt.threshold(cH, threshold, mode='soft')
-            cV_denoised = pywt.threshold(cV, threshold, mode='soft')
-            cD_denoised = pywt.threshold(cD, threshold, mode='soft')
+            cH_denoised = pywt.threshold(cH, threshold, mode="soft")
+            cV_denoised = pywt.threshold(cV, threshold, mode="soft")
+            cD_denoised = pywt.threshold(cD, threshold, mode="soft")
 
             # 3. Reconstruct denoised image
             denoised_coeffs = (cA, (cH_denoised, cV_denoised, cD_denoised))
-            denoised = pywt.idwt2(denoised_coeffs, 'db8')
+            denoised = pywt.idwt2(denoised_coeffs, "db8")
 
             # Handle size mismatch after reconstruction
             if denoised.shape != img_float.shape:
@@ -164,17 +161,12 @@ class DigitalFingerprintAnalyzer:
                 "score": score,
                 "flags": flags,
                 "energy": float(prnu_energy),
-                "pattern_valid": prnu_energy >= self.prnu_threshold
+                "pattern_valid": prnu_energy >= self.prnu_threshold,
             }
 
         except Exception as e:
             logger.error(f"PRNU analysis failed: {str(e)}")
-            return {
-                "score": 0.5,
-                "flags": [f"PRNU analysis error: {str(e)}"],
-                "energy": 0.0,
-                "pattern_valid": False
-            }
+            return {"score": 0.5, "flags": [f"PRNU analysis error: {str(e)}"], "energy": 0.0, "pattern_valid": False}
 
     def _estimate_noise(self, coeffs: np.ndarray) -> float:
         """Estimate noise level using MAD (Median Absolute Deviation)"""
@@ -196,8 +188,9 @@ class DigitalFingerprintAnalyzer:
 
             # Re-save at fixed quality
             import io
+
             buffer = io.BytesIO()
-            original.save(buffer, format='JPEG', quality=95)
+            original.save(buffer, format="JPEG", quality=95)
             buffer.seek(0)
 
             # Load re-saved image
@@ -209,10 +202,7 @@ class DigitalFingerprintAnalyzer:
 
             # Ensure same dimensions
             if orig_array.shape != resaved_array.shape:
-                resaved_array = cv2.resize(
-                    resaved_array,
-                    (orig_array.shape[1], orig_array.shape[0])
-                )
+                resaved_array = cv2.resize(resaved_array, (orig_array.shape[1], orig_array.shape[0]))
 
             # Calculate absolute difference (ELA image)
             ela = np.abs(orig_array - resaved_array)
@@ -249,16 +239,12 @@ class DigitalFingerprintAnalyzer:
                 "flags": flags,
                 "uniformity": float(uniformity),
                 "mean_error": float(ela_mean),
-                "max_error": float(ela_max)
+                "max_error": float(ela_max),
             }
 
         except Exception as e:
             logger.error(f"ELA analysis failed: {str(e)}")
-            return {
-                "score": 0.5,
-                "flags": [f"ELA analysis error: {str(e)}"],
-                "uniformity": 0.0
-            }
+            return {"score": 0.5, "flags": [f"ELA analysis error: {str(e)}"], "uniformity": 0.0}
 
     async def _analyze_fft(self, image: np.ndarray) -> Dict:
         """
@@ -302,7 +288,7 @@ class DigitalFingerprintAnalyzer:
 
             # Create masks
             y, x = np.ogrid[:h, :w]
-            distance = np.sqrt((x - center_x)**2 + (y - center_y)**2)
+            distance = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
 
             low_freq_mask = distance <= low_freq_radius
             high_freq_mask = distance >= high_freq_radius_inner
@@ -337,16 +323,12 @@ class DigitalFingerprintAnalyzer:
                 "flags": flags,
                 "high_freq_ratio": float(high_freq_ratio),
                 "low_freq_energy": float(low_freq_energy),
-                "high_freq_energy": float(high_freq_energy)
+                "high_freq_energy": float(high_freq_energy),
             }
 
         except Exception as e:
             logger.error(f"FFT analysis failed: {str(e)}")
-            return {
-                "score": 0.5,
-                "flags": [f"FFT analysis error: {str(e)}"],
-                "high_freq_ratio": 0.0
-            }
+            return {"score": 0.5, "flags": [f"FFT analysis error: {str(e)}"], "high_freq_ratio": 0.0}
 
     def _calculate_verdict(self, scores: Dict[str, float]) -> Tuple[str, float]:
         """
@@ -360,11 +342,7 @@ class DigitalFingerprintAnalyzer:
         Returns:
             (verdict: str, confidence: float)
         """
-        weighted_score = (
-            scores['prnu'] * 0.50 +
-            scores['ela'] * 0.25 +
-            scores['fft'] * 0.25
-        )
+        weighted_score = scores["prnu"] * 0.50 + scores["ela"] * 0.25 + scores["fft"] * 0.25
 
         if weighted_score < 0.3:
             verdict = "REJECT"
@@ -391,5 +369,5 @@ class DigitalFingerprintAnalyzer:
             "prnu_score": 0.0,
             "ela_score": 0.0,
             "fft_score": 0.0,
-            "analysis": "Digital fingerprint analysis failed"
+            "analysis": "Digital fingerprint analysis failed",
         }

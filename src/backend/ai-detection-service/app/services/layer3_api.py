@@ -3,11 +3,12 @@ Layer 3: Third-Party API Verification Service
 Integration with professional AI detection APIs for final verdict
 """
 
-import httpx
-import os
-from typing import Dict, Optional
 import logging
+import os
 from pathlib import Path
+from typing import Dict, Optional
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ class ThirdPartyAPIVerifier:
                 "confidence": 0.5,
                 "flags": ["No third-party API configured - manual review required"],
                 "api_used": None,
-                "analysis": "Third-party verification unavailable"
+                "analysis": "Third-party verification unavailable",
             }
 
         except Exception as e:
@@ -71,7 +72,7 @@ class ThirdPartyAPIVerifier:
                 "confidence": 0.0,
                 "flags": [f"API verification error: {str(e)}"],
                 "api_used": None,
-                "analysis": "Third-party verification failed"
+                "analysis": "Third-party verification failed",
             }
 
     async def _verify_hive_ai(self, image_path: str) -> Dict:
@@ -93,26 +94,15 @@ class ThirdPartyAPIVerifier:
             # Prepare request
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 # Read image file
-                with open(image_path, 'rb') as f:
-                    files = {
-                        'media': (Path(image_path).name, f, 'image/jpeg')
-                    }
+                with open(image_path, "rb") as f:
+                    files = {"media": (Path(image_path).name, f, "image/jpeg")}
 
-                    headers = {
-                        'Authorization': f'Token {self.hive_api_key}'
-                    }
+                    headers = {"Authorization": f"Token {self.hive_api_key}"}
 
                     # Request AI detection
-                    data = {
-                        'models': 'ai_generated_media'  # Hive's AI detection model
-                    }
+                    data = {"models": "ai_generated_media"}  # Hive's AI detection model
 
-                    response = await client.post(
-                        url,
-                        headers=headers,
-                        files=files,
-                        data=data
-                    )
+                    response = await client.post(url, headers=headers, files=files, data=data)
 
                 if response.status_code != 200:
                     logger.error(f"Hive AI API error: {response.status_code} - {response.text}")
@@ -124,14 +114,14 @@ class ThirdPartyAPIVerifier:
                 # Response structure: { "status": [...], "scores": [...] }
                 ai_generated_score = 0.0
 
-                if 'status' in result and result['status']:
-                    for item in result['status']:
-                        if 'response' in item and 'output' in item['response']:
-                            for output in item['response']['output']:
-                                if 'classes' in output:
-                                    for cls in output['classes']:
-                                        if cls.get('class') == 'ai_generated':
-                                            ai_generated_score = cls.get('score', 0.0)
+                if "status" in result and result["status"]:
+                    for item in result["status"]:
+                        if "response" in item and "output" in item["response"]:
+                            for output in item["response"]["output"]:
+                                if "classes" in output:
+                                    for cls in output["classes"]:
+                                        if cls.get("class") == "ai_generated":
+                                            ai_generated_score = cls.get("score", 0.0)
 
                 # Determine verdict
                 flags = []
@@ -154,7 +144,7 @@ class ThirdPartyAPIVerifier:
                     "flags": flags,
                     "api_used": "Hive AI",
                     "ai_score": ai_generated_score,
-                    "analysis": f"Hive AI verification: {verdict}"
+                    "analysis": f"Hive AI verification: {verdict}",
                 }
 
         except Exception as e:
@@ -179,23 +169,15 @@ class ThirdPartyAPIVerifier:
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 # Example API call structure (adjust based on actual API)
-                with open(image_path, 'rb') as f:
-                    files = {
-                        'image': (Path(image_path).name, f, 'image/jpeg')
-                    }
+                with open(image_path, "rb") as f:
+                    files = {"image": (Path(image_path).name, f, "image/jpeg")}
 
-                    headers = {
-                        'Authorization': f'Bearer {self.optic_api_key}'
-                    }
+                    headers = {"Authorization": f"Bearer {self.optic_api_key}"}
 
                     # Placeholder endpoint - replace with actual
                     url = "https://api.optic.example/v1/detect"
 
-                    response = await client.post(
-                        url,
-                        headers=headers,
-                        files=files
-                    )
+                    response = await client.post(url, headers=headers, files=files)
 
                 if response.status_code != 200:
                     logger.error(f"Optic API error: {response.status_code}")
@@ -204,7 +186,7 @@ class ThirdPartyAPIVerifier:
                 result = response.json()
 
                 # Parse response (adjust based on actual API)
-                ai_probability = result.get('ai_probability', 0.5)
+                ai_probability = result.get("ai_probability", 0.5)
 
                 if ai_probability > 0.7:
                     verdict = "REJECT"
@@ -222,7 +204,7 @@ class ThirdPartyAPIVerifier:
                     "flags": [f"Optic AI score: {ai_probability:.2f}"],
                     "api_used": "Optic AI",
                     "ai_probability": ai_probability,
-                    "analysis": f"Optic AI verification: {verdict}"
+                    "analysis": f"Optic AI verification: {verdict}",
                 }
 
         except Exception as e:

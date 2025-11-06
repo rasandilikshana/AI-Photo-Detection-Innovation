@@ -3,13 +3,14 @@ Layer 1: Metadata Analysis Service
 Forensic EXIF analysis to detect AI-generated images through metadata signatures
 """
 
+import json
+import logging
+import subprocess
+from pathlib import Path
+from typing import Dict, List, Optional
+
 from PIL import Image
 from PIL.ExifTags import TAGS
-import subprocess
-import json
-from typing import Optional, Dict, List
-import logging
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +27,24 @@ class MetadataAnalyzer:
 
     # Known AI generation tool signatures
     AI_SIGNATURES = [
-        "midjourney", "dall-e", "dall·e", "stable diffusion", "stablediffusion",
-        "ai generated", "synthetic", "artificial intelligence", "generative",
-        "openai", "midjourney bot", "ai-generated", "adobe firefly", "firefly",
-        "leonardo.ai", "playground ai", "craiyon", "nightcafe"
+        "midjourney",
+        "dall-e",
+        "dall·e",
+        "stable diffusion",
+        "stablediffusion",
+        "ai generated",
+        "synthetic",
+        "artificial intelligence",
+        "generative",
+        "openai",
+        "midjourney bot",
+        "ai-generated",
+        "adobe firefly",
+        "firefly",
+        "leonardo.ai",
+        "playground ai",
+        "craiyon",
+        "nightcafe",
     ]
 
     # Essential camera metadata fields
@@ -45,11 +60,7 @@ class MetadataAnalyzer:
     }
 
     # Critical fields that should exist together
-    CONSISTENCY_GROUPS = [
-        ["Make", "Model"],
-        ["ExposureTime", "FNumber", "ISO"],
-        ["FocalLength", "LensModel"]
-    ]
+    CONSISTENCY_GROUPS = [["Make", "Model"], ["ExposureTime", "FNumber", "ISO"], ["FocalLength", "LensModel"]]
 
     def __init__(self):
         self.exiftool_available = self._check_exiftool()
@@ -57,12 +68,7 @@ class MetadataAnalyzer:
     def _check_exiftool(self) -> bool:
         """Check if exiftool is available in system"""
         try:
-            result = subprocess.run(
-                ["exiftool", "-ver"],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            result = subprocess.run(["exiftool", "-ver"], capture_output=True, text=True, timeout=5)
             return result.returncode == 0
         except (FileNotFoundError, subprocess.TimeoutExpired):
             logger.warning("exiftool not available, falling back to PIL only")
@@ -112,7 +118,7 @@ class MetadataAnalyzer:
                     "metadata_present": bool(jpg_metadata),
                     "camera_fields_found": 0,
                     "ai_signatures_found": len(ai_flags),
-                    "analysis": "AI generation signatures detected in metadata"
+                    "analysis": "AI generation signatures detected in metadata",
                 }
 
             # Check 2: Camera Signature Validation
@@ -125,9 +131,7 @@ class MetadataAnalyzer:
 
             # Check 4: RAW-JPG Metadata Correlation (if RAW provided)
             if raw_metadata:
-                correlation_score, correlation_flags = self._check_raw_jpg_correlation(
-                    jpg_metadata, raw_metadata
-                )
+                correlation_score, correlation_flags = self._check_raw_jpg_correlation(jpg_metadata, raw_metadata)
                 flags.extend(correlation_flags)
             else:
                 correlation_score = 0.5  # Neutral if no RAW provided
@@ -135,16 +139,9 @@ class MetadataAnalyzer:
             # Calculate overall confidence
             # Weight: Camera signatures (40%), Consistency (30%), Correlation (30%)
             if raw_metadata:
-                confidence_score = (
-                    camera_score * 0.4 +
-                    consistency_score * 0.3 +
-                    correlation_score * 0.3
-                )
+                confidence_score = camera_score * 0.4 + consistency_score * 0.3 + correlation_score * 0.3
             else:
-                confidence_score = (
-                    camera_score * 0.6 +
-                    consistency_score * 0.4
-                )
+                confidence_score = camera_score * 0.6 + consistency_score * 0.4
 
             # Determine verdict based on confidence
             if confidence_score < 0.3:
@@ -165,7 +162,7 @@ class MetadataAnalyzer:
                 "ai_signatures_found": 0,
                 "camera_score": camera_score,
                 "consistency_score": consistency_score,
-                "analysis": self._generate_analysis_summary(verdict, camera_fields_found, flags)
+                "analysis": self._generate_analysis_summary(verdict, camera_fields_found, flags),
             }
 
         except Exception as e:
@@ -177,7 +174,7 @@ class MetadataAnalyzer:
                 "metadata_present": False,
                 "camera_fields_found": 0,
                 "ai_signatures_found": 0,
-                "analysis": "Metadata analysis failed"
+                "analysis": "Metadata analysis failed",
             }
 
     def _extract_metadata_pil(self, image_path: str) -> Dict:
@@ -202,10 +199,7 @@ class MetadataAnalyzer:
         """Extract comprehensive metadata using exiftool"""
         try:
             result = subprocess.run(
-                ["exiftool", "-j", "-a", "-G", file_path],
-                capture_output=True,
-                text=True,
-                timeout=30
+                ["exiftool", "-j", "-a", "-G", file_path], capture_output=True, text=True, timeout=30
             )
 
             if result.returncode == 0:
@@ -299,9 +293,7 @@ class MetadataAnalyzer:
 
         return score, flags
 
-    def _check_raw_jpg_correlation(
-        self, jpg_metadata: Dict, raw_metadata: Dict
-    ) -> tuple[float, List[str]]:
+    def _check_raw_jpg_correlation(self, jpg_metadata: Dict, raw_metadata: Dict) -> tuple[float, List[str]]:
         """
         Check if RAW and JPG metadata correlate (same camera/settings)
 
@@ -322,7 +314,9 @@ class MetadataAnalyzer:
                 if jpg_metadata[field] == raw_metadata[field]:
                     matches += 1
                 else:
-                    flags.append(f"RAW-JPG mismatch in {field}: RAW='{raw_metadata[field]}' vs JPG='{jpg_metadata[field]}'")
+                    flags.append(
+                        f"RAW-JPG mismatch in {field}: RAW='{raw_metadata[field]}' vs JPG='{jpg_metadata[field]}'"
+                    )
 
         if comparisons == 0:
             return 0.5, ["Insufficient metadata for RAW-JPG correlation"]
@@ -334,9 +328,7 @@ class MetadataAnalyzer:
 
         return score, flags
 
-    def _generate_analysis_summary(
-        self, verdict: str, camera_fields_found: int, flags: List[str]
-    ) -> str:
+    def _generate_analysis_summary(self, verdict: str, camera_fields_found: int, flags: List[str]) -> str:
         """Generate human-readable analysis summary"""
         if verdict == "REJECT":
             return f"Image rejected: {len(flags)} critical issues detected"
