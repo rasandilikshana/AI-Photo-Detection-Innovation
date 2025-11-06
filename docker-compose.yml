@@ -26,7 +26,7 @@ services:
     image: redis:7-alpine
     container_name: avar-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -63,27 +63,28 @@ services:
       - avar-network
     restart: unless-stopped
 
-  # Competition Management Service (PHP Laravel)
+  # Competition Management Service (Python FastAPI)
   competition-service:
     build:
       context: ./src/backend/competition-service
       dockerfile: Dockerfile
     container_name: avar-competition
     environment:
-      - DB_CONNECTION=pgsql
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_DATABASE=avar_db
-      - DB_USERNAME=avar_user
-      - DB_PASSWORD=${DB_PASSWORD:-change_me_in_production}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - DATABASE_URL=postgresql+asyncpg://avar_user:${DB_PASSWORD:-change_me_in_production}@postgres:5432/avar_competitions
+      - REDIS_URL=redis://redis:6379/1
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-development-secret-key-change-in-production}
       - AI_DETECTION_SERVICE_URL=http://ai-detection-service:8001
+      - API_GATEWAY_URL=http://api-gateway:8000
+      - SERVICE_PORT=8080
+      - SERVICE_HOST=0.0.0.0
+      - ENVIRONMENT=production
+      - DEBUG=False
+      - LOG_LEVEL=INFO
     ports:
-      - "8080:80"
+      - "8080:8080"
     volumes:
-      - ./src/backend/competition-service:/var/www/html
-      - upload_storage:/var/www/html/storage/uploads
+      - ./src/backend/competition-service:/app
+      - competition_uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,6 +94,12 @@ services:
         condition: service_started
     networks:
       - avar-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     restart: unless-stopped
 
   # API Gateway (Node.js/Python FastAPI)
@@ -103,7 +110,7 @@ services:
     container_name: avar-gateway
     environment:
       - AI_DETECTION_URL=http://ai-detection-service:8001
-      - COMPETITION_SERVICE_URL=http://competition-service:80
+      - COMPETITION_SERVICE_URL=http://competition-service:8080
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     ports:
@@ -142,3 +149,4 @@ volumes:
   postgres_data:
   redis_data:
   upload_storage:
+  competition_uploads:
