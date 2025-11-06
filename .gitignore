@@ -1,0 +1,93 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+.cache/
+.parcel-cache/
+
+# PHP/Laravel
+/vendor/
+.env
+.env.backup
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+storage/*.key
+.phpunit.cache
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+.docker/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+/tmp/
+*.tmp
+*.bak
+
+# Secrets and credentials
+*.key
+*.pem
+*.crt
+secrets/
+credentials/
+
+# Test data
+test_images/
+sample_images/
+
+# Build artifacts
+*.o
+*.a
+*.exe
+*.dll
+
+# OS specific
+Thumbs.db
+.DS_Store
+
+# Word documents (keep in documents folder only)
+*.docx
