@@ -61,8 +61,8 @@ The first comprehensive AI-powered authenticity verification gateway specificall
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd "Rasan Research 3"
+git clone https://github.com/rasandilikshana/AI-Photo-Detection-Innovation.git
+cd "AI-Photo-Detection-Innovation"
 
 # Start all services with Docker Compose
 docker-compose up -d
