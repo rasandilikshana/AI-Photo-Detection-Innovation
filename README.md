@@ -183,6 +183,18 @@ AI-Photo-Detection-Innovation/
 - 📖 [Developer Guide](docs/guides/CLAUDE.md)
 - 🔧 [Commands Reference](docs/guides/COMMANDS_REFERENCE.md)
 
+### API Documentation
+- 📘 [Complete API Documentation](docs/api/API_DOCUMENTATION.md)
+- ⚡ [Quick Reference Guide](docs/api/QUICK_REFERENCE.md)
+- 📦 [Postman Collections](docs/api/)
+  - [AI Detection Service](docs/api/AVAR-AI-Detection-Service.postman_collection.json)
+  - [Competition Service](docs/api/AVAR-Competition-Service.postman_collection.json)
+  - [API Gateway](docs/api/AVAR-API-Gateway.postman_collection.json)
+- 🌐 Interactive API Docs:
+  - AI Detection: http://localhost:8001/docs
+  - Competition Service: http://localhost:8080/docs
+  - API Gateway: http://localhost:8000/docs
+
 ### Architecture & Design
 - 🏗️ [System Architecture](docs/architecture/SYSTEM_ARCHITECTURE.md)
 - 📊 [Database Schema](docs/architecture/DATABASE_SCHEMA.md) _(planned)_

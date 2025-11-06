@@ -1,0 +1,220 @@
+{
+	"info": {
+		"_postman_id": "avar-ai-detection-001",
+		"name": "A.V.A.R. - AI Detection Service",
+		"description": "Collection for testing the A.V.A.R. AI Detection Service API endpoints. This service provides multi-layer AI detection including PRNU, ELA, FFT analysis, and RAW-JPG linkage verification.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health & Info",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Check service health status"
+					},
+					"response": []
+				},
+				{
+					"name": "Service Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": ["{{base_url}}"]
+						},
+						"description": "Get service information and available endpoints"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Image Analysis",
+			"item": [
+				{
+					"name": "Analyze Single Image",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Image file to analyze (JPG/PNG)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analyze"]
+						},
+						"description": "Analyze a single image for AI manipulation detection"
+					},
+					"response": []
+				},
+				{
+					"name": "Batch Analysis",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "files",
+									"type": "file",
+									"src": [],
+									"description": "Multiple image files (up to 10)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/analyze/batch",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "analyze", "batch"]
+						},
+						"description": "Analyze multiple images in a single request"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "RAW-JPG Verification",
+			"item": [
+				{
+					"name": "Verify RAW-JPG Linkage",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "raw_file",
+									"type": "file",
+									"src": "",
+									"description": "RAW image file (CR2, NEF, ARW, etc.)"
+								},
+								{
+									"key": "jpg_file",
+									"type": "file",
+									"src": "",
+									"description": "Corresponding JPG file"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/verify-linkage",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "verify-linkage"]
+						},
+						"description": "Verify that a JPG was generated from the provided RAW file"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Advanced Detection",
+			"item": [
+				{
+					"name": "PRNU Analysis",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Image file for PRNU fingerprinting"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/prnu",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "prnu"]
+						},
+						"description": "Extract Photo Response Non-Uniformity (sensor fingerprint)"
+					},
+					"response": []
+				},
+				{
+					"name": "ELA Analysis",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Image file for ELA analysis"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/ela",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "ela"]
+						},
+						"description": "Perform Error Level Analysis to detect compression artifacts"
+					},
+					"response": []
+				},
+				{
+					"name": "Metadata Analysis",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Image file for metadata extraction"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/metadata",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "metadata"]
+						},
+						"description": "Extract and analyze EXIF metadata"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8001",
+			"type": "string"
+		}
+	]
+}

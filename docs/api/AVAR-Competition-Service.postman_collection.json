@@ -1,0 +1,605 @@
+{
+	"info": {
+		"_postman_id": "avar-competition-002",
+		"name": "A.V.A.R. - Competition Service",
+		"description": "Collection for testing the A.V.A.R. Competition Service API. This service manages photography competitions, user authentication, submissions, and judging workflows.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health & Info",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Check service health status"
+					},
+					"response": []
+				},
+				{
+					"name": "Service Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": ["{{base_url}}"]
+						},
+						"description": "Get service information"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('user_id', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"photographer@example.com\",\n    \"username\": \"photographer01\",\n    \"password\": \"SecurePass123!\",\n    \"full_name\": \"John Photographer\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "register"]
+						},
+						"description": "Register a new user account"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('access_token', response.access_token);",
+									"    pm.collectionVariables.set('refresh_token', response.refresh_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"photographer@example.com\",\n    \"password\": \"SecurePass123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "login"]
+						},
+						"description": "Login and receive JWT tokens"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "refresh"]
+						},
+						"description": "Get new access token using refresh token"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "me"]
+						},
+						"description": "Get current authenticated user's profile"
+					},
+					"response": []
+				},
+				{
+					"name": "List Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users?skip=0&limit=50",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users"],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						},
+						"description": "List all users (paginated)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/users/{{user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "users", "{{user_id}}"]
+						},
+						"description": "Get specific user by ID"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Competitions",
+			"item": [
+				{
+					"name": "Create Competition",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('competition_id', response.id);",
+									"    pm.collectionVariables.set('competition_slug', response.slug);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Wildlife Photography Challenge 2025\",\n    \"description\": \"Capture the beauty of wildlife in their natural habitat\",\n    \"rules\": \"1. Original work only\\n2. No AI-generated images\\n3. RAW files required\",\n    \"submission_start\": \"2025-02-01T00:00:00Z\",\n    \"submission_end\": \"2025-03-31T23:59:59Z\",\n    \"max_submissions_per_user\": 5,\n    \"require_raw_files\": true,\n    \"allow_ai_generated\": false,\n    \"entry_fee\": 25.00,\n    \"prize_description\": \"1st: $5000, 2nd: $2500, 3rd: $1000\",\n    \"prize_amount\": 8500.00\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/competitions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "competitions"]
+						},
+						"description": "Create new competition (Organizer/Admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "List Competitions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/competitions?status=open&skip=0&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "competitions"],
+							"query": [
+								{
+									"key": "status",
+									"value": "open",
+									"description": "Filter by status: draft, open, closed, judging, completed"
+								},
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "List all competitions with optional filters"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Competition by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/competitions/{{competition_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "competitions", "{{competition_id}}"]
+						},
+						"description": "Get competition details by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Competition by Slug",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/competitions/slug/{{competition_slug}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "competitions", "slug", "{{competition_slug}}"]
+						},
+						"description": "Get competition details by URL-friendly slug"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Competition",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"open\",\n    \"description\": \"Updated description with more details\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/competitions/{{competition_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "competitions", "{{competition_id}}"]
+						},
+						"description": "Update competition (Organizer/Admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Competition",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/competitions/{{competition_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "competitions", "{{competition_id}}"]
+						},
+						"description": "Delete competition (Organizer/Admin only)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Submissions",
+			"item": [
+				{
+					"name": "Create Submission",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('submission_id', response.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "competition_id",
+									"value": "{{competition_id}}",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Golden Hour Eagle",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "A majestic eagle captured during golden hour",
+									"type": "text"
+								},
+								{
+									"key": "image_file",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "raw_file",
+									"type": "file",
+									"src": "",
+									"description": "Optional RAW file"
+								},
+								{
+									"key": "camera_model",
+									"value": "Canon EOS R5",
+									"type": "text"
+								},
+								{
+									"key": "lens_model",
+									"value": "Canon RF 100-500mm",
+									"type": "text"
+								},
+								{
+									"key": "capture_date",
+									"value": "2025-01-15T17:30:00Z",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/submissions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "submissions"]
+						},
+						"description": "Submit entry to competition"
+					},
+					"response": []
+				},
+				{
+					"name": "List Submissions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/submissions?competition_id={{competition_id}}&skip=0&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "submissions"],
+							"query": [
+								{
+									"key": "competition_id",
+									"value": "{{competition_id}}"
+								},
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "List submissions for a competition"
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Submissions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/submissions/my",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "submissions", "my"]
+						},
+						"description": "Get current user's submissions"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Submission by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/submissions/{{submission_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "submissions", "{{submission_id}}"]
+						},
+						"description": "Get submission details"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Submission",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Updated Title\",\n    \"description\": \"Updated description with more details\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/submissions/{{submission_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "submissions", "{{submission_id}}"]
+						},
+						"description": "Update submission (before competition closes)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Submission",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/submissions/{{submission_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "submissions", "{{submission_id}}"]
+						},
+						"description": "Delete submission (before competition closes)"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "competition_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "competition_slug",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "submission_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

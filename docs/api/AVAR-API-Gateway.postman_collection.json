@@ -1,0 +1,236 @@
+{
+	"info": {
+		"_postman_id": "avar-gateway-003",
+		"name": "A.V.A.R. - API Gateway",
+		"description": "Collection for testing the A.V.A.R. API Gateway. This gateway provides a unified interface to all backend services with request routing, rate limiting, and load balancing.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Gateway Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Check gateway and all backend services health"
+					},
+					"response": []
+				},
+				{
+					"name": "Gateway Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": ["{{base_url}}"]
+						},
+						"description": "Get gateway information and available routes"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AI Detection (via Gateway)",
+			"item": [
+				{
+					"name": "Analyze Image",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Image file to analyze"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/ai/analyze",
+							"host": ["{{base_url}}"],
+							"path": ["ai", "analyze"]
+						},
+						"description": "Analyze image through gateway (routed to AI Detection Service)"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify RAW-JPG Linkage",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "raw_file",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "jpg_file",
+									"type": "file",
+									"src": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/ai/verify-linkage",
+							"host": ["{{base_url}}"],
+							"path": ["ai", "verify-linkage"]
+						},
+						"description": "Verify RAW-JPG linkage through gateway"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Competition (via Gateway)",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"username\": \"photographer\",\n    \"password\": \"SecurePass123!\",\n    \"full_name\": \"John Doe\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/competition/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["competition", "auth", "register"]
+						},
+						"description": "Register through gateway"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('access_token', response.access_token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"SecurePass123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/competition/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["competition", "auth", "login"]
+						},
+						"description": "Login through gateway"
+					},
+					"response": []
+				},
+				{
+					"name": "List Competitions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/competition/competitions",
+							"host": ["{{base_url}}"],
+							"path": ["competition", "competitions"]
+						},
+						"description": "List competitions through gateway"
+					},
+					"response": []
+				},
+				{
+					"name": "Submit to Competition",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "competition_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "My Entry",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Description",
+									"type": "text"
+								},
+								{
+									"key": "image_file",
+									"type": "file",
+									"src": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/competition/submissions",
+							"host": ["{{base_url}}"],
+							"path": ["competition", "submissions"]
+						},
+						"description": "Submit entry through gateway"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
