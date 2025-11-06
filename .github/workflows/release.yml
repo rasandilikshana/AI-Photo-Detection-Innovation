@@ -1,0 +1,308 @@
+name: Release - Automated Deployment
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger on version tags (v1.0.0, v1.2.3, etc.)
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================================================
+  # Create GitHub Release
+  # ============================================================================
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Extract changelog for this version
+          VERSION="${{ steps.get_version.outputs.version }}"
+          CHANGELOG=$(awk "/## \[$VERSION\]/,/## \[/" CHANGELOG.md | sed '$d')
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: A.V.A.R. v${{ steps.get_version.outputs.version }}
+          body: |
+            ## A.V.A.R. - Aura Verification and Authentication for RAW files
+
+            **Version**: ${{ steps.get_version.outputs.version }}
+            **Release Date**: ${{ github.event.head_commit.timestamp }}
+
+            ### Changes in this Release
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ### Installation
+
+            ```bash
+            # Clone the repository
+            git clone https://github.com/${{ github.repository }}.git
+            cd ${{ github.event.repository.name }}
+            git checkout v${{ steps.get_version.outputs.version }}
+
+            # Run quick start
+            ./quickstart.sh
+            ```
+
+            ### Documentation
+
+            - [Installation Guide](docs/guides/TESTING_GUIDE.md)
+            - [Developer Documentation](docs/guides/CLAUDE.md)
+            - [API Documentation](http://localhost:8001/docs)
+
+            ### Docker Images
+
+            ```bash
+            docker pull ghcr.io/${{ github.repository }}/ai-detection:v${{ steps.get_version.outputs.version }}
+            docker pull ghcr.io/${{ github.repository }}/api-gateway:v${{ steps.get_version.outputs.version }}
+            ```
+
+            ---
+
+            **Full Changelog**: https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md
+          draft: false
+          prerelease: false
+
+  # ============================================================================
+  # Build and Push Docker Images
+  # ============================================================================
+  build-and-push-images:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: create-release
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        service:
+          - name: ai-detection
+            context: ./src/backend/ai-detection-service
+          - name: api-gateway
+            context: ./src/backend/api-gateway
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service.name }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ needs.create-release.outputs.version }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+  # ============================================================================
+  # Run Tests on Release Build
+  # ============================================================================
+  test-release:
+    name: Test Release Build
+    runs-on: ubuntu-latest
+    needs: build-and-push-images
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: avar_test
+          POSTGRES_USER: avar_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Pull Docker images
+        run: |
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/ai-detection:${{ needs.create-release.outputs.version }}
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api-gateway:${{ needs.create-release.outputs.version }}
+
+      - name: Run containers
+        run: |
+          docker run -d -p 8001:8001 --name ai-detection \
+            -e DATABASE_URL=postgresql://avar_user:test_password@host.docker.internal:5432/avar_test \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/ai-detection:${{ needs.create-release.outputs.version }}
+
+          docker run -d -p 8000:8000 --name api-gateway \
+            -e AI_DETECTION_URL=http://host.docker.internal:8001 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/api-gateway:${{ needs.create-release.outputs.version }}
+
+          sleep 15
+
+      - name: Test health endpoints
+        run: |
+          curl -f http://localhost:8001/health || exit 1
+          curl -f http://localhost:8000/health || exit 1
+
+      - name: Run smoke tests
+        run: |
+          # Create test image
+          python3 -c "from PIL import Image; import numpy as np; Image.fromarray(np.random.randint(0,255,(800,600,3),dtype=np.uint8)).save('/tmp/test.jpg')"
+
+          # Test API
+          curl -X POST http://localhost:8001/api/v1/analyze \
+            -F "jpg_file=@/tmp/test.jpg" \
+            -H "Accept: application/json" || exit 1
+
+  # ============================================================================
+  # Create Release Artifacts
+  # ============================================================================
+  create-artifacts:
+    name: Create Release Artifacts
+    runs-on: ubuntu-latest
+    needs: create-release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create source archive
+        run: |
+          VERSION=${{ needs.create-release.outputs.version }}
+          tar -czf avar-v${VERSION}-source.tar.gz \
+            --exclude='.git' \
+            --exclude='__pycache__' \
+            --exclude='*.pyc' \
+            --exclude='venv' \
+            --exclude='node_modules' \
+            .
+
+      - name: Create documentation archive
+        run: |
+          VERSION=${{ needs.create-release.outputs.version }}
+          tar -czf avar-v${VERSION}-docs.tar.gz docs/ README.md CHANGELOG.md PROJECT_STRUCTURE.md
+
+      - name: Upload source archive
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./avar-v${{ needs.create-release.outputs.version }}-source.tar.gz
+          asset_name: avar-v${{ needs.create-release.outputs.version }}-source.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Upload documentation archive
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./avar-v${{ needs.create-release.outputs.version }}-docs.tar.gz
+          asset_name: avar-v${{ needs.create-release.outputs.version }}-docs.tar.gz
+          asset_content_type: application/gzip
+
+  # ============================================================================
+  # Deploy to Staging (Optional)
+  # ============================================================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [test-release, build-and-push-images]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: staging
+      url: https://staging.avar.example.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add your deployment commands here
+          # Example: kubectl apply -f deployments/staging/
+          # Example: helm upgrade --install avar ./charts/avar --values deployments/staging/values.yaml
+
+  # ============================================================================
+  # Notification
+  # ============================================================================
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [create-release, build-and-push-images, test-release]
+    if: always()
+
+    steps:
+      - name: Send success notification
+        if: needs.test-release.result == 'success'
+        run: |
+          echo "✅ Release v${{ needs.create-release.outputs.version }} published successfully!"
+          # Add Slack/Discord/Email notification here if needed
+
+      - name: Send failure notification
+        if: needs.test-release.result == 'failure'
+        run: |
+          echo "❌ Release v${{ needs.create-release.outputs.version }} failed!"
+          # Add Slack/Discord/Email notification here if needed

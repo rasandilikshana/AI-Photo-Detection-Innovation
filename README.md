@@ -73,9 +73,24 @@ docker-compose up -d
 # Admin Panel: http://localhost:8080
 ```
 
-## Development
+## Documentation
 
-See [CLAUDE.md](CLAUDE.md) for detailed development instructions and architecture documentation.
+Complete documentation is organized in the [`docs/`](docs/) directory:
+
+- **📘 [Quick Start Guide](docs/guides/TESTING_GUIDE.md)** - Get started in 5 minutes
+- **📗 [Developer Guide](docs/guides/CLAUDE.md)** - Comprehensive development documentation
+- **📙 [Commands Reference](docs/guides/COMMANDS_REFERENCE.md)** - All available commands
+- **📕 [System Architecture](docs/architecture/SYSTEM_ARCHITECTURE.md)** - Technical architecture
+- **🧪 [Testing Guide](docs/guides/TESTING.md)** - Complete testing documentation
+- **📊 [Implementation Summary](docs/IMPLEMENTATION_SUMMARY.md)** - Full project summary
+- **📂 [Project Structure](PROJECT_STRUCTURE.md)** - Directory organization
+- **📝 [Changelog](CHANGELOG.md)** - Version history
+
+### Quick Links
+- 📖 **[All Documentation](docs/README.md)** - Documentation index
+- 🎓 **[Research Documents](documents/)** - Original dissertation materials
+- 🧪 **[Test Suite](tests/)** - Comprehensive testing (2,000+ lines)
+- 🐳 **[Docker Setup](docker-compose.yml)** - Container orchestration
 
 ## Research Context
 

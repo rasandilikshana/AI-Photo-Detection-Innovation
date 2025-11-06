@@ -1,0 +1,348 @@
+name: CI - Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '18'
+
+jobs:
+  # ============================================================================
+  # Code Quality Checks
+  # ============================================================================
+  code-quality:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black isort pylint mypy
+
+      - name: Check code formatting (Black)
+        run: |
+          black --check src/backend/ai-detection-service/app/
+          black --check src/backend/api-gateway/app/
+
+      - name: Check import ordering (isort)
+        run: |
+          isort --check-only src/backend/ai-detection-service/app/
+          isort --check-only src/backend/api-gateway/app/
+
+      - name: Lint with flake8
+        run: |
+          # Stop on critical errors
+          flake8 src/backend/ai-detection-service/app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          # All errors with max complexity
+          flake8 src/backend/ai-detection-service/app/ --count --max-complexity=15 --max-line-length=120 --statistics
+
+      - name: Type checking (mypy)
+        continue-on-error: true
+        run: |
+          mypy src/backend/ai-detection-service/app/ --ignore-missing-imports
+
+  # ============================================================================
+  # Unit Tests
+  # ============================================================================
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-glx libglib2.0-0
+
+      - name: Install Python dependencies
+        run: |
+          cd src/backend/ai-detection-service
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio
+
+      - name: Run unit tests with coverage
+        run: |
+          cd src/backend/ai-detection-service
+          pytest tests/ -v --cov=app --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./src/backend/ai-detection-service/coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  # ============================================================================
+  # Integration Tests
+  # ============================================================================
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: avar_test
+          POSTGRES_USER: avar_user
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-glx libglib2.0-0
+
+      - name: Install AI Detection Service dependencies
+        run: |
+          cd src/backend/ai-detection-service
+          pip install -r requirements.txt
+
+      - name: Install API Gateway dependencies
+        run: |
+          cd src/backend/api-gateway
+          pip install -r requirements.txt
+
+      - name: Start AI Detection Service
+        run: |
+          cd src/backend/ai-detection-service
+          uvicorn app.main:app --host 0.0.0.0 --port 8001 &
+          sleep 10
+
+      - name: Start API Gateway
+        run: |
+          cd src/backend/api-gateway
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 10
+
+      - name: Install test dependencies
+        run: |
+          pip install -r tests/requirements.txt
+
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://avar_user:test_password@localhost:5432/avar_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+        run: |
+          pytest tests/integration/ -v -m "not slow"
+
+      - name: Run slow integration tests
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          pytest tests/integration/ -v -m slow
+
+  # ============================================================================
+  # Security Scanning
+  # ============================================================================
+  security:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install safety
+        run: pip install safety bandit
+
+      - name: Check for security vulnerabilities in dependencies
+        run: |
+          cd src/backend/ai-detection-service
+          safety check --json
+
+      - name: Run Bandit security linter
+        run: |
+          bandit -r src/backend/ai-detection-service/app/ -f json
+
+  # ============================================================================
+  # Docker Build Test
+  # ============================================================================
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build AI Detection Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./src/backend/ai-detection-service
+          push: false
+          tags: avar-ai-detection:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build API Gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: ./src/backend/api-gateway
+          push: false
+          tags: avar-api-gateway:test
+
+  # ============================================================================
+  # Documentation Build
+  # ============================================================================
+  docs:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for broken links in documentation
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          config-file: '.github/markdown-link-check-config.json'
+
+      - name: Validate documentation structure
+        run: |
+          # Check that all referenced docs exist
+          test -f docs/README.md
+          test -f docs/guides/CLAUDE.md
+          test -f docs/guides/TESTING_GUIDE.md
+          test -f docs/architecture/SYSTEM_ARCHITECTURE.md
+          test -f PROJECT_STRUCTURE.md
+          test -f CHANGELOG.md
+
+  # ============================================================================
+  # Performance Benchmarks
+  # ============================================================================
+  performance:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          cd src/backend/ai-detection-service
+          pip install -r requirements.txt
+          pip install locust
+
+      - name: Start services
+        run: |
+          cd src/backend/ai-detection-service
+          uvicorn app.main:app --host 0.0.0.0 --port 8001 &
+          sleep 15
+
+      - name: Run performance tests
+        run: |
+          locust -f tests/performance/locustfile.py \
+            --host=http://localhost:8001 \
+            --users 5 \
+            --spawn-rate 1 \
+            --run-time 30s \
+            --headless \
+            --html performance-report.html
+
+      - name: Upload performance report
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-report
+          path: performance-report.html
+
+  # ============================================================================
+  # Build Summary
+  # ============================================================================
+  build-summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, integration-tests, security, docker-build, docs]
+    if: always()
+
+    steps:
+      - name: Check build status
+        run: |
+          echo "Build Summary:"
+          echo "=============="
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          echo "Unit Tests: ${{ needs.unit-tests.result }}"
+          echo "Integration Tests: ${{ needs.integration-tests.result }}"
+          echo "Security: ${{ needs.security.result }}"
+          echo "Docker Build: ${{ needs.docker-build.result }}"
+          echo "Documentation: ${{ needs.docs.result }}"
+
+      - name: Fail if any job failed
+        if: |
+          needs.code-quality.result == 'failure' ||
+          needs.unit-tests.result == 'failure' ||
+          needs.integration-tests.result == 'failure' ||
+          needs.security.result == 'failure' ||
+          needs.docker-build.result == 'failure' ||
+          needs.docs.result == 'failure'
+        run: exit 1

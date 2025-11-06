@@ -1,21 +1,33 @@
-.PHONY: help build up down logs test clean restart
+.PHONY: help build up down logs test clean restart test-all test-integration test-e2e test-performance
 
 help:
 	@echo "A.V.A.R. Development Commands"
 	@echo "=============================="
-	@echo "make build         - Build all Docker containers"
-	@echo "make up            - Start all services"
-	@echo "make down          - Stop all services"
-	@echo "make restart       - Restart all services"
-	@echo "make logs          - View logs from all services"
-	@echo "make logs-ai       - View AI detection service logs"
-	@echo "make logs-gateway  - View API gateway logs"
-	@echo "make test          - Run all tests"
-	@echo "make test-ai       - Run AI detection service tests"
-	@echo "make clean         - Clean up containers and volumes"
-	@echo "make shell-ai      - Open shell in AI detection container"
-	@echo "make shell-db      - Open PostgreSQL shell"
-	@echo "make install       - Install Python dependencies locally"
+	@echo "Docker Commands:"
+	@echo "  make build           - Build all Docker containers"
+	@echo "  make up              - Start all services"
+	@echo "  make down            - Stop all services"
+	@echo "  make restart         - Restart all services"
+	@echo "  make status          - Show service status"
+	@echo "  make health          - Check service health"
+	@echo ""
+	@echo "Testing Commands:"
+	@echo "  make test-install    - Install testing dependencies"
+	@echo "  make test-all        - Run complete test suite"
+	@echo "  make test-unit       - Run unit tests"
+	@echo "  make test-integration- Run integration tests"
+	@echo "  make test-e2e        - Run end-to-end browser tests"
+	@echo "  make test-performance- Run performance/load tests"
+	@echo "  make test-quick      - Run quick smoke tests"
+	@echo "  make test-coverage   - Generate coverage report"
+	@echo ""
+	@echo "Development Commands:"
+	@echo "  make logs            - View logs from all services"
+	@echo "  make logs-ai         - View AI detection service logs"
+	@echo "  make shell-ai        - Open shell in AI detection container"
+	@echo "  make shell-db        - Open PostgreSQL shell"
+	@echo "  make clean           - Clean up containers and volumes"
+	@echo "  make install         - Install Python dependencies locally"
 
 build:
 	docker-compose build
@@ -88,3 +100,37 @@ health:
 	@echo "Checking service health..."
 	@curl -s http://localhost:8000/health | python3 -m json.tool || echo "Gateway unreachable"
 	@curl -s http://localhost:8001/health | python3 -m json.tool || echo "AI Detection unreachable"
+
+# Testing commands
+test-install:
+	@echo "Installing testing dependencies..."
+	pip install -r tests/requirements.txt
+	playwright install chromium
+
+test-all:
+	@echo "Running complete test suite..."
+	./tests/run_tests.sh all
+
+test-unit:
+	@echo "Running unit tests..."
+	./tests/run_tests.sh unit
+
+test-integration:
+	@echo "Running integration tests..."
+	./tests/run_tests.sh integration
+
+test-e2e:
+	@echo "Running end-to-end tests..."
+	./tests/run_tests.sh e2e
+
+test-performance:
+	@echo "Running performance tests..."
+	./tests/run_tests.sh performance
+
+test-quick:
+	@echo "Running quick smoke tests..."
+	pytest tests/integration/ -v -m "not slow" --tb=short
+
+performance-ui:
+	@echo "Starting Locust web UI..."
+	locust -f tests/performance/locustfile.py --host=http://localhost:8001

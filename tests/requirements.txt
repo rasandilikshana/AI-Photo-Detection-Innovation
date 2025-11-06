@@ -1,0 +1,29 @@
+# Browser Automation
+playwright==1.40.0
+selenium==4.16.0
+
+# HTTP Testing
+requests==2.31.0
+httpx==0.25.2
+
+# Testing Framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-playwright==0.4.3
+pytest-xdist==3.5.0  # Parallel testing
+pytest-html==4.1.1  # HTML reports
+pytest-timeout==2.2.0
+
+# Image Generation for Testing
+Pillow==10.1.0
+opencv-python==4.8.1.78
+numpy==1.26.2
+
+# Test Data
+faker==20.1.0
+
+# Performance Testing
+locust==2.20.0
+
+# Reporting
+allure-pytest==2.13.2
