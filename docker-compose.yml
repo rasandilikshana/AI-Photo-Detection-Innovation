@@ -120,24 +120,50 @@ services:
       - avar-network
     restart: unless-stopped
 
-  # Frontend Application (Vue.js) - Coming in Phase 3
-  # frontend:
-  #   build:
-  #     context: ./src/frontend
-  #     dockerfile: Dockerfile
-  #   container_name: avar-frontend
-  #   environment:
-  #     - VITE_API_URL=http://localhost:8000
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - ./src/frontend:/app
-  #     - /app/node_modules
-  #   depends_on:
-  #     - api-gateway
-  #   networks:
-  #     - avar-network
-  #   restart: unless-stopped
+  # Frontend Application (Vue.js + Vuetify)
+  frontend:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: avar-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+      - competition-service
+    networks:
+      - avar-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Frontend Development Server (for development only)
+  frontend-dev:
+    build:
+      context: ./src/frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: avar-frontend-dev
+    environment:
+      - VITE_API_URL=http://localhost:8080
+      - VITE_AI_DETECTION_URL=http://localhost:8001
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src/frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api-gateway
+      - competition-service
+    networks:
+      - avar-network
+    restart: unless-stopped
+    profiles:
+      - development
 
 networks:
   avar-network:

@@ -107,7 +107,7 @@ import CompetitionCard from '@/components/competition/CompetitionCard.vue'
 import CompetitionFilters from '@/components/competition/CompetitionFilters.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import ErrorMessage from '@/components/common/ErrorMessage.vue'
-import type { CompetitionFilters } from '@/types/competition.types'
+import type { CompetitionFilters as ICompetitionFilters } from '@/types/competition.types'
 
 const competitionStore = useCompetitionStore()
 const toast = useToast()
@@ -115,7 +115,7 @@ const toast = useToast()
 const viewMode = ref<'grid' | 'list'>('grid')
 const sortBy = ref('newest')
 
-const filters = ref<CompetitionFilters>({
+const filters = ref<ICompetitionFilters>({
   skip: 0,
   limit: 20,
 })
@@ -140,7 +140,7 @@ watch(
   { deep: true }
 )
 
-async function fetchCompetitions(customFilters?: CompetitionFilters) {
+async function fetchCompetitions(customFilters?: ICompetitionFilters) {
   try {
     await competitionStore.fetchCompetitions(customFilters || filters.value)
   } catch (error) {

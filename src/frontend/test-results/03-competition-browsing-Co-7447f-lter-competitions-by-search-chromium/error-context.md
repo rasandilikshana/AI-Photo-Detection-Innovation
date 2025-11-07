@@ -1,0 +1,155 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e7]:
+      - link "A.V.A.R" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]: 󰄄
+        - generic [ref=e11]: A.V.A.R
+      - generic [ref=e12]:
+        - link "Home" [ref=e13] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e14]:
+            - generic [ref=e15]: 󰋜
+            - text: Home
+        - link "Competitions" [ref=e16] [cursor=pointer]:
+          - /url: /competitions
+          - generic [ref=e17]:
+            - generic [ref=e18]: 󰔸
+            - text: Competitions
+        - generic [ref=e19]:
+          - link "Login" [ref=e20] [cursor=pointer]:
+            - /url: /auth/login
+            - generic [ref=e21]: Login
+          - link "Sign Up" [ref=e22] [cursor=pointer]:
+            - /url: /auth/register
+            - generic [ref=e23]: Sign Up
+  - navigation [ref=e24]:
+    - generic [ref=e25]:
+      - listbox [ref=e26]:
+        - link "Home" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e29]: 󰋜
+          - generic [ref=e31]: Home
+        - link "Competitions" [ref=e32] [cursor=pointer]:
+          - /url: /competitions
+          - generic [ref=e34]: 󰔸
+          - generic [ref=e36]: Competitions
+      - separator [ref=e37]
+      - listbox [ref=e38]:
+        - link "Login" [ref=e39] [cursor=pointer]:
+          - /url: /auth/login
+          - generic [ref=e41]: 󰍂
+          - generic [ref=e43]: Login
+        - link "Sign Up" [ref=e44] [cursor=pointer]:
+          - /url: /auth/register
+          - generic [ref=e46]: 󰀔
+          - generic [ref=e48]: Sign Up
+  - main [ref=e49]:
+    - generic [ref=e50]:
+      - generic [ref=e52]:
+        - heading "Photography Competitions" [level=1] [ref=e53]
+        - paragraph [ref=e54]: Discover and participate in authentic photography competitions
+      - generic [ref=e57]:
+        - generic [ref=e61]:
+          - generic [ref=e63]: 󰍉
+          - generic [ref=e64]:
+            - generic: Search competitions
+            - textbox "Search competitions Search competitions" [ref=e65]
+          - text: 󰅙
+        - combobox [ref=e69] [cursor=pointer]:
+          - generic [ref=e71]: 󰈲
+          - generic [ref=e73]:
+            - generic [ref=e75]: All Status
+            - textbox "Open"
+          - button "Clear Status" [ref=e77]: 󰅙
+          - generic [ref=e79]: 󰍝
+          - generic:
+            - generic:
+              - generic: Status
+        - combobox [ref=e83] [cursor=pointer]:
+          - generic [ref=e85]: 󰒺
+          - generic [ref=e87]:
+            - generic [ref=e89]: Newest First
+            - textbox "Open": newest
+          - generic [ref=e91]: 󰍝
+          - generic:
+            - generic:
+              - generic: Sort by
+        - generic [ref=e93]:
+          - button [ref=e94] [cursor=pointer]:
+            - generic [ref=e96]: 󰕰
+          - button [ref=e97] [cursor=pointer]:
+            - generic [ref=e99]: 󰕲
+      - alert [ref=e100]:
+        - generic [ref=e102]: 󰅙
+        - generic [ref=e103]:
+          - generic [ref=e104]: Failed to load competitions
+          - text: No response from server. Please check your connection.
+        - button "Close" [ref=e106] [cursor=pointer]:
+          - generic [ref=e108]: 󰅖
+  - contentinfo [ref=e109]:
+    - generic [ref=e110]:
+      - generic [ref=e111]:
+        - generic [ref=e112]:
+          - generic [ref=e113]:
+            - generic [ref=e114]: 󰄄
+            - heading "A.V.A.R" [level=3] [ref=e115]
+          - paragraph [ref=e116]: Authentic Visual Art Recognition Platform
+          - paragraph [ref=e117]: Ensuring authenticity in digital photography competitions through AI-powered detection.
+        - generic [ref=e118]:
+          - heading "Quick Links" [level=4] [ref=e119]
+          - listbox [ref=e120]:
+            - link "Home" [ref=e121] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e123]: Home
+            - link "Competitions" [ref=e124] [cursor=pointer]:
+              - /url: /competitions
+              - generic [ref=e126]: Competitions
+            - link "About" [ref=e127] [cursor=pointer]:
+              - /url: /about
+              - generic [ref=e129]: About
+            - link "Contact" [ref=e130] [cursor=pointer]:
+              - /url: /contact
+              - generic [ref=e132]: Contact
+        - generic [ref=e133]:
+          - heading "Resources" [level=4] [ref=e134]
+          - listbox [ref=e135]:
+            - link "API Documentation" [ref=e136] [cursor=pointer]:
+              - /url: /docs/api
+              - generic [ref=e138]: API Documentation
+            - link "Help Center" [ref=e139] [cursor=pointer]:
+              - /url: /help
+              - generic [ref=e141]: Help Center
+            - link "FAQs" [ref=e142] [cursor=pointer]:
+              - /url: /faq
+              - generic [ref=e144]: FAQs
+            - link "Guidelines" [ref=e145] [cursor=pointer]:
+              - /url: /guidelines
+              - generic [ref=e147]: Guidelines
+        - generic [ref=e148]:
+          - heading "Connect" [level=4] [ref=e149]
+          - generic [ref=e150]:
+            - link [ref=e151] [cursor=pointer]:
+              - /url: https://github.com
+              - generic [ref=e153]: 󰊤
+            - link [ref=e154] [cursor=pointer]:
+              - /url: https://twitter.com
+              - generic [ref=e156]: 󰕄
+            - link [ref=e157] [cursor=pointer]:
+              - /url: https://facebook.com
+              - generic [ref=e159]: 󰈌
+            - link [ref=e160] [cursor=pointer]:
+              - /url: https://instagram.com
+              - generic [ref=e162]: 󰋾
+      - separator [ref=e163]
+      - paragraph [ref=e166]:
+        - text: © 2025 A.V.A.R. All rights reserved. |
+        - link "Privacy Policy" [ref=e167] [cursor=pointer]:
+          - /url: /privacy
+        - text: "|"
+        - link "Terms of Service" [ref=e168] [cursor=pointer]:
+          - /url: /terms
+```

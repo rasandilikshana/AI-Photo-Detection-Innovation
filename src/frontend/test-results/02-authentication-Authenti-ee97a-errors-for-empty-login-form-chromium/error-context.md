@@ -1,0 +1,169 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e7]:
+      - link "A.V.A.R" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]: 󰄄
+        - generic [ref=e11]: A.V.A.R
+      - generic [ref=e12]:
+        - link "Home" [ref=e13] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e14]:
+            - generic [ref=e15]: 󰋜
+            - text: Home
+        - link "Competitions" [ref=e16] [cursor=pointer]:
+          - /url: /competitions
+          - generic [ref=e17]:
+            - generic [ref=e18]: 󰔸
+            - text: Competitions
+        - generic [ref=e19]:
+          - link "Login" [ref=e20] [cursor=pointer]:
+            - /url: /auth/login
+            - generic [ref=e21]: Login
+          - link "Sign Up" [ref=e22] [cursor=pointer]:
+            - /url: /auth/register
+            - generic [ref=e23]: Sign Up
+  - navigation [ref=e24]:
+    - generic [ref=e25]:
+      - listbox [ref=e26]:
+        - link "Home" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e29]: 󰋜
+          - generic [ref=e31]: Home
+        - link "Competitions" [ref=e32] [cursor=pointer]:
+          - /url: /competitions
+          - generic [ref=e34]: 󰔸
+          - generic [ref=e36]: Competitions
+      - separator [ref=e37]
+      - listbox [ref=e38]:
+        - link "Login" [ref=e39] [cursor=pointer]:
+          - /url: /auth/login
+          - generic [ref=e41]: 󰍂
+          - generic [ref=e43]: Login
+        - link "Sign Up" [ref=e44] [cursor=pointer]:
+          - /url: /auth/register
+          - generic [ref=e46]: 󰀔
+          - generic [ref=e48]: Sign Up
+  - main [ref=e49]:
+    - main [ref=e52]:
+      - generic [ref=e54]:
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - generic [ref=e58]: 󰄄
+            - heading "A.V.A.R" [level=1] [ref=e59]
+            - paragraph [ref=e60]: Authentic Visual Art Recognition Platform
+          - generic [ref=e61]:
+            - generic [ref=e62]:
+              - generic [ref=e63]: 󰕥
+              - heading "AI-Powered Detection" [level=3] [ref=e64]
+              - paragraph [ref=e65]: Advanced algorithms ensure authentic photographs in every competition.
+            - generic [ref=e66]:
+              - generic [ref=e67]: 󰔸
+              - heading "Fair Competitions" [level=3] [ref=e68]
+              - paragraph [ref=e69]: Transparent judging process with integrity at its core.
+            - generic [ref=e70]:
+              - generic [ref=e71]: 󰡉
+              - heading "Global Community" [level=3] [ref=e72]
+              - paragraph [ref=e73]: Connect with photographers worldwide in a trusted environment.
+        - generic [ref=e75]:
+          - text: 󰄄
+          - generic [ref=e76]:
+            - heading "Welcome Back" [level=1] [ref=e77]
+            - paragraph [ref=e78]: Sign in to continue to your account
+            - generic [ref=e79]:
+              - generic [ref=e80]:
+                - generic [ref=e82]:
+                  - generic [ref=e84]: 󰇮
+                  - generic [ref=e85]:
+                    - generic: Email
+                    - textbox "Email Email" [ref=e86]
+                - alert [ref=e88]
+              - generic [ref=e89]:
+                - generic [ref=e91]:
+                  - generic [ref=e93]: 󰌾
+                  - generic [ref=e94]:
+                    - generic: Password
+                    - textbox "Password Password" [ref=e95]
+                  - button "Password appended action" [ref=e97] [cursor=pointer]: 󰈈
+                - alert [ref=e99]
+              - generic [ref=e100]:
+                - generic [ref=e103]:
+                  - generic [ref=e105]:
+                    - generic [ref=e106]: 󰄱
+                    - checkbox "Remember me" [ref=e107] [cursor=pointer]
+                  - generic [ref=e108] [cursor=pointer]: Remember me
+                - link "Forgot password?" [ref=e109] [cursor=pointer]:
+                  - /url: /auth/forgot-password
+              - button "Sign In" [disabled]:
+                - generic: Sign In
+            - separator [ref=e110]
+            - paragraph [ref=e111]:
+              - text: Don't have an account?
+              - link "Sign Up" [ref=e112] [cursor=pointer]:
+                - /url: /auth/register
+  - contentinfo [ref=e113]:
+    - generic [ref=e114]:
+      - generic [ref=e115]:
+        - generic [ref=e116]:
+          - generic [ref=e117]:
+            - generic [ref=e118]: 󰄄
+            - heading "A.V.A.R" [level=3] [ref=e119]
+          - paragraph [ref=e120]: Authentic Visual Art Recognition Platform
+          - paragraph [ref=e121]: Ensuring authenticity in digital photography competitions through AI-powered detection.
+        - generic [ref=e122]:
+          - heading "Quick Links" [level=4] [ref=e123]
+          - listbox [ref=e124]:
+            - link "Home" [ref=e125] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e127]: Home
+            - link "Competitions" [ref=e128] [cursor=pointer]:
+              - /url: /competitions
+              - generic [ref=e130]: Competitions
+            - link "About" [ref=e131] [cursor=pointer]:
+              - /url: /about
+              - generic [ref=e133]: About
+            - link "Contact" [ref=e134] [cursor=pointer]:
+              - /url: /contact
+              - generic [ref=e136]: Contact
+        - generic [ref=e137]:
+          - heading "Resources" [level=4] [ref=e138]
+          - listbox [ref=e139]:
+            - link "API Documentation" [ref=e140] [cursor=pointer]:
+              - /url: /docs/api
+              - generic [ref=e142]: API Documentation
+            - link "Help Center" [ref=e143] [cursor=pointer]:
+              - /url: /help
+              - generic [ref=e145]: Help Center
+            - link "FAQs" [ref=e146] [cursor=pointer]:
+              - /url: /faq
+              - generic [ref=e148]: FAQs
+            - link "Guidelines" [ref=e149] [cursor=pointer]:
+              - /url: /guidelines
+              - generic [ref=e151]: Guidelines
+        - generic [ref=e152]:
+          - heading "Connect" [level=4] [ref=e153]
+          - generic [ref=e154]:
+            - link [ref=e155] [cursor=pointer]:
+              - /url: https://github.com
+              - generic [ref=e157]: 󰊤
+            - link [ref=e158] [cursor=pointer]:
+              - /url: https://twitter.com
+              - generic [ref=e160]: 󰕄
+            - link [ref=e161] [cursor=pointer]:
+              - /url: https://facebook.com
+              - generic [ref=e163]: 󰈌
+            - link [ref=e164] [cursor=pointer]:
+              - /url: https://instagram.com
+              - generic [ref=e166]: 󰋾
+      - separator [ref=e167]
+      - paragraph [ref=e170]:
+        - text: © 2025 A.V.A.R. All rights reserved. |
+        - link "Privacy Policy" [ref=e171] [cursor=pointer]:
+          - /url: /privacy
+        - text: "|"
+        - link "Terms of Service" [ref=e172] [cursor=pointer]:
+          - /url: /terms
+```

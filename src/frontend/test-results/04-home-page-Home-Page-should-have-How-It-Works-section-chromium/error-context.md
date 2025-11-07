@@ -1,0 +1,193 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e7]:
+      - link "A.V.A.R" [ref=e8] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e9]: 󰄄
+        - generic [ref=e11]: A.V.A.R
+      - generic [ref=e12]:
+        - link "Home" [ref=e13] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e14]:
+            - generic [ref=e15]: 󰋜
+            - text: Home
+        - link "Competitions" [ref=e16] [cursor=pointer]:
+          - /url: /competitions
+          - generic [ref=e17]:
+            - generic [ref=e18]: 󰔸
+            - text: Competitions
+        - generic [ref=e19]:
+          - link "Login" [ref=e20] [cursor=pointer]:
+            - /url: /auth/login
+            - generic [ref=e21]: Login
+          - link "Sign Up" [ref=e22] [cursor=pointer]:
+            - /url: /auth/register
+            - generic [ref=e23]: Sign Up
+  - navigation [ref=e24]:
+    - generic [ref=e25]:
+      - listbox [ref=e26]:
+        - link "Home" [ref=e27] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e29]: 󰋜
+          - generic [ref=e31]: Home
+        - link "Competitions" [ref=e32] [cursor=pointer]:
+          - /url: /competitions
+          - generic [ref=e34]: 󰔸
+          - generic [ref=e36]: Competitions
+      - separator [ref=e37]
+      - listbox [ref=e38]:
+        - link "Login" [ref=e39] [cursor=pointer]:
+          - /url: /auth/login
+          - generic [ref=e41]: 󰍂
+          - generic [ref=e43]: Login
+        - link "Sign Up" [ref=e44] [cursor=pointer]:
+          - /url: /auth/register
+          - generic [ref=e46]: 󰀔
+          - generic [ref=e48]: Sign Up
+  - main [ref=e49]:
+    - generic [ref=e50]:
+      - generic [ref=e53]:
+        - generic [ref=e54]:
+          - heading "Authentic Visual Art Recognition Platform" [level=1] [ref=e55]
+          - paragraph [ref=e56]: Ensuring authenticity in photography competitions through cutting-edge AI detection technology
+          - generic [ref=e57]:
+            - link "Browse Competitions" [ref=e58] [cursor=pointer]:
+              - /url: /competitions
+              - generic [ref=e59]:
+                - generic [ref=e60]: 󰔸
+                - text: Browse Competitions
+            - link "Get Started" [ref=e61] [cursor=pointer]:
+              - /url: /auth/register
+              - generic [ref=e62]:
+                - generic [ref=e63]: 󰀔
+                - text: Get Started
+        - img "Photography" [ref=e65]:
+          - img "Photography" [ref=e66]
+      - generic [ref=e68]:
+        - heading "Why Choose A.V.A.R?" [level=2] [ref=e69]
+        - paragraph [ref=e70]: The most trusted platform for authentic photography competitions
+        - generic [ref=e71]:
+          - generic [ref=e74] [cursor=pointer]:
+            - generic [ref=e76]: 󰕥
+            - heading "AI-Powered Detection" [level=3] [ref=e77]
+            - paragraph [ref=e78]: State-of-the-art algorithms detect AI-generated images with high accuracy, ensuring only authentic photographs compete.
+          - generic [ref=e81] [cursor=pointer]:
+            - generic [ref=e83]: 󰔸
+            - heading "Fair Competition" [level=3] [ref=e84]
+            - paragraph [ref=e85]: Transparent judging process with role-based access control ensures integrity and fairness for all participants.
+          - generic [ref=e88] [cursor=pointer]:
+            - generic [ref=e90]: 󰡉
+            - heading "Global Community" [level=3] [ref=e91]
+            - paragraph [ref=e92]: Join photographers worldwide in a trusted environment where authenticity and creativity are celebrated.
+      - generic [ref=e94]:
+        - heading "How It Works" [level=2] [ref=e95]
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - generic [ref=e98]:
+              - generic [ref=e100]: "1"
+              - heading "Create Account" [level=3] [ref=e101]
+              - paragraph [ref=e102]: Sign up for free and complete your photographer profile
+            - generic [ref=e103]: 󰁔
+          - generic [ref=e104]:
+            - generic [ref=e105]:
+              - generic [ref=e107]: "2"
+              - heading "Browse Competitions" [level=3] [ref=e108]
+              - paragraph [ref=e109]: Find competitions that match your interests and skill level
+            - generic [ref=e110]: 󰁔
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - generic [ref=e114]: "3"
+              - heading "Submit Photos" [level=3] [ref=e115]
+              - paragraph [ref=e116]: Upload your authentic photographs with metadata and details
+            - generic [ref=e117]: 󰁔
+          - generic [ref=e119]:
+            - generic [ref=e121]: "4"
+            - heading "Win Prizes" [level=3] [ref=e122]
+            - paragraph [ref=e123]: Get judged fairly and win exciting prizes for your work
+      - generic [ref=e126]:
+        - generic [ref=e128]:
+          - heading "10K+" [level=3] [ref=e129]
+          - paragraph [ref=e130]: Active Users
+        - generic [ref=e132]:
+          - heading "500+" [level=3] [ref=e133]
+          - paragraph [ref=e134]: Competitions
+        - generic [ref=e136]:
+          - heading "50K+" [level=3] [ref=e137]
+          - paragraph [ref=e138]: Submissions
+        - generic [ref=e140]:
+          - heading "99.9%" [level=3] [ref=e141]
+          - paragraph [ref=e142]: Detection Accuracy
+      - generic [ref=e146]:
+        - heading "Ready to Join the Community?" [level=2] [ref=e147]
+        - paragraph [ref=e148]: Start participating in authentic photography competitions today
+        - link "Create Free Account" [ref=e149] [cursor=pointer]:
+          - /url: /auth/register
+          - generic [ref=e150]:
+            - generic [ref=e151]: 󰀔
+            - text: Create Free Account
+  - contentinfo [ref=e152]:
+    - generic [ref=e153]:
+      - generic [ref=e154]:
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - generic [ref=e157]: 󰄄
+            - heading "A.V.A.R" [level=3] [ref=e158]
+          - paragraph [ref=e159]: Authentic Visual Art Recognition Platform
+          - paragraph [ref=e160]: Ensuring authenticity in digital photography competitions through AI-powered detection.
+        - generic [ref=e161]:
+          - heading "Quick Links" [level=4] [ref=e162]
+          - listbox [ref=e163]:
+            - link "Home" [ref=e164] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e166]: Home
+            - link "Competitions" [ref=e167] [cursor=pointer]:
+              - /url: /competitions
+              - generic [ref=e169]: Competitions
+            - link "About" [ref=e170] [cursor=pointer]:
+              - /url: /about
+              - generic [ref=e172]: About
+            - link "Contact" [ref=e173] [cursor=pointer]:
+              - /url: /contact
+              - generic [ref=e175]: Contact
+        - generic [ref=e176]:
+          - heading "Resources" [level=4] [ref=e177]
+          - listbox [ref=e178]:
+            - link "API Documentation" [ref=e179] [cursor=pointer]:
+              - /url: /docs/api
+              - generic [ref=e181]: API Documentation
+            - link "Help Center" [ref=e182] [cursor=pointer]:
+              - /url: /help
+              - generic [ref=e184]: Help Center
+            - link "FAQs" [ref=e185] [cursor=pointer]:
+              - /url: /faq
+              - generic [ref=e187]: FAQs
+            - link "Guidelines" [ref=e188] [cursor=pointer]:
+              - /url: /guidelines
+              - generic [ref=e190]: Guidelines
+        - generic [ref=e191]:
+          - heading "Connect" [level=4] [ref=e192]
+          - generic [ref=e193]:
+            - link [ref=e194] [cursor=pointer]:
+              - /url: https://github.com
+              - generic [ref=e196]: 󰊤
+            - link [ref=e197] [cursor=pointer]:
+              - /url: https://twitter.com
+              - generic [ref=e199]: 󰕄
+            - link [ref=e200] [cursor=pointer]:
+              - /url: https://facebook.com
+              - generic [ref=e202]: 󰈌
+            - link [ref=e203] [cursor=pointer]:
+              - /url: https://instagram.com
+              - generic [ref=e205]: 󰋾
+      - separator [ref=e206]
+      - paragraph [ref=e209]:
+        - text: © 2025 A.V.A.R. All rights reserved. |
+        - link "Privacy Policy" [ref=e210] [cursor=pointer]:
+          - /url: /privacy
+        - text: "|"
+        - link "Terms of Service" [ref=e211] [cursor=pointer]:
+          - /url: /terms
+```

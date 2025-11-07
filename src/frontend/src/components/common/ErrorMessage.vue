@@ -25,13 +25,13 @@ interface Props {
   icon?: string | boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   message: '',
   title: '',
   type: 'error',
   variant: 'tonal',
   closable: true,
-  icon: true,
+  icon: undefined,
 })
 
 const emit = defineEmits<{
