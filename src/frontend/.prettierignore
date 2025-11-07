@@ -1,0 +1,15 @@
+# Ignore build outputs
+dist
+build
+coverage
+
+# Ignore dependencies
+node_modules
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore generated files
+*.min.js
+*.min.css
