@@ -1,271 +1,115 @@
-<template>
-  <div class="home-page">
-    <!-- Hero Section -->
-    <section class="hero-section">
-      <v-container>
-        <v-row align="center" justify="center" class="fill-height">
-          <v-col cols="12" md="6" class="text-center text-md-left">
-            <h1 class="text-h2 text-md-h1 font-weight-bold mb-4">
-              {{ appTitle }}
-            </h1>
-            <p class="text-h6 text-md-h5 text-medium-emphasis mb-8">
-              Ensuring authenticity in photography competitions through cutting-edge AI detection technology
-            </p>
-            <div class="d-flex flex-column flex-sm-row justify-center justify-md-start gap-4">
-              <v-btn
-                :to="{ name: 'competitions' }"
-                color="primary"
-                size="x-large"
-                elevation="2"
-              >
-                <v-icon start>mdi-trophy</v-icon>
-                Browse Competitions
-              </v-btn>
-              <v-btn
-                v-if="!authStore.isAuthenticated"
-                :to="{ name: 'register' }"
-                color="accent"
-                size="x-large"
-                elevation="2"
-              >
-                <v-icon start>mdi-account-plus</v-icon>
-                Get Started
-              </v-btn>
-            </div>
-          </v-col>
-          <v-col cols="12" md="6" class="d-none d-md-block">
-            <v-img
-              src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800"
-              alt="Photography"
-              cover
-              class="rounded-lg elevation-8"
-              aspect-ratio="1.5"
-            />
-          </v-col>
-        </v-row>
-      </v-container>
-    </section>
-
-    <!-- Features Section -->
-    <section class="features-section py-16">
-      <v-container>
-        <h2 class="text-h3 font-weight-bold text-center mb-4">Why Choose {{ appName }}?</h2>
-        <p class="text-h6 text-center text-medium-emphasis mb-12">
-          The most trusted platform for authentic photography competitions
-        </p>
-
-        <v-row>
-          <v-col
-            v-for="feature in features"
-            :key="feature.title"
-            cols="12"
-            md="4"
-          >
-            <v-card class="h-100" elevation="2" hover>
-              <v-card-text class="text-center pa-8">
-                <v-avatar :color="feature.color" size="80" class="mb-4">
-                  <v-icon size="48" color="white">{{ feature.icon }}</v-icon>
-                </v-avatar>
-                <h3 class="text-h5 font-weight-bold mb-3">{{ feature.title }}</h3>
-                <p class="text-body-1 text-medium-emphasis">{{ feature.description }}</p>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-container>
-    </section>
-
-    <!-- How It Works Section -->
-    <section class="how-it-works-section py-16 bg-surface">
-      <v-container>
-        <h2 class="text-h3 font-weight-bold text-center mb-12">How It Works</h2>
-
-        <v-row>
-          <v-col
-            v-for="(step, index) in steps"
-            :key="step.title"
-            cols="12"
-            md="3"
-          >
-            <div class="text-center">
-              <v-avatar :color="step.color" size="64" class="mb-4">
-                <span class="text-h4 font-weight-bold text-white">{{ index + 1 }}</span>
-              </v-avatar>
-              <h3 class="text-h6 font-weight-bold mb-2">{{ step.title }}</h3>
-              <p class="text-body-2 text-medium-emphasis">{{ step.description }}</p>
-            </div>
-            <v-icon
-              v-if="index < steps.length - 1"
-              class="d-none d-md-block mt-n12"
-              size="32"
-              color="primary"
-            >
-              mdi-arrow-right
-            </v-icon>
-          </v-col>
-        </v-row>
-      </v-container>
-    </section>
-
-    <!-- Stats Section -->
-    <section class="stats-section py-16">
-      <v-container>
-        <v-row>
-          <v-col
-            v-for="stat in stats"
-            :key="stat.label"
-            cols="12"
-            sm="6"
-            md="3"
-          >
-            <div class="text-center">
-              <h3 class="text-h3 font-weight-bold text-primary mb-2">{{ stat.value }}</h3>
-              <p class="text-h6 text-medium-emphasis">{{ stat.label }}</p>
-            </div>
-          </v-col>
-        </v-row>
-      </v-container>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section py-16 bg-primary">
-      <v-container>
-        <v-row align="center" justify="center">
-          <v-col cols="12" md="8" class="text-center">
-            <h2 class="text-h3 font-weight-bold text-white mb-4">
-              Ready to Join the Community?
-            </h2>
-            <p class="text-h6 text-white mb-8 text-opacity-90">
-              Start participating in authentic photography competitions today
-            </p>
-            <v-btn
-              v-if="!authStore.isAuthenticated"
-              :to="{ name: 'register' }"
-              color="white"
-              size="x-large"
-              elevation="2"
-            >
-              <v-icon start>mdi-account-plus</v-icon>
-              Create Free Account
-            </v-btn>
-            <v-btn
-              v-else
-              :to="{ name: 'competitions' }"
-              color="white"
-              size="x-large"
-              elevation="2"
-            >
-              <v-icon start>mdi-trophy</v-icon>
-              View Competitions
-            </v-btn>
-          </v-col>
-        </v-row>
-      </v-container>
-    </section>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { useAuthStore } from '@/store/auth'
+import { useRouter } from 'vue-router'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-const authStore = useAuthStore()
-
-const appName = import.meta.env.VITE_APP_NAME || 'A.V.A.R'
-const appTitle = import.meta.env.VITE_APP_TITLE || 'Authentic Visual Art Recognition Platform'
-
-const features = [
-  {
-    icon: 'mdi-shield-check',
-    color: 'primary',
-    title: 'AI-Powered Detection',
-    description:
-      'State-of-the-art algorithms detect AI-generated images with high accuracy, ensuring only authentic photographs compete.',
-  },
-  {
-    icon: 'mdi-trophy',
-    color: 'success',
-    title: 'Fair Competition',
-    description:
-      'Transparent judging process with role-based access control ensures integrity and fairness for all participants.',
-  },
-  {
-    icon: 'mdi-account-group',
-    color: 'info',
-    title: 'Global Community',
-    description:
-      'Join photographers worldwide in a trusted environment where authenticity and creativity are celebrated.',
-  },
-]
-
-const steps = [
-  {
-    title: 'Create Account',
-    description: 'Sign up for free and complete your photographer profile',
-    color: 'primary',
-  },
-  {
-    title: 'Browse Competitions',
-    description: 'Find competitions that match your interests and skill level',
-    color: 'secondary',
-  },
-  {
-    title: 'Submit Photos',
-    description: 'Upload your authentic photographs with metadata and details',
-    color: 'accent',
-  },
-  {
-    title: 'Win Prizes',
-    description: 'Get judged fairly and win exciting prizes for your work',
-    color: 'success',
-  },
-]
-
-const stats = [
-  { value: '10K+', label: 'Active Users' },
-  { value: '500+', label: 'Competitions' },
-  { value: '50K+', label: 'Submissions' },
-  { value: '99.9%', label: 'Detection Accuracy' },
-]
+const router = useRouter()
 </script>
 
-<style scoped>
-.home-page {
-  min-height: 100vh;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
+<template>
+  <div class="container mx-auto px-4 py-12">
+    <!-- Hero Section -->
+    <div class="text-center space-y-6 mb-16">
+      <h1 class="text-5xl font-bold tracking-tight">
+        A.V.A.R.
+      </h1>
+      <p class="text-xl text-muted-foreground max-w-2xl mx-auto">
+        Anti-AI Verification and Adjudication Registry
+      </p>
+      <p class="text-lg text-muted-foreground max-w-3xl mx-auto">
+        Join authentic photography competitions with AI-powered verification.
+        Submit your genuine photos and compete with photographers worldwide.
+      </p>
+      <div class="flex gap-4 justify-center mt-8">
+        <Button size="lg" @click="router.push('/competitions')">
+          Browse Competitions
+        </Button>
+        <Button size="lg" variant="outline" @click="router.push('/register')">
+          Get Started
+        </Button>
+      </div>
+    </div>
 
-.hero-section {
-  min-height: 80vh;
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  width: 100%;
-}
+    <!-- Features Section -->
+    <div class="grid md:grid-cols-3 gap-6 mt-16">
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Detection</CardTitle>
+          <CardDescription>Multi-layered AI verification</CardDescription>
+        </CardHeader>
+        <CardContent>
+          Advanced forensic analysis ensures only authentic photographs are accepted in competitions.
+        </CardContent>
+      </Card>
 
-.features-section {
-  background: white;
-  width: 100%;
-}
+      <Card>
+        <CardHeader>
+          <CardTitle>Fair Competition</CardTitle>
+          <CardDescription>Level playing field for all</CardDescription>
+        </CardHeader>
+        <CardContent>
+          Compete with confidence knowing all submissions are verified for authenticity.
+        </CardContent>
+      </Card>
 
-.bg-surface {
-  background-color: rgb(var(--v-theme-surface));
-}
+      <Card>
+        <CardHeader>
+          <CardTitle>Professional Judging</CardTitle>
+          <CardDescription>Expert evaluation</CardDescription>
+        </CardHeader>
+        <CardContent>
+          Your work is evaluated by experienced photographers and industry professionals.
+        </CardContent>
+      </Card>
+    </div>
 
-.bg-primary {
-  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
-}
+    <!-- How It Works -->
+    <div class="mt-20 text-center space-y-8">
+      <h2 class="text-3xl font-bold">How It Works</h2>
+      <div class="grid md:grid-cols-4 gap-6 mt-8">
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold mx-auto">
+            1
+          </div>
+          <h3 class="font-semibold">Sign Up</h3>
+          <p class="text-sm text-muted-foreground">Create your account and complete your profile</p>
+        </div>
 
-.gap-4 {
-  gap: 1rem;
-}
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold mx-auto">
+            2
+          </div>
+          <h3 class="font-semibold">Choose Competition</h3>
+          <p class="text-sm text-muted-foreground">Browse active competitions and find one that interests you</p>
+        </div>
 
-/* Ensure all sections are full width */
-section {
-  width: 100%;
-  margin: 0;
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-</style>
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold mx-auto">
+            3
+          </div>
+          <h3 class="font-semibold">Submit Photos</h3>
+          <p class="text-sm text-muted-foreground">Upload your JPG and RAW files for verification</p>
+        </div>
+
+        <div class="space-y-4">
+          <div class="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold mx-auto">
+            4
+          </div>
+          <h3 class="font-semibold">Get Judged</h3>
+          <p class="text-sm text-muted-foreground">Professionals evaluate your work and winners are announced</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="mt-20 text-center bg-muted rounded-lg p-12">
+      <h2 class="text-3xl font-bold mb-4">Ready to showcase your authentic photography?</h2>
+      <p class="text-lg text-muted-foreground mb-8">
+        Join thousands of photographers in the fight against AI-generated imagery
+      </p>
+      <Button size="lg" @click="router.push('/register')">
+        Create Your Account
+      </Button>
+    </div>
+  </div>
+</template>

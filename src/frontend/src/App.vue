@@ -1,46 +1,20 @@
 <script setup lang="ts">
-import MainLayout from './components/layout/MainLayout.vue'
+import { RouterView, useRoute } from 'vue-router'
+import { computed } from 'vue'
+import Layout from './components/Layout.vue'
+
+const route = useRoute()
+
+// Pages that don't need layout
+const noLayoutPages = ['Login', 'Register']
+const needsLayout = computed(() => !noLayoutPages.includes(route.name as string))
 </script>
 
 <template>
-  <MainLayout />
+  <div id="app">
+    <Layout v-if="needsLayout">
+      <RouterView />
+    </Layout>
+    <RouterView v-else />
+  </div>
 </template>
-
-<style>
-/* Global styles */
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-}
-
-/* Remove default v-main padding for full-width layouts */
-.v-main {
-  padding: 0 !important;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
-</style>

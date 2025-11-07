@@ -1,47 +1,73 @@
-/**
- * Main Application Entry Point
- */
-
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import App from './App.vue'
-import router from './router'
-import vuetify from './plugins/vuetify'
-import Toast from 'vue-toastification'
-import 'vue-toastification/dist/index.css'
+import { createRouter, createWebHistory } from 'vue-router'
 import './style.css'
+import App from './App.vue'
+import Home from './views/Home.vue'
+import { useAuthStore } from './stores/auth'
 
-// Import auth store to initialize authentication
-import { useAuthStore } from './store/auth'
-
-// Create Vue app
-const app = createApp(App)
-
-// Create Pinia instance
-const pinia = createPinia()
-
-// Register plugins
-app.use(pinia) // Register Pinia first
-app.use(router)
-app.use(vuetify)
-app.use(Toast, {
-  position: 'top-right',
-  timeout: 3000,
-  closeOnClick: true,
-  pauseOnFocusLoss: true,
-  pauseOnHover: true,
-  draggable: true,
-  draggablePercent: 0.6,
-  showCloseButtonOnHover: false,
-  hideProgressBar: false,
-  closeButton: 'button',
-  icon: true,
-  rtl: false,
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    {
+      path: '/',
+      name: 'Home',
+      component: Home,
+    },
+    {
+      path: '/login',
+      name: 'Login',
+      component: () => import('./views/Login.vue'),
+    },
+    {
+      path: '/register',
+      name: 'Register',
+      component: () => import('./views/Register.vue'),
+    },
+    {
+      path: '/competitions',
+      name: 'Competitions',
+      component: () => import('./views/Competitions.vue'),
+    },
+    {
+      path: '/competitions/:id',
+      name: 'CompetitionDetail',
+      component: () => import('./views/CompetitionDetail.vue'),
+    },
+    {
+      path: '/submit/:competitionId',
+      name: 'Submit',
+      component: () => import('./views/Submit.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/my-submissions',
+      name: 'MySubmissions',
+      component: () => import('./views/MySubmissions.vue'),
+      meta: { requiresAuth: true },
+    },
+  ],
 })
 
-// Mount app
-app.mount('#app')
+// Navigation guard for auth
+router.beforeEach(async (to, _from, next) => {
+  const authStore = useAuthStore()
 
-// Initialize auth state after mounting
-const authStore = useAuthStore()
-authStore.initializeAuth()
+  // Try to fetch current user if we have a token
+  if (localStorage.getItem('access_token') && !authStore.user) {
+    await authStore.fetchCurrentUser()
+  }
+
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next({ name: 'Login', query: { redirect: to.fullPath } })
+  } else {
+    next()
+  }
+})
+
+const pinia = createPinia()
+const app = createApp(App)
+
+app.use(pinia)
+app.use(router)
+app.mount('#app')
