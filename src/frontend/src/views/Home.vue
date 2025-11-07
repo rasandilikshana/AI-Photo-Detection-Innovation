@@ -231,6 +231,9 @@ const stats = [
 <style scoped>
 .home-page {
   min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .hero-section {
@@ -238,10 +241,12 @@ const stats = [
   display: flex;
   align-items: center;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  width: 100%;
 }
 
 .features-section {
   background: white;
+  width: 100%;
 }
 
 .bg-surface {
@@ -254,5 +259,13 @@ const stats = [
 
 .gap-4 {
   gap: 1rem;
+}
+
+/* Ensure all sections are full width */
+section {
+  width: 100%;
+  margin: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 </style>

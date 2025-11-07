@@ -12,9 +12,9 @@
             <div class="brand-content">
               <div class="brand-header">
                 <v-icon size="64" color="white">mdi-camera-iris</v-icon>
-                <h1 class="text-h3 font-weight-bold text-white mt-4">
+                <div class="text-h3 font-weight-bold text-white mt-4">
                   {{ appName }}
-                </h1>
+                </div>
                 <p class="text-h6 text-white mt-2 font-weight-light">
                   {{ appTitle }}
                 </p>

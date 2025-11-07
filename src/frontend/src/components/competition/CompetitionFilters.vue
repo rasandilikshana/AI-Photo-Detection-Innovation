@@ -7,6 +7,7 @@
           <v-text-field
             :model-value="modelValue.search"
             label="Search competitions"
+            placeholder="Search competitions..."
             prepend-inner-icon="mdi-magnify"
             variant="outlined"
             density="comfortable"

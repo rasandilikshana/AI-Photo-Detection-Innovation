@@ -53,7 +53,7 @@
         - generic [ref=e56]:
           - generic [ref=e57]:
             - generic [ref=e58]: 󰄄
-            - heading "A.V.A.R" [level=1] [ref=e59]
+            - generic [ref=e59]: A.V.A.R
             - paragraph [ref=e60]: Authentic Visual Art Recognition Platform
           - generic [ref=e61]:
             - generic [ref=e62]:

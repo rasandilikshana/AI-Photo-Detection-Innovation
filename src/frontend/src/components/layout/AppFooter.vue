@@ -1,5 +1,5 @@
 <template>
-  <v-footer app color="surface" class="border-t">
+  <v-footer color="surface" class="border-t">
     <v-container>
       <v-row>
         <!-- About Section -->

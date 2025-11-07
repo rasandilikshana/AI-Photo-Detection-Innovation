@@ -163,7 +163,7 @@
           "specs": [
             {
               "title": "should load the home page successfully",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -176,58 +176,18 @@
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 7778,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveTitle\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/A\\.V\\.A\\.R|Authentic Visual Art Recognition/\u001b[39m\nReceived string:  \u001b[31m\"frontend\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveTitle\" with timeout 5000ms\u001b[22m\n\u001b[2m    8 × unexpected value \"frontend\"\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveTitle\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/A\\.V\\.A\\.R|Authentic Visual Art Recognition/\u001b[39m\nReceived string:  \u001b[31m\"frontend\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveTitle\" with timeout 5000ms\u001b[22m\n\u001b[2m    8 × unexpected value \"frontend\"\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts:8:24",
-                        "location": {
-                          "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts",
-                          "column": 24,
-                          "line": 8
-                        },
-                        "snippet": "   6 |\n   7 |     // Check page title\n>  8 |     await expect(page).toHaveTitle(/A\\.V\\.A\\.R|Authentic Visual Art Recognition/)\n     |                        ^\n   9 |\n  10 |     // Check header is visible\n  11 |     await expect(page.locator('header')).toBeVisible()"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts",
-                            "column": 24,
-                            "line": 8
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mpage\u001b[39m\u001b[2m).\u001b[22mtoHaveTitle\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nExpected pattern: \u001b[32m/A\\.V\\.A\\.R|Authentic Visual Art Recognition/\u001b[39m\nReceived string:  \u001b[31m\"frontend\"\u001b[39m\nTimeout: 5000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveTitle\" with timeout 5000ms\u001b[22m\n\u001b[2m    8 × unexpected value \"frontend\"\u001b[22m\n\n\n   6 |\n   7 |     // Check page title\n>  8 |     await expect(page).toHaveTitle(/A\\.V\\.A\\.R|Authentic Visual Art Recognition/)\n     |                        ^\n   9 |\n  10 |     // Check header is visible\n  11 |     await expect(page.locator('header')).toBeVisible()\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts:8:24"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 3824,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:09.859Z",
+                      "startTime": "2025-11-07T05:53:13.735Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/01-navigation-Navigation-a-039e2--the-home-page-successfully-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/01-navigation-Navigation-a-039e2--the-home-page-successfully-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/01-navigation-Navigation-a-039e2--the-home-page-successfully-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts",
-                        "column": 24,
-                        "line": 8
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "957431cae479accf8a10-d449def17ed5c3a5ac03",
@@ -251,12 +211,12 @@
                       "workerIndex": 1,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 4165,
+                      "duration": 4140,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:09.786Z",
+                      "startTime": "2025-11-07T05:53:13.703Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -271,7 +231,7 @@
             },
             {
               "title": "should show login page when unauthenticated user tries to access protected route",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -284,58 +244,18 @@
                     {
                       "workerIndex": 2,
                       "parallelIndex": 2,
-                      "status": "failed",
-                      "duration": 3728,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Welcome Back|Login|Sign In/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-45748280=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Welcome Back</h1> aka getByRole('heading', { name: 'Welcome Back' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Welcome Back|Login|Sign In/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-45748280=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Welcome Back</h1> aka getByRole('heading', { name: 'Welcome Back' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts:35:38",
-                        "location": {
-                          "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts",
-                          "column": 38,
-                          "line": 35
-                        },
-                        "snippet": "  33 |     // Should redirect to login\n  34 |     await page.waitForURL('**/auth/login**')\n> 35 |     await expect(page.locator('h1')).toContainText(/Welcome Back|Login|Sign In/i)\n     |                                      ^\n  36 |   })\n  37 |\n  38 |   test('should display footer on all pages', async ({ page }) => {"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts",
-                            "column": 38,
-                            "line": 35
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Welcome Back|Login|Sign In/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-45748280=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Welcome Back</h1> aka getByRole('heading', { name: 'Welcome Back' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n\n  33 |     // Should redirect to login\n  34 |     await page.waitForURL('**/auth/login**')\n> 35 |     await expect(page.locator('h1')).toContainText(/Welcome Back|Login|Sign In/i)\n     |                                      ^\n  36 |   })\n  37 |\n  38 |   test('should display footer on all pages', async ({ page }) => {\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts:35:38"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 3067,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:09.787Z",
+                      "startTime": "2025-11-07T05:53:13.765Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/01-navigation-Navigation-a-928c5-s-to-access-protected-route-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/01-navigation-Navigation-a-928c5-s-to-access-protected-route-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/01-navigation-Navigation-a-928c5-s-to-access-protected-route-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts",
-                        "column": 38,
-                        "line": 35
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "957431cae479accf8a10-876327e3cdd1d1ae5ec6",
@@ -359,12 +279,12 @@
                       "workerIndex": 3,
                       "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 3675,
+                      "duration": 3820,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:09.829Z",
+                      "startTime": "2025-11-07T05:53:13.765Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -390,13 +310,13 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 3,
-                      "parallelIndex": 3,
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
                       "status": "failed",
-                      "duration": 1764,
+                      "duration": 2612,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\nExpected: visible\nError: strict mode violation: locator('button:has-text(\"Home\"), a:has-text(\"Home\")') resolved to 4 elements:\n    1) <a href=\"/\" data-v-2f4958dc=\"\" class=\"v-btn v-theme--customTheme text-white v-btn--density-default elevation-2 rounded-md v-btn--size-default v-btn--variant-text mx-1\">…</a> aka getByRole('banner').getByRole('link', { name: 'Home' })\n    2) <a href=\"/\" tabindex=\"-2\" class=\"v-list-item v-list-item--link v-list-item--nav v-theme--customTheme v-list-item--density-comfortable v-list-item--one-line v-list-item--rounded v-list-item--variant-text\">…</a> aka getByRole('navigation').getByRole('link', { name: 'Home' })\n    3) <a href=\"/\" data-v-f96230c5=\"\" class=\"v-btn v-theme--customTheme text-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-outlined\">…</a> aka getByRole('main').getByRole('link', { name: 'Home' })\n    4) <a href=\"/\" tabindex=\"-2\" data-v-d29a0bc8=\"\" class=\"v-list-item v-list-item--link v-theme--customTheme v-list-item--density-compact v-list-item--one-line rounded-0 v-list-item--variant-text px-0\">…</a> aka getByRole('contentinfo').getByRole('link', { name: 'Home' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\nExpected: visible\nError: strict mode violation: locator('button:has-text(\"Home\"), a:has-text(\"Home\")') resolved to 4 elements:\n    1) <a href=\"/\" data-v-2f4958dc=\"\" class=\"v-btn v-theme--customTheme text-white v-btn--density-default elevation-2 rounded-md v-btn--size-default v-btn--variant-text mx-1\">…</a> aka getByRole('banner').getByRole('link', { name: 'Home' })\n    2) <a href=\"/\" tabindex=\"-2\" class=\"v-list-item v-list-item--link v-list-item--nav v-theme--customTheme v-list-item--density-comfortable v-list-item--one-line v-list-item--rounded v-list-item--variant-text\">…</a> aka getByRole('navigation').getByRole('link', { name: 'Home' })\n    3) <a href=\"/\" data-v-f96230c5=\"\" class=\"v-btn v-theme--customTheme text-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-outlined\">…</a> aka getByRole('main').getByRole('link', { name: 'Home' })\n    4) <a href=\"/\" tabindex=\"-2\" data-v-d29a0bc8=\"\" class=\"v-list-item v-list-item--link v-theme--customTheme v-list-item--density-compact v-list-item--one-line rounded-0 v-list-item--variant-text px-0\">…</a> aka getByRole('contentinfo').getByRole('link', { name: 'Home' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts:57:30",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\nExpected: visible\nError: strict mode violation: locator('button:has-text(\"Home\"), a:has-text(\"Home\")') resolved to 4 elements:\n    1) <a href=\"/\" data-v-2f4958dc=\"\" class=\"v-btn v-theme--customTheme text-white v-btn--density-default elevation-2 rounded-md v-btn--size-default v-btn--variant-text mx-1\">…</a> aka getByRole('banner').getByRole('link', { name: 'Home' })\n    2) <a href=\"/\" tabindex=\"-2\" class=\"v-list-item v-list-item--link v-list-item--nav v-theme--customTheme v-list-item--density-comfortable v-list-item--one-line v-list-item--rounded v-list-item--variant-text\">…</a> aka getByRole('navigation').getByRole('link', { name: 'Home' })\n    3) <a href=\"/\" data-v-f96230c5=\"\" class=\"v-btn v-theme--customTheme text-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-outlined\">…</a> aka getByRole('main').getByRole('link', { name: 'Home' })\n    4) <a href=\"/\" tabindex=\"-2\" data-v-45d5464d=\"\" class=\"v-list-item v-list-item--link v-theme--customTheme v-list-item--density-compact v-list-item--one-line rounded-0 v-list-item--variant-text px-0\">…</a> aka getByRole('contentinfo').getByRole('link', { name: 'Home' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\nExpected: visible\nError: strict mode violation: locator('button:has-text(\"Home\"), a:has-text(\"Home\")') resolved to 4 elements:\n    1) <a href=\"/\" data-v-2f4958dc=\"\" class=\"v-btn v-theme--customTheme text-white v-btn--density-default elevation-2 rounded-md v-btn--size-default v-btn--variant-text mx-1\">…</a> aka getByRole('banner').getByRole('link', { name: 'Home' })\n    2) <a href=\"/\" tabindex=\"-2\" class=\"v-list-item v-list-item--link v-list-item--nav v-theme--customTheme v-list-item--density-comfortable v-list-item--one-line v-list-item--rounded v-list-item--variant-text\">…</a> aka getByRole('navigation').getByRole('link', { name: 'Home' })\n    3) <a href=\"/\" data-v-f96230c5=\"\" class=\"v-btn v-theme--customTheme text-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-outlined\">…</a> aka getByRole('main').getByRole('link', { name: 'Home' })\n    4) <a href=\"/\" tabindex=\"-2\" data-v-45d5464d=\"\" class=\"v-list-item v-list-item--link v-theme--customTheme v-list-item--density-compact v-list-item--one-line rounded-0 v-list-item--variant-text px-0\">…</a> aka getByRole('contentinfo').getByRole('link', { name: 'Home' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts:57:30",
                         "location": {
                           "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts",
                           "column": 30,
@@ -411,13 +331,13 @@
                             "column": 30,
                             "line": 57
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\nExpected: visible\nError: strict mode violation: locator('button:has-text(\"Home\"), a:has-text(\"Home\")') resolved to 4 elements:\n    1) <a href=\"/\" data-v-2f4958dc=\"\" class=\"v-btn v-theme--customTheme text-white v-btn--density-default elevation-2 rounded-md v-btn--size-default v-btn--variant-text mx-1\">…</a> aka getByRole('banner').getByRole('link', { name: 'Home' })\n    2) <a href=\"/\" tabindex=\"-2\" class=\"v-list-item v-list-item--link v-list-item--nav v-theme--customTheme v-list-item--density-comfortable v-list-item--one-line v-list-item--rounded v-list-item--variant-text\">…</a> aka getByRole('navigation').getByRole('link', { name: 'Home' })\n    3) <a href=\"/\" data-v-f96230c5=\"\" class=\"v-btn v-theme--customTheme text-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-outlined\">…</a> aka getByRole('main').getByRole('link', { name: 'Home' })\n    4) <a href=\"/\" tabindex=\"-2\" data-v-d29a0bc8=\"\" class=\"v-list-item v-list-item--link v-theme--customTheme v-list-item--density-compact v-list-item--one-line rounded-0 v-list-item--variant-text px-0\">…</a> aka getByRole('contentinfo').getByRole('link', { name: 'Home' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\u001b[22m\n\n\n  55 |     // Should have \"Go Back\" or \"Home\" button\n  56 |     const homeButton = page.locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\n> 57 |     await expect(homeButton).toBeVisible()\n     |                              ^\n  58 |   })\n  59 |\n  60 |   test('should have responsive navigation on mobile', async ({ page }) => {\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts:57:30"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\nExpected: visible\nError: strict mode violation: locator('button:has-text(\"Home\"), a:has-text(\"Home\")') resolved to 4 elements:\n    1) <a href=\"/\" data-v-2f4958dc=\"\" class=\"v-btn v-theme--customTheme text-white v-btn--density-default elevation-2 rounded-md v-btn--size-default v-btn--variant-text mx-1\">…</a> aka getByRole('banner').getByRole('link', { name: 'Home' })\n    2) <a href=\"/\" tabindex=\"-2\" class=\"v-list-item v-list-item--link v-list-item--nav v-theme--customTheme v-list-item--density-comfortable v-list-item--one-line v-list-item--rounded v-list-item--variant-text\">…</a> aka getByRole('navigation').getByRole('link', { name: 'Home' })\n    3) <a href=\"/\" data-v-f96230c5=\"\" class=\"v-btn v-theme--customTheme text-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-outlined\">…</a> aka getByRole('main').getByRole('link', { name: 'Home' })\n    4) <a href=\"/\" tabindex=\"-2\" data-v-45d5464d=\"\" class=\"v-list-item v-list-item--link v-theme--customTheme v-list-item--density-compact v-list-item--one-line rounded-0 v-list-item--variant-text px-0\">…</a> aka getByRole('contentinfo').getByRole('link', { name: 'Home' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\u001b[22m\n\n\n  55 |     // Should have \"Go Back\" or \"Home\" button\n  56 |     const homeButton = page.locator('button:has-text(\"Home\"), a:has-text(\"Home\")')\n> 57 |     await expect(homeButton).toBeVisible()\n     |                              ^\n  58 |   })\n  59 |\n  60 |   test('should have responsive navigation on mobile', async ({ page }) => {\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/01-navigation.spec.ts:57:30"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:15.282Z",
+                      "startTime": "2025-11-07T05:53:17.420Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -464,15 +384,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 4,
-                      "parallelIndex": 2,
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1435,
+                      "duration": 2321,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:21.440Z",
+                      "startTime": "2025-11-07T05:53:18.049Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -504,7 +424,7 @@
           "specs": [
             {
               "title": "should display login form",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -515,60 +435,20 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
-                      "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 1860,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Welcome Back|Login|Sign In/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-45748280=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Welcome Back</h1> aka getByRole('heading', { name: 'Welcome Back' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Welcome Back|Login|Sign In/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-45748280=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Welcome Back</h1> aka getByRole('heading', { name: 'Welcome Back' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:8:38",
-                        "location": {
-                          "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
-                          "column": 38,
-                          "line": 8
-                        },
-                        "snippet": "   6 |\n   7 |     // Check form elements\n>  8 |     await expect(page.locator('h1')).toContainText(/Welcome Back|Login|Sign In/i)\n     |                                      ^\n   9 |     await expect(page.locator('input[type=\"email\"], input[label*=\"email\" i]')).toBeVisible()\n  10 |     await expect(page.locator('input[type=\"password\"], input[label*=\"password\" i]')).toBeVisible()\n  11 |     await expect(page.locator('button[type=\"submit\"], button:has-text(\"Sign In\")')).toBeVisible()"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
-                            "column": 38,
-                            "line": 8
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Welcome Back|Login|Sign In/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-45748280=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Welcome Back</h1> aka getByRole('heading', { name: 'Welcome Back' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n\n   6 |\n   7 |     // Check form elements\n>  8 |     await expect(page.locator('h1')).toContainText(/Welcome Back|Login|Sign In/i)\n     |                                      ^\n   9 |     await expect(page.locator('input[type=\"email\"], input[label*=\"email\" i]')).toBeVisible()\n  10 |     await expect(page.locator('input[type=\"password\"], input[label*=\"password\" i]')).toBeVisible()\n  11 |     await expect(page.locator('button[type=\"submit\"], button:has-text(\"Sign In\")')).toBeVisible()\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:8:38"
-                        }
-                      ],
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 2981,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:15.743Z",
+                      "startTime": "2025-11-07T05:53:18.319Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/02-authentication-Authenti-6226c-w-should-display-login-form-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/02-authentication-Authenti-6226c-w-should-display-login-form-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/02-authentication-Authenti-6226c-w-should-display-login-form-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
-                        "column": 38,
-                        "line": 8
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "b043aacf8ca4edaa8a9e-fcaee207a18fc37c9941",
@@ -589,13 +469,13 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 5,
-                      "parallelIndex": 3,
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
                       "status": "failed",
-                      "duration": 13257,
+                      "duration": 13506,
                       "error": {
-                        "message": "TimeoutError: page.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[type=\"submit\"], button:has-text(\"Sign In\")')\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" data-v-45748280=\"\" class=\"v-btn v-btn--block v-btn--disabled v-theme--customTheme bg-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-elevated\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    18 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
-                        "stack": "TimeoutError: page.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[type=\"submit\"], button:has-text(\"Sign In\")')\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" data-v-45748280=\"\" class=\"v-btn v-btn--block v-btn--disabled v-theme--customTheme bg-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-elevated\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    18 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:18:16",
+                        "message": "TimeoutError: page.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[type=\"submit\"], button:has-text(\"Sign In\")')\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" data-v-45748280=\"\" class=\"v-btn v-btn--block v-btn--disabled v-theme--customTheme bg-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-elevated\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    17 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+                        "stack": "TimeoutError: page.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[type=\"submit\"], button:has-text(\"Sign In\")')\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" data-v-45748280=\"\" class=\"v-btn v-btn--block v-btn--disabled v-theme--customTheme bg-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-elevated\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    17 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:18:16",
                         "location": {
                           "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
                           "column": 16,
@@ -610,13 +490,13 @@
                             "column": 16,
                             "line": 18
                           },
-                          "message": "TimeoutError: page.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[type=\"submit\"], button:has-text(\"Sign In\")')\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" data-v-45748280=\"\" class=\"v-btn v-btn--block v-btn--disabled v-theme--customTheme bg-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-elevated\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    18 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n  16 |\n  17 |     // Try to submit empty form\n> 18 |     await page.click('button[type=\"submit\"], button:has-text(\"Sign In\")')\n     |                ^\n  19 |\n  20 |     // Should show validation errors\n  21 |     await expect(page.locator('text=/email.*required/i, text=/password.*required/i')).toBeVisible({\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:18:16"
+                          "message": "TimeoutError: page.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[type=\"submit\"], button:has-text(\"Sign In\")')\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" data-v-45748280=\"\" class=\"v-btn v-btn--block v-btn--disabled v-theme--customTheme bg-primary v-btn--density-default elevation-2 rounded-md v-btn--size-large v-btn--variant-elevated\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    17 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n  16 |\n  17 |     // Try to submit empty form\n> 18 |     await page.click('button[type=\"submit\"], button:has-text(\"Sign In\")')\n     |                ^\n  19 |\n  20 |     // Should show validation errors\n  21 |     await expect(page.locator('text=/email.*required/i, text=/password.*required/i')).toBeVisible({\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:18:16"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:22.367Z",
+                      "startTime": "2025-11-07T05:53:18.516Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -663,15 +543,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 6,
-                      "parallelIndex": 1,
+                      "workerIndex": 4,
+                      "parallelIndex": 2,
                       "status": "passed",
-                      "duration": 2994,
+                      "duration": 1215,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:22.918Z",
+                      "startTime": "2025-11-07T05:53:25.304Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -697,34 +577,34 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 7,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1880,
+                      "duration": 8106,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Create Account|Sign Up|Register/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-e883d63b=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Create Account</h1> aka getByRole('heading', { name: 'Create Account' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Create Account|Sign Up|Register/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-e883d63b=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Create Account</h1> aka getByRole('heading', { name: 'Create Account' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:44:38",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input[label*=\"name\" i]')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input[label*=\"name\" i]')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input[label*=\"name\" i]')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input[label*=\"name\" i]')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:45:58",
                         "location": {
                           "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
-                          "column": 38,
-                          "line": 44
+                          "column": 58,
+                          "line": 45
                         },
-                        "snippet": "  42 |\n  43 |     // Check form elements\n> 44 |     await expect(page.locator('h1')).toContainText(/Create Account|Sign Up|Register/i)\n     |                                      ^\n  45 |     await expect(page.locator('input[label*=\"name\" i]')).toBeVisible()\n  46 |     await expect(page.locator('input[label*=\"username\" i]')).toBeVisible()\n  47 |     await expect(page.locator('input[type=\"email\"]')).toBeVisible()"
+                        "snippet": "  43 |     // Check form elements\n  44 |     await expect(page.locator('h1')).toContainText(/Create Account|Sign Up|Register/i)\n> 45 |     await expect(page.locator('input[label*=\"name\" i]')).toBeVisible()\n     |                                                          ^\n  46 |     await expect(page.locator('input[label*=\"username\" i]')).toBeVisible()\n  47 |     await expect(page.locator('input[type=\"email\"]')).toBeVisible()\n  48 |     await expect(page.locator('input[type=\"password\"]')).toHaveCount(2) // Password and confirm"
                       },
                       "errors": [
                         {
                           "location": {
                             "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
-                            "column": 38,
-                            "line": 44
+                            "column": 58,
+                            "line": 45
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Create Account|Sign Up|Register/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-e883d63b=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Create Account</h1> aka getByRole('heading', { name: 'Create Account' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n\n  42 |\n  43 |     // Check form elements\n> 44 |     await expect(page.locator('h1')).toContainText(/Create Account|Sign Up|Register/i)\n     |                                      ^\n  45 |     await expect(page.locator('input[label*=\"name\" i]')).toBeVisible()\n  46 |     await expect(page.locator('input[label*=\"username\" i]')).toBeVisible()\n  47 |     await expect(page.locator('input[type=\"email\"]')).toBeVisible()\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:44:38"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input[label*=\"name\" i]')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input[label*=\"name\" i]')\u001b[22m\n\n\n  43 |     // Check form elements\n  44 |     await expect(page.locator('h1')).toContainText(/Create Account|Sign Up|Register/i)\n> 45 |     await expect(page.locator('input[label*=\"name\" i]')).toBeVisible()\n     |                                                          ^\n  46 |     await expect(page.locator('input[label*=\"username\" i]')).toBeVisible()\n  47 |     await expect(page.locator('input[type=\"email\"]')).toBeVisible()\n  48 |     await expect(page.locator('input[type=\"password\"]')).toHaveCount(2) // Password and confirm\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:45:58"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:26.117Z",
+                      "startTime": "2025-11-07T05:53:20.524Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -745,8 +625,8 @@
                       ],
                       "errorLocation": {
                         "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
-                        "column": 38,
-                        "line": 44
+                        "column": 58,
+                        "line": 45
                       }
                     }
                   ],
@@ -771,13 +651,13 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 4,
-                      "parallelIndex": 2,
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
                       "status": "failed",
-                      "duration": 2584,
+                      "duration": 1822,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/strength|weak|fair|strong/i')\nExpected: visible\nError: strict mode violation: locator('text=/strength|weak|fair|strong/i') resolved to 3 elements:\n    1) <h3 data-v-faa3846d=\"\" class=\"text-h6 text-white font-weight-medium\">Fair Competitions</h3> aka getByRole('heading', { name: 'Fair Competitions' })\n    2) <span data-v-e883d63b=\"\" class=\"text-caption text-medium-emphasis mr-2\">Password Strength:</span> aka getByText('Password Strength:')\n    3) <span data-v-e883d63b=\"\" class=\"text-caption font-weight-medium text-error\">Weak</span> aka getByText('Weak')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 3000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/strength|weak|fair|strong/i')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/strength|weak|fair|strong/i')\nExpected: visible\nError: strict mode violation: locator('text=/strength|weak|fair|strong/i') resolved to 3 elements:\n    1) <h3 data-v-faa3846d=\"\" class=\"text-h6 text-white font-weight-medium\">Fair Competitions</h3> aka getByRole('heading', { name: 'Fair Competitions' })\n    2) <span data-v-e883d63b=\"\" class=\"text-caption text-medium-emphasis mr-2\">Password Strength:</span> aka getByText('Password Strength:')\n    3) <span data-v-e883d63b=\"\" class=\"text-caption font-weight-medium text-error\">Weak</span> aka getByText('Weak')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 3000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/strength|weak|fair|strong/i')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:59:69",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/strength|weak|fair|strong/i')\nExpected: visible\nError: strict mode violation: locator('text=/strength|weak|fair|strong/i') resolved to 3 elements:\n    1) <h3 data-v-12e60de8=\"\" class=\"text-h6 text-white font-weight-medium\">Fair Competitions</h3> aka getByRole('heading', { name: 'Fair Competitions' })\n    2) <span data-v-e883d63b=\"\" class=\"text-caption text-medium-emphasis mr-2\">Password Strength:</span> aka getByText('Password Strength:')\n    3) <span data-v-e883d63b=\"\" class=\"text-caption font-weight-medium text-error\">Weak</span> aka getByText('Weak')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 3000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/strength|weak|fair|strong/i')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/strength|weak|fair|strong/i')\nExpected: visible\nError: strict mode violation: locator('text=/strength|weak|fair|strong/i') resolved to 3 elements:\n    1) <h3 data-v-12e60de8=\"\" class=\"text-h6 text-white font-weight-medium\">Fair Competitions</h3> aka getByRole('heading', { name: 'Fair Competitions' })\n    2) <span data-v-e883d63b=\"\" class=\"text-caption text-medium-emphasis mr-2\">Password Strength:</span> aka getByText('Password Strength:')\n    3) <span data-v-e883d63b=\"\" class=\"text-caption font-weight-medium text-error\">Weak</span> aka getByText('Weak')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 3000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/strength|weak|fair|strong/i')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:59:69",
                         "location": {
                           "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
                           "column": 69,
@@ -792,13 +672,13 @@
                             "column": 69,
                             "line": 59
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/strength|weak|fair|strong/i')\nExpected: visible\nError: strict mode violation: locator('text=/strength|weak|fair|strong/i') resolved to 3 elements:\n    1) <h3 data-v-faa3846d=\"\" class=\"text-h6 text-white font-weight-medium\">Fair Competitions</h3> aka getByRole('heading', { name: 'Fair Competitions' })\n    2) <span data-v-e883d63b=\"\" class=\"text-caption text-medium-emphasis mr-2\">Password Strength:</span> aka getByText('Password Strength:')\n    3) <span data-v-e883d63b=\"\" class=\"text-caption font-weight-medium text-error\">Weak</span> aka getByText('Weak')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 3000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/strength|weak|fair|strong/i')\u001b[22m\n\n\n  57 |\n  58 |     // Should show strength indicator\n> 59 |     await expect(page.locator('text=/strength|weak|fair|strong/i')).toBeVisible({ timeout: 3000 })\n     |                                                                     ^\n  60 |   })\n  61 |\n  62 |   test('should validate password matching on register', async ({ page }) => {\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:59:69"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/strength|weak|fair|strong/i')\nExpected: visible\nError: strict mode violation: locator('text=/strength|weak|fair|strong/i') resolved to 3 elements:\n    1) <h3 data-v-12e60de8=\"\" class=\"text-h6 text-white font-weight-medium\">Fair Competitions</h3> aka getByRole('heading', { name: 'Fair Competitions' })\n    2) <span data-v-e883d63b=\"\" class=\"text-caption text-medium-emphasis mr-2\">Password Strength:</span> aka getByText('Password Strength:')\n    3) <span data-v-e883d63b=\"\" class=\"text-caption font-weight-medium text-error\">Weak</span> aka getByText('Weak')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 3000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/strength|weak|fair|strong/i')\u001b[22m\n\n\n  57 |\n  58 |     // Should show strength indicator\n> 59 |     await expect(page.locator('text=/strength|weak|fair|strong/i')).toBeVisible({ timeout: 3000 })\n     |                                                                     ^\n  60 |   })\n  61 |\n  62 |   test('should validate password matching on register', async ({ page }) => {\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:59:69"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:23.297Z",
+                      "startTime": "2025-11-07T05:53:21.371Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -845,15 +725,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 8,
-                      "parallelIndex": 2,
+                      "workerIndex": 5,
+                      "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 1175,
+                      "duration": 2397,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:30.718Z",
+                      "startTime": "2025-11-07T05:53:26.661Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -879,10 +759,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 6,
-                      "parallelIndex": 1,
+                      "workerIndex": 4,
+                      "parallelIndex": 2,
                       "status": "failed",
-                      "duration": 13615,
+                      "duration": 14342,
                       "error": {
                         "message": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has(.mdi-eye), button:has(.mdi-eye-off)').first()\u001b[22m\n",
                         "stack": "TimeoutError: locator.click: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has(.mdi-eye), button:has(.mdi-eye-off)').first()\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:85:24",
@@ -906,7 +786,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:26.411Z",
+                      "startTime": "2025-11-07T05:53:26.751Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -942,7 +822,7 @@
             },
             {
               "title": "should navigate between login and register",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -953,60 +833,20 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 9,
+                      "workerIndex": 6,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 1517,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Create Account|Sign Up|Register/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-45748280=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Welcome Back</h1> aka getByRole('heading', { name: 'Welcome Back' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Create Account|Sign Up|Register/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-45748280=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Welcome Back</h1> aka getByRole('heading', { name: 'Welcome Back' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:97:38",
-                        "location": {
-                          "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
-                          "column": 38,
-                          "line": 97
-                        },
-                        "snippet": "   95 |     await page.click('text=/Sign Up|Register|Create.*Account/i')\n   96 |     await page.waitForURL('**/auth/register')\n>  97 |     await expect(page.locator('h1')).toContainText(/Create Account|Sign Up|Register/i)\n      |                                      ^\n   98 |\n   99 |     // Click login link\n  100 |     await page.click('text=/Sign In|Login|Already.*account/i')"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
-                            "column": 38,
-                            "line": 97
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: locator('h1')\nExpected pattern: \u001b[32m/Create Account|Sign Up|Register/i\u001b[39m\nError: strict mode violation: locator('h1') resolved to 2 elements:\n    1) <h1 data-v-faa3846d=\"\" class=\"text-h3 font-weight-bold text-white mt-4\">A.V.A.R</h1> aka locator('h1').filter({ hasText: 'A.V.A.R' })\n    2) <h1 data-v-45748280=\"\" class=\"text-h4 font-weight-bold text-center mb-2\">Welcome Back</h1> aka getByRole('heading', { name: 'Welcome Back' })\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('h1')\u001b[22m\n\n\n   95 |     await page.click('text=/Sign Up|Register|Create.*Account/i')\n   96 |     await page.waitForURL('**/auth/register')\n>  97 |     await expect(page.locator('h1')).toContainText(/Create Account|Sign Up|Register/i)\n      |                                      ^\n   98 |\n   99 |     // Click login link\n  100 |     await page.click('text=/Sign In|Login|Already.*account/i')\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:97:38"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 2435,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:32.046Z",
+                      "startTime": "2025-11-07T05:53:33.156Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/02-authentication-Authenti-088d1--between-login-and-register-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/02-authentication-Authenti-088d1--between-login-and-register-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/02-authentication-Authenti-088d1--between-login-and-register-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts",
-                        "column": 38,
-                        "line": 97
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "b043aacf8ca4edaa8a9e-56ec51c5dea5f91e7f8e",
@@ -1027,10 +867,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 8,
-                      "parallelIndex": 2,
+                      "workerIndex": 5,
+                      "parallelIndex": 3,
                       "status": "failed",
-                      "duration": 1122,
+                      "duration": 1013,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/terms.*service/i, a:has-text(\"Terms\")')\nExpected: visible\nSyntaxError: Invalid flags supplied to RegExp constructor 'i, a:has-text(\"Terms\")'\n    at new RegExp (<anonymous>)\n    at createTextMatcher (<anonymous>:7786:16)\n    at Object.queryAll (<anonymous>:6691:33)\n    at InjectedScript._queryEngineAll (<anonymous>:6664:49)\n    at InjectedScript.querySelectorAll (<anonymous>:6651:30)\n    at eval (eval at evaluate (:290:30), <anonymous>:2:42)\n    at UtilityScript.evaluate (<anonymous>:292:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/terms.*service/i, a:has-text(\"Terms\")')\u001b[22m\n",
                         "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/terms.*service/i, a:has-text(\"Terms\")')\nExpected: visible\nSyntaxError: Invalid flags supplied to RegExp constructor 'i, a:has-text(\"Terms\")'\n    at new RegExp (<anonymous>)\n    at createTextMatcher (<anonymous>:7786:16)\n    at Object.queryAll (<anonymous>:6691:33)\n    at InjectedScript._queryEngineAll (<anonymous>:6664:49)\n    at InjectedScript.querySelectorAll (<anonymous>:6651:30)\n    at eval (eval at evaluate (:290:30), <anonymous>:2:42)\n    at UtilityScript.evaluate (<anonymous>:292:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/terms.*service/i, a:has-text(\"Terms\")')\u001b[22m\n\n    at createTextMatcher (<anonymous>:7786:16)\n    at Object.queryAll (<anonymous>:6691:33)\n    at InjectedScript._queryEngineAll (<anonymous>:6664:49)\n    at InjectedScript.querySelectorAll (<anonymous>:6651:30)\n    at eval (eval at evaluate (:290:30), <anonymous>:2:42)\n    at UtilityScript.evaluate (<anonymous>:292:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/02-authentication.spec.ts:113:79",
@@ -1053,7 +893,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:32.113Z",
+                      "startTime": "2025-11-07T05:53:29.350Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1106,7 +946,7 @@
           "specs": [
             {
               "title": "should display competitions browse page",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1117,60 +957,20 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 10,
-                      "parallelIndex": 2,
-                      "status": "failed",
-                      "duration": 6922,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts:11:92",
-                        "location": {
-                          "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                          "column": 92,
-                          "line": 11
-                        },
-                        "snippet": "   9 |\n  10 |     // Check filters are visible\n> 11 |     await expect(page.locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')).toBeVisible()\n     |                                                                                            ^\n  12 |   })\n  13 |\n  14 |   test('should have filter controls', async ({ page }) => {"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                            "column": 92,
-                            "line": 11
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n\n\n   9 |\n  10 |     // Check filters are visible\n> 11 |     await expect(page.locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')).toBeVisible()\n     |                                                                                            ^\n  12 |   })\n  13 |\n  14 |   test('should have filter controls', async ({ page }) => {\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts:11:92"
-                        }
-                      ],
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 1370,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:37.625Z",
+                      "startTime": "2025-11-07T05:53:34.871Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-5cfb1-ay-competitions-browse-page-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-5cfb1-ay-competitions-browse-page-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-5cfb1-ay-competitions-browse-page-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                        "column": 92,
-                        "line": 11
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "f4d4ba637b424bab9001-d89a66dfb1e930ed0c53",
@@ -1180,7 +980,7 @@
             },
             {
               "title": "should have filter controls",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1191,60 +991,20 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 11,
-                      "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 7075,
-                      "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts:19:31",
-                        "location": {
-                          "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                          "column": 31,
-                          "line": 19
-                        },
-                        "snippet": "  17 |     // Check search input\n  18 |     const searchInput = page.locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\n> 19 |     await expect(searchInput).toBeVisible()\n     |                               ^\n  20 |\n  21 |     // Check status filter\n  22 |     const statusFilter = page.locator('select[label*=\"status\" i], .v-select:has-text(\"Status\")')"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                            "column": 31,
-                            "line": 19
-                          },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n\n\n  17 |     // Check search input\n  18 |     const searchInput = page.locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\n> 19 |     await expect(searchInput).toBeVisible()\n     |                               ^\n  20 |\n  21 |     // Check status filter\n  22 |     const statusFilter = page.locator('select[label*=\"status\" i], .v-select:has-text(\"Status\")')\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts:19:31"
-                        }
-                      ],
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 2694,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:38.549Z",
+                      "startTime": "2025-11-07T05:53:37.578Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-16003-should-have-filter-controls-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-16003-should-have-filter-controls-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-16003-should-have-filter-controls-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                        "column": 31,
-                        "line": 19
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "f4d4ba637b424bab9001-1a07240ad1368793b476",
@@ -1254,7 +1014,7 @@
             },
             {
               "title": "should filter competitions by search",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1265,60 +1025,20 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 12,
-                      "parallelIndex": 3,
-                      "status": "failed",
-                      "duration": 14204,
-                      "error": {
-                        "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n",
-                        "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts:38:23",
-                        "location": {
-                          "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                          "column": 23,
-                          "line": 38
-                        },
-                        "snippet": "  36 |     // Type in search\n  37 |     const searchInput = page.locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\n> 38 |     await searchInput.fill('nature')\n     |                       ^\n  39 |\n  40 |     // Wait for search to trigger\n  41 |     await page.waitForTimeout(500)"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                            "column": 23,
-                            "line": 38
-                          },
-                          "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n\n\n  36 |     // Type in search\n  37 |     const searchInput = page.locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\n> 38 |     await searchInput.fill('nature')\n     |                       ^\n  39 |\n  40 |     // Wait for search to trigger\n  41 |     await page.waitForTimeout(500)\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts:38:23"
-                        }
-                      ],
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3463,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:43.330Z",
+                      "startTime": "2025-11-07T05:53:35.878Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-7447f-lter-competitions-by-search-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-7447f-lter-competitions-by-search-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-7447f-lter-competitions-by-search-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                        "column": 23,
-                        "line": 38
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "f4d4ba637b424bab9001-5ba1778cd2025a26bfab",
@@ -1339,15 +1059,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 13,
-                      "parallelIndex": 1,
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 1972,
+                      "duration": 2869,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:48.053Z",
+                      "startTime": "2025-11-07T05:53:36.654Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1373,15 +1093,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 14,
-                      "parallelIndex": 2,
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3289,
+                      "duration": 3220,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:51.159Z",
+                      "startTime": "2025-11-07T05:53:39.440Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1407,15 +1127,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 15,
-                      "parallelIndex": 0,
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
                       "status": "passed",
-                      "duration": 3018,
+                      "duration": 3095,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:52.129Z",
+                      "startTime": "2025-11-07T05:53:39.573Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1441,15 +1161,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 13,
+                      "workerIndex": 8,
                       "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 2094,
+                      "duration": 3443,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:50.374Z",
+                      "startTime": "2025-11-07T05:53:40.904Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1464,7 +1184,7 @@
             },
             {
               "title": "should show clear filters button when filters are active",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -1475,60 +1195,20 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 13,
-                      "parallelIndex": 1,
-                      "status": "failed",
-                      "duration": 13365,
-                      "error": {
-                        "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n",
-                        "stack": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts:117:23",
-                        "location": {
-                          "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                          "column": 23,
-                          "line": 117
-                        },
-                        "snippet": "  115 |     // Apply a filter\n  116 |     const searchInput = page.locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\n> 117 |     await searchInput.fill('test')\n      |                       ^\n  118 |     await page.waitForTimeout(500)\n  119 |\n  120 |     // Should show clear button"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                            "column": 23,
-                            "line": 117
-                          },
-                          "message": "TimeoutError: locator.fill: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\u001b[22m\n\n\n  115 |     // Apply a filter\n  116 |     const searchInput = page.locator('input[label*=\"search\" i], input[placeholder*=\"search\" i]')\n> 117 |     await searchInput.fill('test')\n      |                       ^\n  118 |     await page.waitForTimeout(500)\n  119 |\n  120 |     // Should show clear button\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts:117:23"
-                        }
-                      ],
+                      "workerIndex": 9,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1771,
+                      "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:52.529Z",
+                      "startTime": "2025-11-07T05:53:48.203Z",
                       "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-aa3bf-ton-when-filters-are-active-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "video",
-                          "contentType": "video/webm",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-aa3bf-ton-when-filters-are-active-chromium/video.webm"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/test-results/03-competition-browsing-Co-aa3bf-ton-when-filters-are-active-chromium/error-context.md"
-                        }
-                      ],
-                      "errorLocation": {
-                        "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/03-competition-browsing.spec.ts",
-                        "column": 23,
-                        "line": 117
-                      }
+                      "attachments": []
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "f4d4ba637b424bab9001-6b17b165350db678e908",
@@ -1566,15 +1246,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 14,
-                      "parallelIndex": 2,
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3078,
+                      "duration": 2470,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:54.897Z",
+                      "startTime": "2025-11-07T05:53:42.757Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1600,13 +1280,13 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 15,
-                      "parallelIndex": 0,
+                      "workerIndex": 7,
+                      "parallelIndex": 3,
                       "status": "failed",
-                      "duration": 2733,
+                      "duration": 3069,
                       "error": {
-                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\nExpected: visible\nError: strict mode violation: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i') resolved to 5 elements:\n    1) <p data-v-29dea927=\"\" class=\"text-h6 text-md-h5 text-medium-emphasis mb-8\"> Ensuring authenticity in photography competition…</p> aka getByText('Ensuring authenticity in photography competitions through cutting-edge AI')\n    2) <h2 data-v-29dea927=\"\" class=\"text-h3 font-weight-bold text-center mb-4\">Why Choose A.V.A.R?</h2> aka getByRole('heading', { name: 'Why Choose A.V.A.R?' })\n    3) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">AI-Powered Detection</h3> aka getByRole('heading', { name: 'AI-Powered Detection' })\n    4) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">Fair Competition</h3> aka getByRole('heading', { name: 'Fair Competition' })\n    5) <p data-v-d29a0bc8=\"\" class=\"text-caption text-medium-emphasis\"> Ensuring authenticity in digital photography com…</p> aka getByText('Ensuring authenticity in digital photography competitions through AI-powered')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\u001b[22m\n",
-                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\nExpected: visible\nError: strict mode violation: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i') resolved to 5 elements:\n    1) <p data-v-29dea927=\"\" class=\"text-h6 text-md-h5 text-medium-emphasis mb-8\"> Ensuring authenticity in photography competition…</p> aka getByText('Ensuring authenticity in photography competitions through cutting-edge AI')\n    2) <h2 data-v-29dea927=\"\" class=\"text-h3 font-weight-bold text-center mb-4\">Why Choose A.V.A.R?</h2> aka getByRole('heading', { name: 'Why Choose A.V.A.R?' })\n    3) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">AI-Powered Detection</h3> aka getByRole('heading', { name: 'AI-Powered Detection' })\n    4) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">Fair Competition</h3> aka getByRole('heading', { name: 'Fair Competition' })\n    5) <p data-v-d29a0bc8=\"\" class=\"text-caption text-medium-emphasis\"> Ensuring authenticity in digital photography com…</p> aka getByText('Ensuring authenticity in digital photography competitions through AI-powered')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/04-home-page.spec.ts:19:94",
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\nExpected: visible\nError: strict mode violation: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i') resolved to 5 elements:\n    1) <p data-v-29dea927=\"\" class=\"text-h6 text-md-h5 text-medium-emphasis mb-8\"> Ensuring authenticity in photography competition…</p> aka getByText('Ensuring authenticity in photography competitions through cutting-edge AI')\n    2) <h2 data-v-29dea927=\"\" class=\"text-h3 font-weight-bold text-center mb-4\">Why Choose A.V.A.R?</h2> aka getByRole('heading', { name: 'Why Choose A.V.A.R?' })\n    3) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">AI-Powered Detection</h3> aka getByRole('heading', { name: 'AI-Powered Detection' })\n    4) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">Fair Competition</h3> aka getByRole('heading', { name: 'Fair Competition' })\n    5) <p data-v-45d5464d=\"\" class=\"text-caption text-medium-emphasis\"> Ensuring authenticity in digital photography com…</p> aka getByText('Ensuring authenticity in digital photography competitions through AI-powered')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\nExpected: visible\nError: strict mode violation: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i') resolved to 5 elements:\n    1) <p data-v-29dea927=\"\" class=\"text-h6 text-md-h5 text-medium-emphasis mb-8\"> Ensuring authenticity in photography competition…</p> aka getByText('Ensuring authenticity in photography competitions through cutting-edge AI')\n    2) <h2 data-v-29dea927=\"\" class=\"text-h3 font-weight-bold text-center mb-4\">Why Choose A.V.A.R?</h2> aka getByRole('heading', { name: 'Why Choose A.V.A.R?' })\n    3) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">AI-Powered Detection</h3> aka getByRole('heading', { name: 'AI-Powered Detection' })\n    4) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">Fair Competition</h3> aka getByRole('heading', { name: 'Fair Competition' })\n    5) <p data-v-45d5464d=\"\" class=\"text-caption text-medium-emphasis\"> Ensuring authenticity in digital photography com…</p> aka getByText('Ensuring authenticity in digital photography competitions through AI-powered')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/04-home-page.spec.ts:19:94",
                         "location": {
                           "file": "/media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/04-home-page.spec.ts",
                           "column": 94,
@@ -1621,13 +1301,13 @@
                             "column": 94,
                             "line": 19
                           },
-                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\nExpected: visible\nError: strict mode violation: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i') resolved to 5 elements:\n    1) <p data-v-29dea927=\"\" class=\"text-h6 text-md-h5 text-medium-emphasis mb-8\"> Ensuring authenticity in photography competition…</p> aka getByText('Ensuring authenticity in photography competitions through cutting-edge AI')\n    2) <h2 data-v-29dea927=\"\" class=\"text-h3 font-weight-bold text-center mb-4\">Why Choose A.V.A.R?</h2> aka getByRole('heading', { name: 'Why Choose A.V.A.R?' })\n    3) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">AI-Powered Detection</h3> aka getByRole('heading', { name: 'AI-Powered Detection' })\n    4) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">Fair Competition</h3> aka getByRole('heading', { name: 'Fair Competition' })\n    5) <p data-v-d29a0bc8=\"\" class=\"text-caption text-medium-emphasis\"> Ensuring authenticity in digital photography com…</p> aka getByText('Ensuring authenticity in digital photography competitions through AI-powered')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\u001b[22m\n\n\n  17 |\n  18 |     // Check for features section\n> 19 |     await expect(page.locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')).toBeVisible()\n     |                                                                                              ^\n  20 |   })\n  21 |\n  22 |   test('should have statistics section', async ({ page }) => {\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/04-home-page.spec.ts:19:94"
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\nExpected: visible\nError: strict mode violation: locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i') resolved to 5 elements:\n    1) <p data-v-29dea927=\"\" class=\"text-h6 text-md-h5 text-medium-emphasis mb-8\"> Ensuring authenticity in photography competition…</p> aka getByText('Ensuring authenticity in photography competitions through cutting-edge AI')\n    2) <h2 data-v-29dea927=\"\" class=\"text-h3 font-weight-bold text-center mb-4\">Why Choose A.V.A.R?</h2> aka getByRole('heading', { name: 'Why Choose A.V.A.R?' })\n    3) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">AI-Powered Detection</h3> aka getByRole('heading', { name: 'AI-Powered Detection' })\n    4) <h3 data-v-29dea927=\"\" class=\"text-h5 font-weight-bold mb-3\">Fair Competition</h3> aka getByRole('heading', { name: 'Fair Competition' })\n    5) <p data-v-45d5464d=\"\" class=\"text-caption text-medium-emphasis\"> Ensuring authenticity in digital photography com…</p> aka getByText('Ensuring authenticity in digital photography competitions through AI-powered')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')\u001b[22m\n\n\n  17 |\n  18 |     // Check for features section\n> 19 |     await expect(page.locator('text=/Why Choose|Features|AI.*Detection|Fair Competition/i')).toBeVisible()\n     |                                                                                              ^\n  20 |   })\n  21 |\n  22 |   test('should have statistics section', async ({ page }) => {\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/04-home-page.spec.ts:19:94"
                         }
                       ],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:55.746Z",
+                      "startTime": "2025-11-07T05:53:42.766Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1674,15 +1354,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 16,
-                      "parallelIndex": 3,
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 1458,
+                      "duration": 2365,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:23:02.265Z",
+                      "startTime": "2025-11-07T05:53:44.535Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1708,10 +1388,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 14,
-                      "parallelIndex": 2,
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 1557,
+                      "duration": 1989,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/Create Account|Browse.*Competitions|Submit|Win/i')\nExpected: visible\nError: strict mode violation: locator('text=/Create Account|Browse.*Competitions|Submit|Win/i') resolved to 6 elements:\n    1) <span data-no-activator=\"\" class=\"v-btn__content\">…</span> aka getByRole('link', { name: 'Browse Competitions' })\n    2) <h3 data-v-29dea927=\"\" class=\"text-h6 font-weight-bold mb-2\">Create Account</h3> aka getByRole('heading', { name: 'Create Account' })\n    3) <h3 data-v-29dea927=\"\" class=\"text-h6 font-weight-bold mb-2\">Browse Competitions</h3> aka getByRole('heading', { name: 'Browse Competitions' })\n    4) <h3 data-v-29dea927=\"\" class=\"text-h6 font-weight-bold mb-2\">Submit Photos</h3> aka getByRole('heading', { name: 'Submit Photos' })\n    5) <h3 data-v-29dea927=\"\" class=\"text-h6 font-weight-bold mb-2\">Win Prizes</h3> aka getByRole('heading', { name: 'Win Prizes' })\n    6) <p data-v-29dea927=\"\" class=\"text-body-2 text-medium-emphasis\">Get judged fairly and win exciting prizes for you…</p> aka getByText('Get judged fairly and win')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/Create Account|Browse.*Competitions|Submit|Win/i')\u001b[22m\n",
                         "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/Create Account|Browse.*Competitions|Submit|Win/i')\nExpected: visible\nError: strict mode violation: locator('text=/Create Account|Browse.*Competitions|Submit|Win/i') resolved to 6 elements:\n    1) <span data-no-activator=\"\" class=\"v-btn__content\">…</span> aka getByRole('link', { name: 'Browse Competitions' })\n    2) <h3 data-v-29dea927=\"\" class=\"text-h6 font-weight-bold mb-2\">Create Account</h3> aka getByRole('heading', { name: 'Create Account' })\n    3) <h3 data-v-29dea927=\"\" class=\"text-h6 font-weight-bold mb-2\">Browse Competitions</h3> aka getByRole('heading', { name: 'Browse Competitions' })\n    4) <h3 data-v-29dea927=\"\" class=\"text-h6 font-weight-bold mb-2\">Submit Photos</h3> aka getByRole('heading', { name: 'Submit Photos' })\n    5) <h3 data-v-29dea927=\"\" class=\"text-h6 font-weight-bold mb-2\">Win Prizes</h3> aka getByRole('heading', { name: 'Win Prizes' })\n    6) <p data-v-29dea927=\"\" class=\"text-body-2 text-medium-emphasis\">Get judged fairly and win exciting prizes for you…</p> aka getByText('Get judged fairly and win')\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/Create Account|Browse.*Competitions|Submit|Win/i')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/04-home-page.spec.ts:37:90",
@@ -1735,7 +1415,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:22:58.041Z",
+                      "startTime": "2025-11-07T05:53:45.266Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1782,10 +1462,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 17,
-                      "parallelIndex": 0,
+                      "workerIndex": 10,
+                      "parallelIndex": 3,
                       "status": "failed",
-                      "duration": 3119,
+                      "duration": 1263,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/Ready.*Join|Create.*Account|Get Started/i')\nExpected: visible\nError: strict mode violation: locator('text=/Ready.*Join|Create.*Account|Get Started/i') resolved to 4 elements:\n    1) <span data-no-activator=\"\" class=\"v-btn__content\">…</span> aka getByRole('link', { name: 'Get Started' })\n    2) <h3 data-v-29dea927=\"\" class=\"text-h6 font-weight-bold mb-2\">Create Account</h3> aka getByRole('heading', { name: 'Create Account' })\n    3) <h2 data-v-29dea927=\"\" class=\"text-h3 font-weight-bold text-white mb-4\"> Ready to Join the Community? </h2> aka getByRole('heading', { name: 'Ready to Join the Community?' })\n    4) <span data-no-activator=\"\" class=\"v-btn__content\">…</span> aka getByRole('link', { name: 'Create Free Account' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/Ready.*Join|Create.*Account|Get Started/i')\u001b[22m\n",
                         "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('text=/Ready.*Join|Create.*Account|Get Started/i')\nExpected: visible\nError: strict mode violation: locator('text=/Ready.*Join|Create.*Account|Get Started/i') resolved to 4 elements:\n    1) <span data-no-activator=\"\" class=\"v-btn__content\">…</span> aka getByRole('link', { name: 'Get Started' })\n    2) <h3 data-v-29dea927=\"\" class=\"text-h6 font-weight-bold mb-2\">Create Account</h3> aka getByRole('heading', { name: 'Create Account' })\n    3) <h2 data-v-29dea927=\"\" class=\"text-h3 font-weight-bold text-white mb-4\"> Ready to Join the Community? </h2> aka getByRole('heading', { name: 'Ready to Join the Community?' })\n    4) <span data-no-activator=\"\" class=\"v-btn__content\">…</span> aka getByRole('link', { name: 'Create Free Account' })\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('text=/Ready.*Join|Create.*Account|Get Started/i')\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/04-home-page.spec.ts:47:83",
@@ -1809,7 +1489,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:23:02.778Z",
+                      "startTime": "2025-11-07T05:53:51.277Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1856,15 +1536,15 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 18,
-                      "parallelIndex": 2,
+                      "workerIndex": 8,
+                      "parallelIndex": 1,
                       "status": "passed",
-                      "duration": 3323,
+                      "duration": 1701,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:23:04.119Z",
+                      "startTime": "2025-11-07T05:53:46.955Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -1890,10 +1570,10 @@
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 16,
-                      "parallelIndex": 3,
+                      "workerIndex": 11,
+                      "parallelIndex": 0,
                       "status": "failed",
-                      "duration": 7168,
+                      "duration": 6356,
                       "error": {
                         "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('button:has-text(\"Browse\"), button:has-text(\"Get Started\")').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Browse\"), button:has-text(\"Get Started\")').first()\u001b[22m\n",
                         "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('button:has-text(\"Browse\"), button:has-text(\"Get Started\")').first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('button:has-text(\"Browse\"), button:has-text(\"Get Started\")').first()\u001b[22m\n\n    at /media/rasan/windows-drive/NPAS/NPAS - Third Year/Rasan Research 3/src/frontend/tests/e2e/04-home-page.spec.ts:71:35",
@@ -1917,7 +1597,7 @@
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2025-11-07T05:23:04.025Z",
+                      "startTime": "2025-11-07T05:53:51.869Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1958,11 +1638,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2025-11-07T05:22:02.177Z",
-    "duration": 69105.593,
-    "expected": 12,
+    "startTime": "2025-11-07T05:53:09.412Z",
+    "duration": 49176.963,
+    "expected": 20,
     "skipped": 0,
-    "unexpected": 18,
+    "unexpected": 10,
     "flaky": 0
   }
 }

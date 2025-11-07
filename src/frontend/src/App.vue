@@ -21,6 +21,11 @@ body {
   padding: 0;
 }
 
+/* Remove default v-main padding for full-width layouts */
+.v-main {
+  padding: 0 !important;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
