@@ -2,7 +2,8 @@
 Pydantic schemas for request/response validation
 """
 
-from pydantic import BaseModel, EmailStr, Field, validator
+import re
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
@@ -22,10 +23,46 @@ class UserRole(str, Enum):
 class UserCreate(BaseModel):
     email: EmailStr
     username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=8)
+    password: str = Field(..., min_length=8, max_length=128)
     full_name: Optional[str] = None
     phone: Optional[str] = None
     country: Optional[str] = None
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        """
+        Validate password complexity:
+        - At least 8 characters
+        - At least one uppercase letter
+        - At least one lowercase letter
+        - At least one digit
+        - At least one special character
+        """
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one digit")
+
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>_\-+=\[\]\\;'/`~]", v):
+            raise ValueError("Password must contain at least one special character (!@#$%^&*...)")
+
+        return v
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        """Validate username format"""
+        if not re.match(r"^[a-zA-Z0-9_]+$", v):
+            raise ValueError("Username can only contain letters, numbers, and underscores")
+        return v
 
 
 class UserLogin(BaseModel):
@@ -80,9 +117,10 @@ class CompetitionCreate(BaseModel):
     prize_description: Optional[str] = None
     prize_amount: Optional[int] = Field(default=None, ge=0)
 
-    @validator('submission_end')
-    def end_after_start(cls, v, values):
-        if 'submission_start' in values and v <= values['submission_start']:
+    @field_validator('submission_end')
+    @classmethod
+    def end_after_start(cls, v: datetime, info) -> datetime:
+        if 'submission_start' in info.data and v <= info.data['submission_start']:
             raise ValueError('submission_end must be after submission_start')
         return v
 

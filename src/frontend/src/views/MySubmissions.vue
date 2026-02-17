@@ -1,18 +1,33 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSubmissionsStore } from '@/stores/submissions'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 
 const authStore = useAuthStore()
 const submissionsStore = useSubmissionsStore()
+const loadError = ref('')
 
-onMounted(async () => {
-  if (authStore.user) {
-    await submissionsStore.fetchSubmissions({ user_id: authStore.user.id })
+const loadSubmissions = async () => {
+  try {
+    loadError.value = ''
+    if (authStore.user) {
+      await submissionsStore.fetchSubmissions({ user_id: authStore.user.id })
+    }
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      loadError.value = error.message || 'Failed to load submissions'
+    } else {
+      loadError.value = 'Failed to load submissions. Please try again.'
+    }
   }
+}
+
+onMounted(() => {
+  loadSubmissions()
 })
 
 const getStatusColor = (status: string) => {
@@ -47,8 +62,11 @@ const getVerdictColor = (verdict?: string) => {
       </p>
     </div>
 
-    <Alert v-if="submissionsStore.error" variant="destructive" class="mb-6">
-      <AlertDescription>{{ submissionsStore.error }}</AlertDescription>
+    <Alert v-if="loadError || submissionsStore.error" variant="destructive" class="mb-6">
+      <AlertDescription>{{ loadError || submissionsStore.error }}</AlertDescription>
+      <Button v-if="loadError" variant="outline" size="sm" class="mt-4" @click="loadSubmissions">
+        Try Again
+      </Button>
     </Alert>
 
     <div v-if="submissionsStore.isLoading" class="text-center py-12">

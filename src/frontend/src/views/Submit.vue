@@ -22,27 +22,75 @@ const description = ref('')
 const jpgFile = ref<File | null>(null)
 const rawFile = ref<File | null>(null)
 const isSubmitting = ref(false)
+const isLoading = ref(true)
+const loadError = ref('')
+
+// Constants for file validation
+const MAX_JPG_SIZE_MB = 50
+const MAX_RAW_SIZE_MB = 200
 
 onMounted(async () => {
-  await competitionsStore.fetchCompetitionById(competitionId)
+  try {
+    isLoading.value = true
+    loadError.value = ''
+    await competitionsStore.fetchCompetitionById(competitionId)
+  } catch (error) {
+    loadError.value = 'Failed to load competition details. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
 })
 
 const handleJpgFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
+  submissionsStore.clearError()
+
   if (target.files && target.files[0]) {
-    jpgFile.value = target.files[0]
+    const file = target.files[0]
+    const fileSizeMB = file.size / (1024 * 1024)
+
+    if (fileSizeMB > MAX_JPG_SIZE_MB) {
+      submissionsStore.error = `JPG file too large. Maximum size is ${MAX_JPG_SIZE_MB}MB`
+      target.value = ''
+      jpgFile.value = null
+      return
+    }
+
+    jpgFile.value = file
   }
 }
 
 const handleRawFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
+  submissionsStore.clearError()
+
   if (target.files && target.files[0]) {
-    rawFile.value = target.files[0]
+    const file = target.files[0]
+    const fileSizeMB = file.size / (1024 * 1024)
+
+    if (fileSizeMB > MAX_RAW_SIZE_MB) {
+      submissionsStore.error = `RAW file too large. Maximum size is ${MAX_RAW_SIZE_MB}MB`
+      target.value = ''
+      rawFile.value = null
+      return
+    }
+
+    rawFile.value = file
   }
 }
 
 const handleSubmit = async () => {
-  if (!title.value || !jpgFile.value) {
+  // Clear previous errors
+  submissionsStore.clearError()
+
+  // Validate required fields
+  if (!title.value.trim()) {
+    submissionsStore.error = 'Please enter a title for your submission'
+    return
+  }
+
+  if (!jpgFile.value) {
+    submissionsStore.error = 'Please select a JPG file to upload'
     return
   }
 
@@ -54,15 +102,19 @@ const handleSubmit = async () => {
   isSubmitting.value = true
   try {
     await submissionsStore.createSubmission({
-      title: title.value,
-      description: description.value,
+      title: title.value.trim(),
+      description: description.value.trim(),
       competition_id: competitionId,
       jpg_file: jpgFile.value,
       raw_file: rawFile.value || undefined,
     })
     router.push('/my-submissions')
-  } catch (error) {
-    console.error('Submission failed:', error)
+  } catch (error: unknown) {
+    // Error is already set in the store by createSubmission
+    // Just log for debugging
+    if (error instanceof Error) {
+      console.error('Submission failed:', error.message)
+    }
   } finally {
     isSubmitting.value = false
   }
@@ -77,7 +129,20 @@ const handleSubmit = async () => {
       </Button>
     </div>
 
-    <Card>
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex justify-center items-center py-12">
+      <div class="text-muted-foreground">Loading competition details...</div>
+    </div>
+
+    <!-- Load Error -->
+    <Alert v-else-if="loadError" variant="destructive" class="mb-6">
+      <AlertDescription>{{ loadError }}</AlertDescription>
+      <Button variant="outline" size="sm" class="mt-4" @click="router.back()">
+        Go Back
+      </Button>
+    </Alert>
+
+    <Card v-else>
       <CardHeader>
         <CardTitle>Submit Your Entry</CardTitle>
         <CardDescription v-if="competitionsStore.currentCompetition">

@@ -6,7 +6,8 @@ Central routing and load balancing for microservices
 import logging
 import os
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
@@ -14,30 +15,57 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
+# Configuration from environment
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+CORS_ORIGINS = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://localhost:5173,http://localhost:8080"
+)
+
+def get_cors_origins() -> List[str]:
+    """Parse CORS origins from environment - no wildcards allowed"""
+    origins = [o.strip() for o in CORS_ORIGINS.split(",") if o.strip()]
+    # Remove wildcards for security
+    return [o for o in origins if o != "*"]
+
+# Service URLs from environment
+AI_DETECTION_URL = os.getenv("AI_DETECTION_URL", "http://ai-detection-service:8001")
+COMPETITION_SERVICE_URL = os.getenv("COMPETITION_SERVICE_URL", "http://competition-service:8080")
+
+# HTTP client - managed with lifespan
+http_client: Optional[httpx.AsyncClient] = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage HTTP client lifecycle"""
+    global http_client
+    http_client = httpx.AsyncClient(timeout=300.0)  # 5 minute timeout for analysis
+    logger.info("API Gateway started - HTTP client initialized")
+    yield
+    await http_client.aclose()
+    logger.info("API Gateway shutdown - HTTP client closed")
 
 app = FastAPI(
     title="A.V.A.R. API Gateway",
     description="Central API gateway for routing requests to microservices",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
-# CORS middleware
+# CORS middleware - properly configured with whitelist
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure properly in production
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
 )
-
-# Service URLs from environment
-AI_DETECTION_URL = os.getenv("AI_DETECTION_URL", "http://ai-detection-service:8001")
-COMPETITION_SERVICE_URL = os.getenv("COMPETITION_SERVICE_URL", "http://competition-service:80")
-
-# HTTP client configuration
-http_client = httpx.AsyncClient(timeout=300.0)  # 5 minute timeout for analysis
 
 
 @app.get("/")
@@ -106,9 +134,17 @@ async def proxy_ai_detection(path: str, request: Request):
             ),
         )
 
+    except httpx.TimeoutException:
+        logger.error("AI Detection service timeout")
+        raise HTTPException(status_code=504, detail="AI Detection service timeout")
+    except httpx.ConnectError:
+        logger.error("AI Detection service unavailable")
+        raise HTTPException(status_code=503, detail="AI Detection service unavailable")
     except Exception as e:
         logger.error(f"AI Detection proxy error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        # Don't expose internal error details in production
+        detail = str(e) if DEBUG else "Service temporarily unavailable"
+        raise HTTPException(status_code=500, detail=detail)
 
 
 # === Competition Service Routes ===
@@ -142,22 +178,29 @@ async def proxy_competition_service(path: str, request: Request):
             ),
         )
 
+    except httpx.TimeoutException:
+        logger.error("Competition service timeout")
+        raise HTTPException(status_code=504, detail="Competition service timeout")
+    except httpx.ConnectError:
+        logger.error("Competition service unavailable")
+        raise HTTPException(status_code=503, detail="Competition service unavailable")
     except Exception as e:
         logger.error(f"Competition service proxy error: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Service error: {str(e)}")
+        # Don't expose internal error details in production
+        detail = str(e) if DEBUG else "Service temporarily unavailable"
+        raise HTTPException(status_code=500, detail=detail)
 
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Global exception handler"""
+    """Global exception handler - sanitize errors for production"""
     logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
-    return JSONResponse(status_code=500, content={"detail": "Internal server error", "error": str(exc)})
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
-    await http_client.aclose()
+    # Don't expose internal error details in production
+    error_detail = str(exc) if DEBUG else "An unexpected error occurred"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "message": error_detail}
+    )
 
 
 if __name__ == "__main__":

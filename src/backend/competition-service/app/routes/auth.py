@@ -1,11 +1,14 @@
 """
-Authentication routes
+Authentication routes with rate limiting
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import os
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.database import get_db
 from app.models.user import User
@@ -16,13 +19,21 @@ from app.utils.auth import (
     create_access_token,
     create_refresh_token,
     get_current_user,
+    decode_token,
 )
 
 router = APIRouter()
 
+# Check if running in test mode
+TESTING = os.getenv("TESTING", "false").lower() == "true"
+
+# Rate limiter for auth endpoints - disabled in testing mode
+limiter = Limiter(key_func=get_remote_address, enabled=not TESTING)
+
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")  # Limit registration attempts
+async def register(request: Request, user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """
     Register a new user
 
@@ -68,7 +79,8 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(user_data: UserLogin, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")  # Limit login attempts to prevent brute force
+async def login(request: Request, user_data: UserLogin, db: AsyncSession = Depends(get_db)):
     """
     User login
 
@@ -169,3 +181,72 @@ async def logout(current_user: User = Depends(get_current_user)):
     This endpoint is provided for completeness and can be extended with token blacklisting.
     """
     return MessageResponse(message="Successfully logged out")
+
+
+class RefreshTokenRequest(UserLogin.__class__.__bases__[0]):
+    """Request body for token refresh"""
+    refresh_token: str
+
+
+@router.post("/refresh", response_model=TokenResponse)
+@limiter.limit("30/minute")
+async def refresh_token(
+    request: Request,
+    refresh_token: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Refresh access token using refresh token
+
+    - **refresh_token**: Valid refresh token
+    """
+    try:
+        # Decode and validate refresh token
+        payload = decode_token(refresh_token)
+
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type - expected refresh token",
+            )
+
+        email = payload.get("sub")
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload",
+            )
+
+        # Get user from database
+        result = await db.execute(select(User).where(User.email == email))
+        user = result.scalar_one_or_none()
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User account is inactive",
+            )
+
+        # Create new tokens
+        new_access_token = create_access_token(data={"sub": user.email})
+        new_refresh_token = create_refresh_token(data={"sub": user.email})
+
+        return TokenResponse(
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
+            user=UserResponse.model_validate(user),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+        )

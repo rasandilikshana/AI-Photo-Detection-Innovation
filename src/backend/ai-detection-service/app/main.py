@@ -4,6 +4,7 @@ Forensic analysis service for detecting AI-generated images
 """
 
 import logging
+import os
 import uuid
 from datetime import datetime
 from typing import List, Optional
@@ -22,6 +23,20 @@ from pydantic import BaseModel
 # Initialize logger
 logger = setup_logger(__name__)
 
+# Configuration from environment
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+CORS_ORIGINS = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://localhost:5173,http://localhost:8080"
+)
+MAX_FILE_SIZE_MB = int(os.getenv("MAX_UPLOAD_SIZE_MB", "50"))
+MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+
+def get_cors_origins() -> List[str]:
+    """Parse CORS origins from environment - no wildcards allowed"""
+    origins = [o.strip() for o in CORS_ORIGINS.split(",") if o.strip()]
+    return [o for o in origins if o != "*"]
+
 # Initialize FastAPI app
 app = FastAPI(
     title="A.V.A.R. AI Detection Service",
@@ -31,13 +46,13 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS middleware
+# CORS middleware - properly configured with whitelist
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure properly in production
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"],
 )
 
 
@@ -90,7 +105,7 @@ async def health_check():
 async def analyze_submission(
     jpg_file: UploadFile = File(..., description="JPG submission file"),
     raw_file: Optional[UploadFile] = File(None, description="RAW file (optional but recommended)"),
-    background_tasks: BackgroundTasks = None,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
 ):
     """
     Main analysis endpoint - Multi-layered AI detection pipeline
@@ -115,6 +130,29 @@ async def analyze_submission(
 
         if raw_file and not file_handler.is_valid_raw_extension(raw_file.filename):
             raise HTTPException(status_code=400, detail="Invalid RAW file format")
+
+        # Validate file size
+        jpg_file.file.seek(0, 2)  # Seek to end
+        jpg_size = jpg_file.file.tell()
+        jpg_file.file.seek(0)  # Reset to beginning
+
+        if jpg_size > MAX_FILE_SIZE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"JPG file too large. Maximum size is {MAX_FILE_SIZE_MB}MB"
+            )
+
+        if raw_file:
+            raw_file.file.seek(0, 2)
+            raw_size = raw_file.file.tell()
+            raw_file.file.seek(0)
+
+            # RAW files can be larger, allow 200MB
+            if raw_size > MAX_FILE_SIZE_BYTES * 4:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"RAW file too large. Maximum size is {MAX_FILE_SIZE_MB * 4}MB"
+                )
 
         # Save uploaded files temporarily
         jpg_path = await file_handler.save_upload(jpg_file, submission_id, "jpg")
@@ -255,9 +293,14 @@ async def analyze_metadata_only(jpg_file: UploadFile = File(..., description="JP
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
-    """Global exception handler"""
+    """Global exception handler - sanitize errors for production"""
     logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
-    return JSONResponse(status_code=500, content={"detail": "Internal server error", "error": str(exc)})
+    # Don't expose internal error details in production
+    error_detail = str(exc) if DEBUG else "An unexpected error occurred"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "message": error_detail}
+    )
 
 
 if __name__ == "__main__":

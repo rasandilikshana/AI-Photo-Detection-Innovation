@@ -46,10 +46,28 @@ const router = createRouter({
       component: () => import('./views/MySubmissions.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/judge',
+      name: 'JudgeDashboard',
+      component: () => import('./views/JudgeDashboard.vue'),
+      meta: { requiresAuth: true, requiresJudge: true },
+    },
+    {
+      path: '/judge/score/:submissionId',
+      name: 'ScoreSubmission',
+      component: () => import('./views/ScoreSubmission.vue'),
+      meta: { requiresAuth: true, requiresJudge: true },
+    },
+    {
+      path: '/admin',
+      name: 'AdminPanel',
+      component: () => import('./views/AdminPanel.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
   ],
 })
 
-// Navigation guard for auth
+// Navigation guard for auth and role-based access
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
@@ -58,11 +76,30 @@ router.beforeEach(async (to, _from, next) => {
     await authStore.fetchCurrentUser()
   }
 
+  // Check authentication
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next({ name: 'Login', query: { redirect: to.fullPath } })
-  } else {
-    next()
+    return
   }
+
+  // Check judge role
+  if (to.meta.requiresJudge) {
+    const userRole = authStore.user?.role
+    if (userRole !== 'judge' && userRole !== 'admin') {
+      next({ name: 'Home' })
+      return
+    }
+  }
+
+  // Check admin role
+  if (to.meta.requiresAdmin) {
+    if (authStore.user?.role !== 'admin') {
+      next({ name: 'Home' })
+      return
+    }
+  }
+
+  next()
 })
 
 const pinia = createPinia()

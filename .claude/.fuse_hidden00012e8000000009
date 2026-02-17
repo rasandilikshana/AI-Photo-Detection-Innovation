@@ -34,7 +34,20 @@
       "Bash(npm install:*)",
       "Bash(npm run dev:*)",
       "Bash(npx playwright install)",
-      "Bash(PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test:*)"
+      "Bash(PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test:*)",
+      "Bash(rm:*)",
+      "Bash(pnpm create:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm add:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(pnpm approve-builds:*)",
+      "Bash(pnpm exec tailwindcss:*)",
+      "Bash(pnpm run build:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm dev)",
+      "Read(//media/rasan/windows-drive/NPAS/**)",
+      "Bash(cd:*)",
+      "Bash(pnpm dlx:*)"
     ],
     "deny": [],
     "ask": []

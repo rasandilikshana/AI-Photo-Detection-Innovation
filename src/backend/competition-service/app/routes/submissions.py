@@ -2,22 +2,25 @@
 Submission management routes
 """
 
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from typing import List, Optional
 import aiofiles
 import os
 from pathlib import Path
 
 from app.database import get_db
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.competition import Competition, CompetitionStatus
 from app.models.submission import Submission, SubmissionStatus
 from app.schemas import SubmissionResponse, MessageResponse
 from app.utils.auth import get_current_user
 from app.utils.security import validate_file_extension, sanitize_filename
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -63,16 +66,16 @@ async def create_submission(
             detail="Competition is not accepting submissions at this time",
         )
 
-    # Check if user has reached submission limit
-    result = await db.execute(
-        select(Submission).where(
+    # Check if user has reached submission limit (using COUNT for efficiency)
+    count_result = await db.execute(
+        select(func.count(Submission.id)).where(
             Submission.user_id == current_user.id,
             Submission.competition_id == competition_id,
         )
     )
-    user_submissions = result.scalars().all()
+    user_submission_count = count_result.scalar() or 0
 
-    if len(user_submissions) >= competition.max_submissions_per_user:
+    if user_submission_count >= competition.max_submissions_per_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Maximum {competition.max_submissions_per_user} submissions per user reached",
@@ -92,28 +95,67 @@ async def create_submission(
             detail="RAW file is required for this competition",
         )
 
-    # Save JPG file
+    # Validate file sizes before saving
+    jpg_file.file.seek(0, 2)
+    jpg_file_size = jpg_file.file.tell()
+    jpg_file.file.seek(0)
+
+    if jpg_file_size > settings.MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"JPG file too large. Maximum size is {settings.MAX_UPLOAD_SIZE_MB}MB",
+        )
+
+    raw_file_size = 0
+    if raw_file:
+        raw_file.file.seek(0, 2)
+        raw_file_size = raw_file.file.tell()
+        raw_file.file.seek(0)
+
+        # Allow larger RAW files (4x JPG limit)
+        if raw_file_size > settings.MAX_UPLOAD_SIZE_BYTES * 4:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"RAW file too large. Maximum size is {settings.MAX_UPLOAD_SIZE_MB * 4}MB",
+            )
+
+    # Save JPG file with error handling
     jpg_filename = sanitize_filename(jpg_file.filename)
     jpg_path = Path(settings.UPLOAD_DIR) / f"{current_user.id}_{competition_id}_{jpg_filename}"
-    jpg_file_size = 0
 
-    async with aiofiles.open(jpg_path, 'wb') as f:
-        content = await jpg_file.read()
-        jpg_file_size = len(content)
-        await f.write(content)
+    try:
+        async with aiofiles.open(jpg_path, 'wb') as f:
+            content = await jpg_file.read()
+            await f.write(content)
+    except IOError as e:
+        logger.error(f"Failed to save JPG file: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save JPG file",
+        )
 
     # Save RAW file if provided
     raw_path = None
-    raw_file_size = 0
 
     if raw_file:
         raw_filename = sanitize_filename(raw_file.filename)
         raw_path = Path(settings.UPLOAD_DIR) / f"{current_user.id}_{competition_id}_{raw_filename}"
 
-        async with aiofiles.open(raw_path, 'wb') as f:
-            content = await raw_file.read()
-            raw_file_size = len(content)
-            await f.write(content)
+        try:
+            async with aiofiles.open(raw_path, 'wb') as f:
+                content = await raw_file.read()
+                await f.write(content)
+        except IOError as e:
+            # Clean up JPG file if RAW save fails
+            try:
+                os.remove(jpg_path)
+            except OSError:
+                pass
+            logger.error(f"Failed to save RAW file: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save RAW file",
+            )
 
     # Create submission
     new_submission = Submission(
@@ -215,21 +257,39 @@ async def delete_submission(
             detail="Submission not found",
         )
 
-    # Check permissions
-    if submission.user_id != current_user.id and current_user.role != "admin":
+    # Check permissions - use proper enum comparison
+    if submission.user_id != current_user.id and current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to delete this submission",
         )
 
-    # Delete files
-    if os.path.exists(submission.jpg_file_url):
-        os.remove(submission.jpg_file_url)
+    # Delete files with proper error handling
+    files_to_delete = []
+    if submission.jpg_file_url:
+        files_to_delete.append(submission.jpg_file_url)
+    if submission.raw_file_url:
+        files_to_delete.append(submission.raw_file_url)
 
-    if submission.raw_file_url and os.path.exists(submission.raw_file_url):
-        os.remove(submission.raw_file_url)
+    for file_path in files_to_delete:
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                logger.info(f"Deleted file: {file_path}")
+        except OSError as e:
+            # Log error but continue with database deletion
+            logger.error(f"Failed to delete file {file_path}: {e}")
 
-    await db.delete(submission)
-    await db.commit()
+    # Delete from database
+    try:
+        await db.delete(submission)
+        await db.commit()
+    except Exception as e:
+        logger.error(f"Failed to delete submission from database: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete submission",
+        )
 
     return MessageResponse(message="Submission deleted successfully")

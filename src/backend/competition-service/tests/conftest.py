@@ -2,6 +2,10 @@
 Pytest configuration and fixtures for Competition Service tests
 """
 
+import os
+# Set testing mode BEFORE importing app to disable rate limiting
+os.environ["TESTING"] = "true"
+
 import pytest
 import asyncio
 from typing import AsyncGenerator
