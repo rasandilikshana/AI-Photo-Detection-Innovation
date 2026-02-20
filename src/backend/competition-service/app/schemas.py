@@ -84,6 +84,14 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
+class UserUpdate(BaseModel):
+    """Schema for updating user data (admin only)"""
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+    is_verified: Optional[bool] = None
+    full_name: Optional[str] = None
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
@@ -181,6 +189,16 @@ class SubmissionCreate(BaseModel):
     competition_id: int
 
 
+class CompetitionBasic(BaseModel):
+    """Minimal competition info for embedding in submissions"""
+    id: int
+    title: str
+    status: CompetitionStatus
+
+    class Config:
+        from_attributes = True
+
+
 class SubmissionResponse(BaseModel):
     id: int
     title: str
@@ -190,12 +208,19 @@ class SubmissionResponse(BaseModel):
     status: SubmissionStatus
     verification_verdict: Optional[VerificationVerdict]
     verification_confidence: Optional[float]
+    verification_details: Optional[dict] = None
+    verification_timestamp: Optional[str] = None
     camera_make: Optional[str]
     camera_model: Optional[str]
+    iso: Optional[int] = None
+    aperture: Optional[str] = None
+    shutter_speed: Optional[str] = None
+    capture_date: Optional[str] = None
     total_score: float
     score_count: int
     user_id: int
     competition_id: int
+    competition: Optional[CompetitionBasic] = None
     created_at: datetime
 
     class Config:
@@ -211,6 +236,7 @@ class ScoreCreate(BaseModel):
     technical_score: float = Field(..., ge=0, le=10)
     creativity_score: float = Field(..., ge=0, le=10)
     comments: Optional[str] = None
+    judge_identifier: Optional[str] = Field(None, max_length=100, description="Optional identifier for tracking when multiple judges share credentials")
 
 
 class ScoreResponse(BaseModel):
@@ -226,6 +252,60 @@ class ScoreResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ============================================================================
+# Score Audit Log Schemas
+# ============================================================================
+
+class ScoreActionType(str, Enum):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+
+
+class ScoreAuditLogResponse(BaseModel):
+    id: int
+    action_type: ScoreActionType
+
+    # Score values
+    composition_score: Optional[float]
+    technical_score: Optional[float]
+    creativity_score: Optional[float]
+    overall_score: Optional[float]
+    comments: Optional[str]
+
+    # Previous values (for updates)
+    prev_composition_score: Optional[float]
+    prev_technical_score: Optional[float]
+    prev_creativity_score: Optional[float]
+    prev_overall_score: Optional[float]
+    prev_comments: Optional[str]
+
+    # Client tracking
+    ip_address: Optional[str]
+    user_agent: Optional[str]
+    session_id: Optional[str]
+    judge_identifier: Optional[str]
+
+    # References
+    score_id: Optional[int]
+    submission_id: int
+    judge_id: int
+    competition_id: int
+
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ScoreAuditLogListResponse(BaseModel):
+    """Response with list of audit logs and summary"""
+    logs: List[ScoreAuditLogResponse]
+    total_count: int
+    unique_sessions: int
+    unique_ips: int
 
 
 # ============================================================================

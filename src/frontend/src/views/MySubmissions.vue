@@ -1,15 +1,59 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useSubmissionsStore } from '@/stores/submissions'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { Camera, Clock, ImageIcon, Trophy, Search, X } from 'lucide-vue-next'
+import type { Submission } from '@/types'
 
 const authStore = useAuthStore()
 const submissionsStore = useSubmissionsStore()
 const loadError = ref('')
+const searchQuery = ref('')
+const statusFilter = ref<string>('all')
+const selectedSubmission = ref<Submission | null>(null)
+const isModalOpen = ref(false)
+let pollingInterval: ReturnType<typeof setInterval> | null = null
+
+const statusOptions = [
+  { value: 'all', label: 'All' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'analyzing', label: 'Analyzing' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'rejected', label: 'Rejected' },
+]
+
+const filteredSubmissions = computed(() => {
+  let submissions = submissionsStore.submissions
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    submissions = submissions.filter(s =>
+      s.title.toLowerCase().includes(query) ||
+      s.description?.toLowerCase().includes(query) ||
+      s.competition?.title.toLowerCase().includes(query)
+    )
+  }
+
+  // Filter by status
+  if (statusFilter.value !== 'all') {
+    submissions = submissions.filter(s => s.status === statusFilter.value)
+  }
+
+  return submissions
+})
 
 const loadSubmissions = async () => {
   try {
@@ -26,93 +70,249 @@ const loadSubmissions = async () => {
   }
 }
 
-onMounted(() => {
-  loadSubmissions()
+const hasAnalyzingSubmission = computed(() => {
+  return submissionsStore.submissions.some(s => s.status === 'analyzing')
 })
 
-const getStatusColor = (status: string) => {
-  const colors: Record<string, string> = {
-    pending: 'bg-yellow-500',
-    analyzing: 'bg-blue-500',
-    approved: 'bg-green-500',
-    rejected: 'bg-red-500',
-    disqualified: 'bg-red-700',
-  }
-  return colors[status] || 'bg-gray-500'
+const startPolling = () => {
+  if (pollingInterval) return
+  pollingInterval = setInterval(async () => {
+    if (hasAnalyzingSubmission.value) {
+      await loadSubmissions()
+    } else {
+      stopPolling()
+    }
+  }, 3000)
 }
 
-const getVerdictColor = (verdict?: string) => {
-  if (!verdict) return 'bg-gray-500'
-  const colors: Record<string, string> = {
-    authentic: 'bg-green-500',
-    suspicious: 'bg-yellow-500',
-    ai_generated: 'bg-red-500',
-    needs_review: 'bg-orange-500',
+const stopPolling = () => {
+  if (pollingInterval) {
+    clearInterval(pollingInterval)
+    pollingInterval = null
   }
-  return colors[verdict] || 'bg-gray-500'
+}
+
+onMounted(() => {
+  loadSubmissions().then(() => {
+    if (hasAnalyzingSubmission.value) {
+      startPolling()
+    }
+  })
+})
+
+onUnmounted(() => {
+  stopPolling()
+})
+
+const openModal = (submission: Submission) => {
+  selectedSubmission.value = submission
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  selectedSubmission.value = null
+}
+
+const getStatusVariant = (status: string) => {
+  const variants: Record<string, string> = {
+    pending: 'secondary',
+    analyzing: 'secondary',
+    approved: 'default',
+    rejected: 'destructive',
+    disqualified: 'destructive',
+  }
+  return variants[status] || 'secondary'
+}
+
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+const getImageUrl = (url: string) => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+  const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:8080'
+  return `${baseUrl}${url}`
 }
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-12">
+  <div class="container mx-auto px-6 py-10">
     <div class="mb-8">
-      <h1 class="text-4xl font-bold tracking-tight mb-4">My Submissions</h1>
-      <p class="text-lg text-muted-foreground">
-        View and manage your competition entries
-      </p>
+      <h1 class="text-3xl font-bold text-foreground mb-3">My Submissions</h1>
+      <p class="text-lg text-muted-foreground">View and manage your competition entries</p>
     </div>
 
-    <Alert v-if="loadError || submissionsStore.error" variant="destructive" class="mb-6">
-      <AlertDescription>{{ loadError || submissionsStore.error }}</AlertDescription>
-      <Button v-if="loadError" variant="outline" size="sm" class="mt-4" @click="loadSubmissions">
+    <!-- Search and Filters -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-8">
+      <div class="relative flex-1">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+        <Input
+          v-model="searchQuery"
+          placeholder="Search submissions..."
+          class="pl-10 h-12 text-base"
+        />
+        <button
+          v-if="searchQuery"
+          @click="searchQuery = ''"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        >
+          <X class="w-4 h-4" />
+        </button>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <Button
+          v-for="option in statusOptions"
+          :key="option.value"
+          :variant="statusFilter === option.value ? 'default' : 'outline'"
+          size="sm"
+          class="h-12 px-4 text-base"
+          @click="statusFilter = option.value"
+        >
+          {{ option.label }}
+        </Button>
+      </div>
+    </div>
+
+    <Alert v-if="loadError || submissionsStore.error" variant="destructive" class="mb-8">
+      <AlertDescription class="text-base">{{ loadError || submissionsStore.error }}</AlertDescription>
+      <Button v-if="loadError" variant="outline" class="mt-4" @click="loadSubmissions">
         Try Again
       </Button>
     </Alert>
 
-    <div v-if="submissionsStore.isLoading" class="text-center py-12">
-      <p class="text-muted-foreground">Loading submissions...</p>
+    <div v-if="submissionsStore.isLoading" class="text-center py-20">
+      <div class="w-12 h-12 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" />
+      <p class="text-muted-foreground text-lg">Loading submissions...</p>
     </div>
 
-    <div v-else-if="submissionsStore.submissions.length === 0" class="text-center py-12">
-      <p class="text-muted-foreground">You haven't submitted any entries yet.</p>
+    <div v-else-if="submissionsStore.submissions.length === 0" class="text-center py-20">
+      <div class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+        <Camera class="w-12 h-12 text-muted-foreground" />
+      </div>
+      <p class="text-xl text-muted-foreground">No submissions yet</p>
+      <p class="text-muted-foreground mt-2">Submit your first photo to a competition!</p>
     </div>
 
+    <div v-else-if="filteredSubmissions.length === 0" class="text-center py-20">
+      <div class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
+        <Search class="w-12 h-12 text-muted-foreground" />
+      </div>
+      <p class="text-xl text-muted-foreground">No matching submissions</p>
+      <p class="text-muted-foreground mt-2">Try adjusting your search or filters</p>
+    </div>
+
+    <!-- 3-Column Grid -->
     <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <Card v-for="submission in submissionsStore.submissions" :key="submission.id">
-        <CardHeader>
-          <div class="flex items-center justify-between mb-2">
-            <Badge :class="getStatusColor(submission.status)">
-              {{ submission.status.toUpperCase() }}
-            </Badge>
-            <Badge v-if="submission.verification_verdict" :class="getVerdictColor(submission.verification_verdict)">
-              {{ submission.verification_verdict.replace('_', ' ').toUpperCase() }}
-            </Badge>
+      <Card
+        v-for="submission in filteredSubmissions"
+        :key="submission.id"
+        class="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+        @click="openModal(submission)"
+      >
+        <!-- Thumbnail -->
+        <div class="aspect-[4/3] bg-muted relative overflow-hidden">
+          <img
+            v-if="submission.jpg_file_url"
+            :src="getImageUrl(submission.jpg_file_url)"
+            :alt="submission.title"
+            class="w-full h-full object-cover"
+            @error="(e) => { (e.target as HTMLImageElement).style.display = 'none' }"
+          />
+          <div v-else class="w-full h-full flex items-center justify-center">
+            <ImageIcon class="w-12 h-12 text-muted-foreground" />
           </div>
-          <CardTitle class="line-clamp-2">{{ submission.title }}</CardTitle>
-          <CardDescription v-if="submission.competition">
-            {{ submission.competition.title }}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div class="space-y-2 text-sm">
-            <div v-if="submission.verification_confidence">
-              <span class="font-medium">Confidence:</span>
-              <span class="ml-2">{{ (submission.verification_confidence * 100).toFixed(1) }}%</span>
-            </div>
-            <div v-if="submission.score_count > 0">
-              <span class="font-medium">Score:</span>
-              <span class="ml-2">{{ submission.average_score?.toFixed(2) }} ({{ submission.score_count }} judges)</span>
-            </div>
-            <div v-if="submission.camera_make">
-              <span class="font-medium">Camera:</span>
-              <span class="ml-2">{{ submission.camera_make }} {{ submission.camera_model }}</span>
-            </div>
-            <div class="text-xs text-muted-foreground mt-4">
-              Submitted: {{ new Date(submission.created_at).toLocaleDateString() }}
-            </div>
+          <Badge
+            :variant="getStatusVariant(submission.status)"
+            class="absolute top-3 left-3 text-sm px-3 py-1"
+          >
+            {{ submission.status }}
+          </Badge>
+        </div>
+
+        <CardContent class="p-5">
+          <h3 class="text-lg font-semibold mb-2 line-clamp-1">{{ submission.title }}</h3>
+          <div v-if="submission.competition" class="flex items-center gap-2 text-muted-foreground mb-3">
+            <Trophy class="w-4 h-4" />
+            <span class="text-sm line-clamp-1">{{ submission.competition.title }}</span>
+          </div>
+          <div class="flex items-center text-sm text-muted-foreground">
+            <Clock class="w-4 h-4 mr-2" />
+            {{ formatDate(submission.created_at) }}
           </div>
         </CardContent>
       </Card>
     </div>
+
+    <!-- Submission Detail Modal -->
+    <Dialog :open="isModalOpen" @update:open="(open) => { if (!open) closeModal() }">
+      <DialogContent class="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div class="flex items-center gap-3 mb-2">
+            <Badge
+              v-if="selectedSubmission"
+              :variant="getStatusVariant(selectedSubmission.status)"
+              class="text-sm px-3 py-1"
+            >
+              {{ selectedSubmission.status }}
+            </Badge>
+          </div>
+          <DialogTitle class="text-2xl">{{ selectedSubmission?.title }}</DialogTitle>
+          <DialogDescription v-if="selectedSubmission?.competition" class="flex items-center gap-2">
+            <Trophy class="w-4 h-4" />
+            {{ selectedSubmission.competition.title }}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div v-if="selectedSubmission" class="space-y-6 mt-4">
+          <!-- Submitted Image -->
+          <div v-if="selectedSubmission.jpg_file_url">
+            <div class="rounded-xl overflow-hidden border bg-muted/20">
+              <img
+                :src="getImageUrl(selectedSubmission.jpg_file_url)"
+                :alt="selectedSubmission.title"
+                class="w-full h-auto object-contain"
+                style="max-height: 500px;"
+                @error="(e) => { (e.target as HTMLImageElement).style.display = 'none' }"
+              />
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div v-if="selectedSubmission.description">
+            <h4 class="text-base font-medium text-muted-foreground mb-2">Description</h4>
+            <p class="text-base leading-relaxed">{{ selectedSubmission.description }}</p>
+          </div>
+
+          <!-- Details Grid -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 bg-muted/30 rounded-xl">
+              <p class="text-sm text-muted-foreground mb-1">Submitted</p>
+              <p class="text-base font-medium">{{ formatDate(selectedSubmission.created_at) }}</p>
+            </div>
+            <div v-if="selectedSubmission.camera_make || selectedSubmission.camera_model" class="p-4 bg-muted/30 rounded-xl">
+              <p class="text-sm text-muted-foreground mb-1">Camera</p>
+              <p class="text-base font-medium flex items-center gap-2">
+                <Camera class="w-4 h-4" />
+                {{ [selectedSubmission.camera_make, selectedSubmission.camera_model].filter(Boolean).join(' ') }}
+              </p>
+            </div>
+          </div>
+
+          <!-- RAW File indicator -->
+          <div v-if="selectedSubmission.raw_file_url" class="flex items-center gap-3 p-4 bg-muted/30 rounded-xl">
+            <ImageIcon class="w-6 h-6 text-muted-foreground" />
+            <span class="text-base">RAW file included</span>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

@@ -50,6 +50,7 @@ class User(BaseModel):
         "JudgeAssignment", back_populates="judge", cascade="all, delete-orphan"
     )
     scores_given = relationship("Score", back_populates="judge")
+    score_audit_logs = relationship("ScoreAuditLog", back_populates="judge")
 
     def __repr__(self):
         return f"<User {self.username} ({self.email})>"

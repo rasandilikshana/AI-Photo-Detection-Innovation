@@ -34,20 +34,21 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-muted/50 px-4">
+  <div class="min-h-[calc(100vh-10rem)] flex items-center justify-center px-6">
     <Card class="w-full max-w-md">
-      <CardHeader>
+      <CardHeader class="text-center p-8 pb-6">
+        <router-link to="/" class="text-2xl font-bold text-primary mb-3 hover:opacity-80 transition-opacity">A.V.A.R.</router-link>
         <CardTitle class="text-2xl">Sign In</CardTitle>
-        <CardDescription>Enter your credentials to access your account</CardDescription>
+        <CardDescription class="text-base mt-2">Enter your credentials to continue</CardDescription>
       </CardHeader>
-      <CardContent class="space-y-4">
+      <CardContent class="space-y-6 px-8">
         <Alert v-if="authStore.error" variant="destructive">
-          <AlertDescription>{{ authStore.error }}</AlertDescription>
+          <AlertDescription class="text-base">{{ authStore.error }}</AlertDescription>
         </Alert>
 
-        <form @submit.prevent="handleLogin" class="space-y-4">
+        <form @submit.prevent="handleLogin" class="space-y-5">
           <div class="space-y-2">
-            <Label for="email">Email</Label>
+            <Label for="email" class="text-base">Email</Label>
             <Input
               id="email"
               v-model="email"
@@ -55,11 +56,12 @@ const handleLogin = async () => {
               placeholder="you@example.com"
               required
               :disabled="isLoading"
+              class="h-12 text-base"
             />
           </div>
 
           <div class="space-y-2">
-            <Label for="password">Password</Label>
+            <Label for="password" class="text-base">Password</Label>
             <Input
               id="password"
               v-model="password"
@@ -67,18 +69,19 @@ const handleLogin = async () => {
               placeholder="••••••••"
               required
               :disabled="isLoading"
+              class="h-12 text-base"
             />
           </div>
 
-          <Button type="submit" class="w-full" :disabled="isLoading">
+          <Button type="submit" class="w-full h-12 text-base" :disabled="isLoading">
             {{ isLoading ? 'Signing in...' : 'Sign In' }}
           </Button>
         </form>
       </CardContent>
-      <CardFooter class="flex justify-center">
-        <p class="text-sm text-muted-foreground">
+      <CardFooter class="flex justify-center p-8 pt-4">
+        <p class="text-base text-muted-foreground">
           Don't have an account?
-          <router-link to="/register" class="text-primary hover:underline font-medium">
+          <router-link to="/register" class="text-primary hover:underline font-medium ml-1">
             Sign up
           </router-link>
         </p>

@@ -31,9 +31,14 @@ class RAWJPGLinkageAnalyzer:
     """
 
     def __init__(self):
-        self.phash_threshold = 10  # Hamming distance threshold
-        self.ssim_threshold = 0.85  # SSIM similarity threshold
-        self.histogram_threshold = 0.90  # Histogram correlation threshold
+        self.phash_threshold = 15  # Hamming distance threshold (increased for RAW processing differences)
+
+        # Lowered thresholds to account for differences between:
+        # - Camera's internal JPG processing (proprietary color science, tone curves)
+        # - Basic RAW demosaicing (rawpy with camera white balance)
+        # These will never be identical, but should still be visually similar
+        self.ssim_threshold = 0.45  # SSIM similarity threshold (was 0.85)
+        self.histogram_threshold = 0.40  # Histogram correlation threshold (was 0.90)
 
     async def analyze_linkage(self, raw_path: str, jpg_path: str) -> Dict:
         """
@@ -146,8 +151,12 @@ class RAWJPGLinkageAnalyzer:
             (match: bool, hamming_distance: int)
         """
         try:
-            # Load images with PIL for hashing
-            raw_img = Image.open(raw_path)
+            # Load RAW file using rawpy (PIL cannot read RAW files!)
+            with rawpy.imread(raw_path) as raw:
+                rgb = raw.postprocess(use_camera_wb=True, half_size=False, no_auto_bright=True, output_bps=8)
+                raw_img = Image.fromarray(rgb)
+
+            # Load JPG with PIL
             jpg_img = Image.open(jpg_path)
 
             # Calculate perceptual hashes

@@ -8,6 +8,10 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Users, Trophy, Image, Activity, Settings, RefreshCw, Eye, Calendar, Search, X,
+  Gavel, Plus, Trash2, Loader2, UserPlus, History, Network, Monitor, User as UserIcon
+} from 'lucide-vue-next'
 import apiClient from '@/api/client'
 
 interface User {
@@ -30,16 +34,82 @@ interface Competition {
   organizer_id: number
 }
 
+interface Judge {
+  id: number
+  username: string
+  email: string
+  full_name: string
+  is_active: boolean
+}
+
+interface JudgeAssignment {
+  id: number
+  judge_id: number
+  judge_username: string
+  judge_email: string
+  competition_id: number
+  competition_title: string
+  competition_status: string
+  is_active: boolean
+  created_at: string
+}
+
+interface ScoreAuditLog {
+  id: number
+  action_type: 'create' | 'update' | 'delete'
+  composition_score: number | null
+  technical_score: number | null
+  creativity_score: number | null
+  overall_score: number | null
+  comments: string | null
+  prev_composition_score: number | null
+  prev_technical_score: number | null
+  prev_creativity_score: number | null
+  prev_overall_score: number | null
+  prev_comments: string | null
+  ip_address: string | null
+  user_agent: string | null
+  session_id: string | null
+  judge_identifier: string | null
+  score_id: number | null
+  submission_id: number
+  judge_id: number
+  competition_id: number
+  created_at: string
+}
+
+interface AuditLogListResponse {
+  logs: ScoreAuditLog[]
+  total_count: number
+  unique_sessions: number
+  unique_ips: number
+}
+
 const router = useRouter()
 const authStore = useAuthStore()
 
 // State
-const activeTab = ref<'users' | 'competitions' | 'stats'>('stats')
+const activeTab = ref<'users' | 'competitions' | 'judges' | 'stats' | 'scoring'>('stats')
 const users = ref<User[]>([])
 const competitions = ref<Competition[]>([])
+const judges = ref<Judge[]>([])
+const judgeAssignments = ref<JudgeAssignment[]>([])
 const isLoading = ref(true)
+const isLoadingJudges = ref(false)
+const isAssigning = ref(false)
 const error = ref('')
 const success = ref('')
+const searchQuery = ref('')
+
+// Score audit log state
+const auditLogs = ref<ScoreAuditLog[]>([])
+const auditLogStats = ref<{ total_count: number; unique_sessions: number; unique_ips: number } | null>(null)
+const isLoadingAuditLogs = ref(false)
+const selectedAuditCompetitionId = ref<number | null>(null)
+
+// New assignment form
+const selectedJudgeId = ref<number | null>(null)
+const selectedCompetitionId = ref<number | null>(null)
 
 // Stats
 const stats = ref({
@@ -52,6 +122,47 @@ const stats = ref({
 // Check if user is admin
 const isAdmin = computed(() => {
   return authStore.user?.role === 'admin'
+})
+
+// Filtered users
+const filteredUsers = computed(() => {
+  if (!searchQuery.value.trim()) return users.value
+  const query = searchQuery.value.toLowerCase()
+  return users.value.filter(u =>
+    u.username.toLowerCase().includes(query) ||
+    u.email.toLowerCase().includes(query) ||
+    u.full_name?.toLowerCase().includes(query)
+  )
+})
+
+// Filtered competitions
+const filteredCompetitions = computed(() => {
+  if (!searchQuery.value.trim()) return competitions.value
+  const query = searchQuery.value.toLowerCase()
+  return competitions.value.filter(c =>
+    c.title.toLowerCase().includes(query)
+  )
+})
+
+// Group assignments by competition
+const assignmentsByCompetition = computed(() => {
+  const grouped: Record<number, { competition: { id: number; title: string; status: string }; assignments: JudgeAssignment[] }> = {}
+
+  for (const assignment of judgeAssignments.value) {
+    if (!grouped[assignment.competition_id]) {
+      grouped[assignment.competition_id] = {
+        competition: {
+          id: assignment.competition_id,
+          title: assignment.competition_title,
+          status: assignment.competition_status,
+        },
+        assignments: [],
+      }
+    }
+    grouped[assignment.competition_id].assignments.push(assignment)
+  }
+
+  return Object.values(grouped)
 })
 
 onMounted(async () => {
@@ -81,7 +192,7 @@ const loadStats = async () => {
     ).length
     competitions.value = compsResponse.data
 
-    // Load submissions count (from users' submissions)
+    // Load submissions count
     const subsResponse = await apiClient.get('/submissions')
     stats.value.totalSubmissions = subsResponse.data.length
   } catch (err) {
@@ -92,17 +203,76 @@ const loadStats = async () => {
   }
 }
 
+const loadJudgesData = async () => {
+  try {
+    isLoadingJudges.value = true
+    error.value = ''
+
+    const [judgesResponse, assignmentsResponse] = await Promise.all([
+      apiClient.get('/scores/admin/judges'),
+      apiClient.get('/scores/admin/judge-assignments'),
+    ])
+
+    judges.value = judgesResponse.data
+    judgeAssignments.value = assignmentsResponse.data.filter((a: JudgeAssignment) => a.is_active)
+  } catch (err) {
+    error.value = 'Failed to load judges data'
+    console.error('Failed to load judges:', err)
+  } finally {
+    isLoadingJudges.value = false
+  }
+}
+
+const assignJudge = async () => {
+  if (!selectedJudgeId.value || !selectedCompetitionId.value) {
+    error.value = 'Please select both a judge and a competition'
+    return
+  }
+
+  try {
+    isAssigning.value = true
+    error.value = ''
+    success.value = ''
+
+    await apiClient.post(`/scores/admin/judge-assignments?judge_id=${selectedJudgeId.value}&competition_id=${selectedCompetitionId.value}`)
+
+    success.value = 'Judge assigned successfully'
+    selectedJudgeId.value = null
+    selectedCompetitionId.value = null
+    await loadJudgesData()
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosErr = err as { response?: { data?: { detail?: string } } }
+      error.value = axiosErr.response?.data?.detail || 'Failed to assign judge'
+    } else {
+      error.value = 'Failed to assign judge'
+    }
+  } finally {
+    isAssigning.value = false
+  }
+}
+
+const removeAssignment = async (assignmentId: number) => {
+  try {
+    error.value = ''
+    success.value = ''
+
+    await apiClient.delete(`/scores/admin/judge-assignments/${assignmentId}`)
+
+    success.value = 'Judge assignment removed'
+    await loadJudgesData()
+  } catch (err) {
+    error.value = 'Failed to remove assignment'
+  }
+}
+
 const updateUserRole = async (userId: number, newRole: string) => {
   try {
     error.value = ''
     success.value = ''
-    // Note: This would require a backend endpoint to update user roles
-    // For now, show a placeholder message
-    success.value = `Role update for user ${userId} to ${newRole} would be processed here`
-
-    // In production, you would call:
-    // await apiClient.patch(`/users/${userId}`, { role: newRole })
-    // await loadStats()
+    await apiClient.patch(`/users/${userId}`, { role: newRole })
+    success.value = `User role updated to ${newRole}`
+    await loadStats()
   } catch (err) {
     error.value = 'Failed to update user role'
   }
@@ -112,45 +282,141 @@ const toggleUserStatus = async (userId: number, isActive: boolean) => {
   try {
     error.value = ''
     success.value = ''
-    success.value = `User ${userId} status would be set to ${isActive ? 'active' : 'inactive'}`
+    await apiClient.patch(`/users/${userId}`, { is_active: isActive })
+    success.value = `User ${isActive ? 'enabled' : 'disabled'} successfully`
+    await loadStats()
   } catch (err) {
     error.value = 'Failed to update user status'
   }
 }
 
-const getRoleBadgeClass = (role: string) => {
-  const classes: Record<string, string> = {
-    admin: 'bg-red-500',
-    organizer: 'bg-purple-500',
-    judge: 'bg-blue-500',
-    participant: 'bg-green-500',
+const handleTabChange = async (tab: 'users' | 'competitions' | 'judges' | 'stats' | 'scoring') => {
+  activeTab.value = tab
+  searchQuery.value = ''
+
+  if (tab === 'judges' && judges.value.length === 0) {
+    await loadJudgesData()
   }
-  return classes[role] || 'bg-gray-500'
+
+  if (tab === 'scoring' && auditLogs.value.length === 0 && competitions.value.length > 0) {
+    // Auto-select first competition with submissions
+    selectedAuditCompetitionId.value = competitions.value[0]?.id || null
+    if (selectedAuditCompetitionId.value) {
+      await loadAuditLogs()
+    }
+  }
 }
 
-const getStatusBadgeClass = (status: string) => {
-  const classes: Record<string, string> = {
-    open: 'bg-green-500',
-    judging: 'bg-blue-500',
-    closed: 'bg-gray-500',
-    completed: 'bg-purple-500',
-    draft: 'bg-yellow-500',
+const loadAuditLogs = async () => {
+  if (!selectedAuditCompetitionId.value) return
+
+  isLoadingAuditLogs.value = true
+  try {
+    const response = await apiClient.get<AuditLogListResponse>(
+      `/scores/audit-logs/competition/${selectedAuditCompetitionId.value}`
+    )
+    auditLogs.value = response.data.logs
+    auditLogStats.value = {
+      total_count: response.data.total_count,
+      unique_sessions: response.data.unique_sessions,
+      unique_ips: response.data.unique_ips,
+    }
+  } catch (err) {
+    console.error('Failed to load audit logs:', err)
+    error.value = 'Failed to load scoring activity logs'
+  } finally {
+    isLoadingAuditLogs.value = false
   }
-  return classes[status] || 'bg-gray-500'
+}
+
+const onCompetitionChange = async () => {
+  auditLogs.value = []
+  auditLogStats.value = null
+  if (selectedAuditCompetitionId.value) {
+    await loadAuditLogs()
+  }
+}
+
+const getActionTypeVariant = (actionType: string) => {
+  const variants: Record<string, string> = {
+    create: 'default',
+    update: 'secondary',
+    delete: 'destructive',
+  }
+  return variants[actionType] || 'outline'
+}
+
+const formatDateTime = (dateStr: string) => {
+  return new Date(dateStr).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+}
+
+const truncateUserAgent = (ua: string | null) => {
+  if (!ua) return 'Unknown'
+  if (ua.includes('Chrome')) return 'Chrome'
+  if (ua.includes('Firefox')) return 'Firefox'
+  if (ua.includes('Safari')) return 'Safari'
+  if (ua.includes('Edge')) return 'Edge'
+  return ua.length > 30 ? ua.substring(0, 30) + '...' : ua
+}
+
+const getRoleVariant = (role: string) => {
+  const variants: Record<string, string> = {
+    admin: 'destructive',
+    organizer: 'default',
+    judge: 'secondary',
+    participant: 'outline',
+  }
+  return variants[role] || 'secondary'
+}
+
+const getStatusVariant = (status: string) => {
+  const variants: Record<string, string> = {
+    open: 'default',
+    judging: 'secondary',
+    closed: 'destructive',
+    completed: 'outline',
+    draft: 'outline',
+  }
+  return variants[status] || 'secondary'
 }
 
 const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString()
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
 }
+
+const statCards = computed(() => [
+  { label: 'Total Users', value: stats.value.totalUsers, icon: Users },
+  { label: 'Total Competitions', value: stats.value.totalCompetitions, icon: Trophy },
+  { label: 'Active Competitions', value: stats.value.activeCompetitions, icon: Activity },
+  { label: 'Total Submissions', value: stats.value.totalSubmissions, icon: Image },
+])
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-12">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold tracking-tight mb-4">Admin Panel</h1>
-      <p class="text-lg text-muted-foreground">
-        Manage users, competitions, and system settings
-      </p>
+  <div class="container mx-auto px-4 md:px-6 py-6 md:py-10">
+    <div class="mb-6 md:mb-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Settings class="w-5 h-5 md:w-6 md:h-6 text-primary" />
+        </div>
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold text-foreground">Admin Panel</h1>
+          <p class="text-sm md:text-lg text-muted-foreground">
+            Manage users, competitions, judges, and system settings
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- Not admin warning -->
@@ -170,99 +436,158 @@ const formatDate = (dateStr: string) => {
     </Alert>
 
     <!-- Loading state -->
-    <div v-if="isLoading" class="text-center py-12">
-      <p class="text-muted-foreground">Loading admin data...</p>
+    <div v-if="isLoading" class="text-center py-20">
+      <Loader2 class="w-12 h-12 text-primary animate-spin mx-auto mb-6" />
+      <p class="text-muted-foreground text-lg">Loading admin data...</p>
     </div>
 
     <template v-else-if="isAdmin">
-      <!-- Tab Navigation -->
-      <div class="flex gap-2 mb-8 border-b">
-        <Button
-          variant="ghost"
-          :class="{ 'border-b-2 border-primary': activeTab === 'stats' }"
-          @click="activeTab = 'stats'"
-        >
-          Dashboard
-        </Button>
-        <Button
-          variant="ghost"
-          :class="{ 'border-b-2 border-primary': activeTab === 'users' }"
-          @click="activeTab = 'users'"
-        >
-          Users
-        </Button>
-        <Button
-          variant="ghost"
-          :class="{ 'border-b-2 border-primary': activeTab === 'competitions' }"
-          @click="activeTab = 'competitions'"
-        >
-          Competitions
-        </Button>
+      <!-- Tab Navigation - Scrollable on mobile -->
+      <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 mb-6 md:mb-8">
+        <div class="flex gap-1 md:gap-2 border-b min-w-max">
+          <Button
+            variant="ghost"
+            size="sm"
+            :class="[
+              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'stats' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+            ]"
+            @click="handleTabChange('stats')"
+          >
+            Dashboard
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            :class="[
+              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'users' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+            ]"
+            @click="handleTabChange('users')"
+          >
+            Users
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            :class="[
+              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'competitions' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+            ]"
+            @click="handleTabChange('competitions')"
+          >
+            Competitions
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            :class="[
+              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'judges' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+            ]"
+            @click="handleTabChange('judges')"
+          >
+            <Gavel class="w-4 h-4 mr-1 md:mr-2" />
+            <span class="hidden sm:inline">Judge</span> Assignments
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            :class="[
+              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'scoring' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+            ]"
+            @click="handleTabChange('scoring')"
+          >
+            <History class="w-4 h-4 mr-1 md:mr-2" />
+            <span class="hidden sm:inline">Score</span> Audit
+          </Button>
+        </div>
       </div>
 
       <!-- Stats Tab -->
-      <div v-if="activeTab === 'stats'" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader class="pb-2">
-            <CardDescription>Total Users</CardDescription>
-            <CardTitle class="text-4xl">{{ stats.totalUsers }}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader class="pb-2">
-            <CardDescription>Total Competitions</CardDescription>
-            <CardTitle class="text-4xl">{{ stats.totalCompetitions }}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader class="pb-2">
-            <CardDescription>Active Competitions</CardDescription>
-            <CardTitle class="text-4xl">{{ stats.activeCompetitions }}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader class="pb-2">
-            <CardDescription>Total Submissions</CardDescription>
-            <CardTitle class="text-4xl">{{ stats.totalSubmissions }}</CardTitle>
-          </CardHeader>
-        </Card>
+      <div v-if="activeTab === 'stats'" class="space-y-4 md:space-y-6">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+          <Card v-for="stat in statCards" :key="stat.label">
+            <CardHeader class="pb-2">
+              <div class="flex items-center justify-between">
+                <CardDescription>{{ stat.label }}</CardDescription>
+                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <component :is="stat.icon" class="w-5 h-5 text-primary" />
+                </div>
+              </div>
+              <CardTitle class="text-4xl">{{ stat.value }}</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
 
         <!-- Quick Actions -->
-        <Card class="md:col-span-2 lg:col-span-4">
+        <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent class="flex gap-4 flex-wrap">
-            <Button @click="router.push('/competitions')">View Competitions</Button>
-            <Button variant="outline" @click="loadStats">Refresh Stats</Button>
+            <Button @click="router.push('/competitions')">
+              <Eye class="w-4 h-4 mr-2" />
+              View Competitions
+            </Button>
+            <Button variant="outline" @click="loadStats">
+              <RefreshCw class="w-4 h-4 mr-2" />
+              Refresh Stats
+            </Button>
+            <Button variant="secondary" @click="handleTabChange('judges')">
+              <Gavel class="w-4 h-4 mr-2" />
+              Manage Judges
+            </Button>
           </CardContent>
         </Card>
       </div>
 
       <!-- Users Tab -->
       <div v-if="activeTab === 'users'">
+        <!-- Search -->
+        <div class="relative mb-6">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            v-model="searchQuery"
+            placeholder="Search users..."
+            class="pl-10 h-12 text-base"
+          />
+          <button
+            v-if="searchQuery"
+            @click="searchQuery = ''"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
         <Card>
           <CardHeader>
-            <CardTitle>User Management</CardTitle>
-            <CardDescription>{{ users.length }} users registered</CardDescription>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Users class="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>User Management</CardTitle>
+                <CardDescription>{{ filteredUsers.length }} users</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b">
-                    <th class="text-left py-3 px-4">User</th>
-                    <th class="text-left py-3 px-4">Role</th>
-                    <th class="text-left py-3 px-4">Status</th>
-                    <th class="text-left py-3 px-4">Joined</th>
-                    <th class="text-left py-3 px-4">Actions</th>
+                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">User</th>
+                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Role</th>
+                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
+                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Joined</th>
+                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="user in users" :key="user.id" class="border-b">
+                  <tr v-for="user in filteredUsers" :key="user.id" class="border-b hover:bg-muted/50 transition-colors">
                     <td class="py-3 px-4">
                       <div>
                         <p class="font-medium">{{ user.username }}</p>
@@ -270,20 +595,20 @@ const formatDate = (dateStr: string) => {
                       </div>
                     </td>
                     <td class="py-3 px-4">
-                      <Badge :class="getRoleBadgeClass(user.role)">
+                      <Badge :variant="getRoleVariant(user.role)">
                         {{ user.role.toUpperCase() }}
                       </Badge>
                     </td>
                     <td class="py-3 px-4">
-                      <Badge :class="user.is_active ? 'bg-green-500' : 'bg-red-500'">
+                      <Badge :variant="user.is_active ? 'default' : 'destructive'">
                         {{ user.is_active ? 'Active' : 'Inactive' }}
                       </Badge>
                     </td>
-                    <td class="py-3 px-4">{{ formatDate(user.created_at) }}</td>
+                    <td class="py-3 px-4 text-muted-foreground">{{ formatDate(user.created_at) }}</td>
                     <td class="py-3 px-4">
                       <div class="flex gap-2">
                         <select
-                          class="text-xs border rounded px-2 py-1"
+                          class="text-sm border rounded-lg px-3 py-2 bg-background focus:ring-2 focus:ring-primary/20 transition-all"
                           :value="user.role"
                           @change="updateUserRole(user.id, ($event.target as HTMLSelectElement).value)"
                         >
@@ -294,7 +619,7 @@ const formatDate = (dateStr: string) => {
                         </select>
                         <Button
                           size="sm"
-                          variant="outline"
+                          :variant="user.is_active ? 'outline' : 'default'"
                           @click="toggleUserStatus(user.id, !user.is_active)"
                         >
                           {{ user.is_active ? 'Disable' : 'Enable' }}
@@ -311,45 +636,364 @@ const formatDate = (dateStr: string) => {
 
       <!-- Competitions Tab -->
       <div v-if="activeTab === 'competitions'">
+        <!-- Search -->
+        <div class="relative mb-6">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            v-model="searchQuery"
+            placeholder="Search competitions..."
+            class="pl-10 h-12 text-base"
+          />
+          <button
+            v-if="searchQuery"
+            @click="searchQuery = ''"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+
         <Card>
           <CardHeader>
-            <CardTitle>Competition Management</CardTitle>
-            <CardDescription>{{ competitions.length }} competitions</CardDescription>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Trophy class="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Competition Management</CardTitle>
+                <CardDescription>{{ filteredCompetitions.length }} competitions</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b">
-                    <th class="text-left py-3 px-4">Competition</th>
-                    <th class="text-left py-3 px-4">Status</th>
-                    <th class="text-left py-3 px-4">Dates</th>
-                    <th class="text-left py-3 px-4">Actions</th>
+                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Competition</th>
+                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
+                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Dates</th>
+                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="comp in competitions" :key="comp.id" class="border-b">
+                  <tr v-for="comp in filteredCompetitions" :key="comp.id" class="border-b hover:bg-muted/50 transition-colors">
                     <td class="py-3 px-4">
                       <p class="font-medium">{{ comp.title }}</p>
                     </td>
                     <td class="py-3 px-4">
-                      <Badge :class="getStatusBadgeClass(comp.status)">
+                      <Badge :variant="getStatusVariant(comp.status)">
                         {{ comp.status.toUpperCase() }}
                       </Badge>
                     </td>
-                    <td class="py-3 px-4">
-                      {{ formatDate(comp.submission_start) }} - {{ formatDate(comp.submission_end) }}
+                    <td class="py-3 px-4 text-muted-foreground">
+                      <div class="flex items-center gap-1">
+                        <Calendar class="w-3 h-3" />
+                        {{ formatDate(comp.submission_start) }} - {{ formatDate(comp.submission_end) }}
+                      </div>
                     </td>
                     <td class="py-3 px-4">
-                      <div class="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          @click="router.push(`/competitions/${comp.id}`)"
-                        >
-                          View
-                        </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        @click="router.push(`/competitions/${comp.id}`)"
+                      >
+                        <Eye class="w-3 h-3 mr-1" />
+                        View
+                      </Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Judges Tab -->
+      <div v-if="activeTab === 'judges'">
+        <!-- Loading -->
+        <div v-if="isLoadingJudges" class="text-center py-12">
+          <Loader2 class="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+          <p class="text-muted-foreground">Loading judge data...</p>
+        </div>
+
+        <template v-else>
+          <!-- Assign Judge Card -->
+          <Card class="mb-6">
+            <CardHeader>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                  <UserPlus class="w-5 h-5 text-green-500" />
+                </div>
+                <div>
+                  <CardTitle>Assign Judge to Competition</CardTitle>
+                  <CardDescription>Select a judge and competition to create an assignment</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div class="flex flex-wrap gap-4 items-end">
+                <div class="flex-1 min-w-[200px]">
+                  <Label class="mb-2 block">Select Judge</Label>
+                  <select
+                    v-model="selectedJudgeId"
+                    class="w-full border rounded-lg px-3 py-2.5 bg-background focus:ring-2 focus:ring-primary/20 transition-all"
+                  >
+                    <option :value="null">-- Choose a judge --</option>
+                    <option v-for="judge in judges" :key="judge.id" :value="judge.id">
+                      {{ judge.username }} ({{ judge.email }})
+                    </option>
+                  </select>
+                </div>
+
+                <div class="flex-1 min-w-[200px]">
+                  <Label class="mb-2 block">Select Competition</Label>
+                  <select
+                    v-model="selectedCompetitionId"
+                    class="w-full border rounded-lg px-3 py-2.5 bg-background focus:ring-2 focus:ring-primary/20 transition-all"
+                  >
+                    <option :value="null">-- Choose a competition --</option>
+                    <option v-for="comp in competitions" :key="comp.id" :value="comp.id">
+                      {{ comp.title }} ({{ comp.status }})
+                    </option>
+                  </select>
+                </div>
+
+                <Button @click="assignJudge" :disabled="isAssigning || !selectedJudgeId || !selectedCompetitionId">
+                  <Loader2 v-if="isAssigning" class="w-4 h-4 mr-2 animate-spin" />
+                  <Plus v-else class="w-4 h-4 mr-2" />
+                  Assign Judge
+                </Button>
+              </div>
+
+              <p v-if="judges.length === 0" class="mt-4 text-sm text-muted-foreground">
+                No judges found. Change a user's role to "Judge" in the Users tab first.
+              </p>
+            </CardContent>
+          </Card>
+
+          <!-- Current Assignments -->
+          <Card>
+            <CardHeader>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Gavel class="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle>Current Judge Assignments</CardTitle>
+                  <CardDescription>
+                    {{ judgeAssignments.length }} active assignments across {{ assignmentsByCompetition.length }} competitions
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div v-if="assignmentsByCompetition.length === 0" class="text-center py-8 text-muted-foreground">
+                No judge assignments yet. Use the form above to assign judges to competitions.
+              </div>
+
+              <div v-else class="space-y-6">
+                <div
+                  v-for="group in assignmentsByCompetition"
+                  :key="group.competition.id"
+                  class="p-4 rounded-xl border bg-muted/20"
+                >
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                      <Trophy class="w-5 h-5 text-primary" />
+                      <div>
+                        <h3 class="font-semibold">{{ group.competition.title }}</h3>
+                        <Badge :variant="getStatusVariant(group.competition.status)" class="text-xs">
+                          {{ group.competition.status.toUpperCase() }}
+                        </Badge>
                       </div>
+                    </div>
+                    <span class="text-sm text-muted-foreground">
+                      {{ group.assignments.length }} judge(s)
+                    </span>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <div
+                      v-for="assignment in group.assignments"
+                      :key="assignment.id"
+                      class="flex items-center justify-between p-3 rounded-lg bg-background border"
+                    >
+                      <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                          <span class="text-sm font-medium">{{ assignment.judge_username.charAt(0).toUpperCase() }}</span>
+                        </div>
+                        <div>
+                          <p class="text-sm font-medium">{{ assignment.judge_username }}</p>
+                          <p class="text-xs text-muted-foreground">{{ assignment.judge_email }}</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        class="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        @click="removeAssignment(assignment.id)"
+                      >
+                        <Trash2 class="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </template>
+      </div>
+
+      <!-- Score Audit Logs Tab -->
+      <div v-if="activeTab === 'scoring'">
+        <!-- Competition Selector -->
+        <Card class="mb-6">
+          <CardHeader>
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <History class="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle>Score Audit Logs</CardTitle>
+                <CardDescription>View all scoring activity with judge details, IP addresses, and timestamps</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div class="flex flex-col sm:flex-row sm:items-end gap-3 md:gap-4">
+              <div class="flex-1">
+                <Label class="mb-2 block text-sm">Select Competition</Label>
+                <select
+                  v-model="selectedAuditCompetitionId"
+                  @change="onCompetitionChange"
+                  class="w-full border rounded-lg px-3 py-2.5 bg-background focus:ring-2 focus:ring-primary/20 transition-all text-sm md:text-base"
+                >
+                  <option :value="null">-- Choose a competition --</option>
+                  <option v-for="comp in competitions" :key="comp.id" :value="comp.id">
+                    {{ comp.title }} ({{ comp.status }})
+                  </option>
+                </select>
+              </div>
+              <Button variant="outline" size="sm" class="w-full sm:w-auto" @click="loadAuditLogs" :disabled="isLoadingAuditLogs || !selectedAuditCompetitionId">
+                <RefreshCw class="w-4 h-4 mr-2" :class="{ 'animate-spin': isLoadingAuditLogs }" />
+                Refresh
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Audit Stats Summary -->
+        <div v-if="auditLogStats && selectedAuditCompetitionId" class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6">
+          <Card>
+            <CardContent class="pt-4 md:pt-6 text-center">
+              <p class="text-2xl md:text-3xl font-bold text-primary">{{ auditLogStats.total_count }}</p>
+              <p class="text-xs md:text-sm text-muted-foreground">Total Score Actions</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent class="pt-4 md:pt-6 text-center">
+              <p class="text-2xl md:text-3xl font-bold text-orange-500">{{ auditLogStats.unique_ips }}</p>
+              <p class="text-xs md:text-sm text-muted-foreground flex items-center justify-center gap-1">
+                <Network class="w-3 h-3" /> Unique IP Addresses
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent class="pt-4 md:pt-6 text-center">
+              <p class="text-2xl md:text-3xl font-bold text-blue-500">{{ auditLogStats.unique_sessions }}</p>
+              <p class="text-xs md:text-sm text-muted-foreground flex items-center justify-center gap-1">
+                <Monitor class="w-3 h-3" /> Unique Sessions
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="isLoadingAuditLogs" class="text-center py-12">
+          <Loader2 class="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+          <p class="text-muted-foreground">Loading scoring activity...</p>
+        </div>
+
+        <!-- No Competition Selected -->
+        <div v-else-if="!selectedAuditCompetitionId" class="text-center py-12">
+          <History class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <p class="text-lg text-muted-foreground">Select a competition to view scoring activity</p>
+        </div>
+
+        <!-- No Logs -->
+        <div v-else-if="auditLogs.length === 0" class="text-center py-12">
+          <History class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <p class="text-lg text-muted-foreground">No scoring activity recorded for this competition yet.</p>
+        </div>
+
+        <!-- Audit Logs Table -->
+        <Card v-else>
+          <CardHeader>
+            <CardTitle>Scoring Activity ({{ auditLogs.length }} actions)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b bg-muted/50">
+                    <th class="text-left py-3 px-4 font-medium">Action</th>
+                    <th class="text-left py-3 px-4 font-medium">Submission</th>
+                    <th class="text-left py-3 px-4 font-medium">Scores</th>
+                    <th class="text-left py-3 px-4 font-medium">Judge Info</th>
+                    <th class="text-left py-3 px-4 font-medium">Client Details</th>
+                    <th class="text-left py-3 px-4 font-medium">Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="log in auditLogs" :key="log.id" class="border-b hover:bg-muted/30 transition-colors">
+                    <td class="py-3 px-4">
+                      <Badge :variant="getActionTypeVariant(log.action_type)">
+                        {{ log.action_type.toUpperCase() }}
+                      </Badge>
+                    </td>
+                    <td class="py-3 px-4">
+                      <span class="font-mono text-muted-foreground">#{{ log.submission_id }}</span>
+                    </td>
+                    <td class="py-3 px-4">
+                      <div v-if="log.action_type !== 'delete'" class="text-xs space-y-1">
+                        <div class="flex gap-3">
+                          <span>C: <strong>{{ log.composition_score?.toFixed(1) }}</strong></span>
+                          <span>T: <strong>{{ log.technical_score?.toFixed(1) }}</strong></span>
+                          <span>R: <strong>{{ log.creativity_score?.toFixed(1) }}</strong></span>
+                        </div>
+                        <div class="font-bold text-primary">
+                          Overall: {{ log.overall_score?.toFixed(2) }}
+                        </div>
+                      </div>
+                      <div v-else class="text-xs text-muted-foreground">
+                        Deleted score
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="text-xs">
+                        <div class="font-medium">Judge ID: {{ log.judge_id }}</div>
+                        <div v-if="log.judge_identifier" class="text-primary font-semibold">
+                          <UserIcon class="w-3 h-3 inline mr-1" />
+                          {{ log.judge_identifier }}
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4">
+                      <div class="text-xs space-y-1">
+                        <div class="flex items-center gap-1">
+                          <Network class="w-3 h-3 text-muted-foreground" />
+                          <span class="font-mono">{{ log.ip_address || 'Unknown' }}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <Monitor class="w-3 h-3 text-muted-foreground" />
+                          <span>{{ truncateUserAgent(log.user_agent) }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-4 text-xs text-muted-foreground whitespace-nowrap">
+                      {{ formatDateTime(log.created_at) }}
                     </td>
                   </tr>
                 </tbody>

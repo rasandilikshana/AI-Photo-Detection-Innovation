@@ -64,6 +64,12 @@ const router = createRouter({
       component: () => import('./views/AdminPanel.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },
     },
+    {
+      path: '/organizer',
+      name: 'OrganizerPanel',
+      component: () => import('./views/OrganizerPanel.vue'),
+      meta: { requiresAuth: true, requiresOrganizer: true },
+    },
   ],
 })
 
@@ -74,6 +80,12 @@ router.beforeEach(async (to, _from, next) => {
   // Try to fetch current user if we have a token
   if (localStorage.getItem('access_token') && !authStore.user) {
     await authStore.fetchCurrentUser()
+  }
+
+  // Redirect authenticated users away from login/register pages
+  if ((to.name === 'Login' || to.name === 'Register') && authStore.isAuthenticated) {
+    next({ name: 'Competitions' })
+    return
   }
 
   // Check authentication
@@ -94,6 +106,15 @@ router.beforeEach(async (to, _from, next) => {
   // Check admin role
   if (to.meta.requiresAdmin) {
     if (authStore.user?.role !== 'admin') {
+      next({ name: 'Home' })
+      return
+    }
+  }
+
+  // Check organizer role
+  if (to.meta.requiresOrganizer) {
+    const userRole = authStore.user?.role
+    if (userRole !== 'organizer' && userRole !== 'admin') {
       next({ name: 'Home' })
       return
     }

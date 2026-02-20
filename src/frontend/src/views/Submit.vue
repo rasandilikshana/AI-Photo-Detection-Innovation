@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ArrowLeft, Upload, Image, FileImage, Info } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -124,33 +125,38 @@ const handleSubmit = async () => {
 <template>
   <div class="container mx-auto px-4 py-12 max-w-2xl">
     <div class="mb-6">
-      <Button variant="ghost" @click="router.back()">
-        ← Back
+      <Button variant="ghost" @click="router.back()" class="group">
+        <ArrowLeft class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+        Back
       </Button>
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="flex justify-center items-center py-12">
+    <div v-if="isLoading" class="flex flex-col justify-center items-center py-12">
+      <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gradient-start to-gradient-end mx-auto mb-4 animate-glow-pulse" />
       <div class="text-muted-foreground">Loading competition details...</div>
     </div>
 
     <!-- Load Error -->
-    <Alert v-else-if="loadError" variant="destructive" class="mb-6">
+    <Alert v-else-if="loadError" variant="destructive" class="mb-6 animate-fade-in">
       <AlertDescription>{{ loadError }}</AlertDescription>
       <Button variant="outline" size="sm" class="mt-4" @click="router.back()">
         Go Back
       </Button>
     </Alert>
 
-    <Card v-else>
-      <CardHeader>
-        <CardTitle>Submit Your Entry</CardTitle>
+    <Card v-else class="animate-fade-in-up">
+      <CardHeader class="text-center">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-gradient-start to-gradient-end flex items-center justify-center mx-auto mb-4 shadow-glow">
+          <Upload class="w-8 h-8 text-white" />
+        </div>
+        <CardTitle class="text-2xl gradient-text">Submit Your Entry</CardTitle>
         <CardDescription v-if="competitionsStore.currentCompetition">
-          Submitting to: {{ competitionsStore.currentCompetition.title }}
+          Submitting to: <span class="font-medium text-foreground">{{ competitionsStore.currentCompetition.title }}</span>
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Alert v-if="submissionsStore.error" variant="destructive" class="mb-6">
+        <Alert v-if="submissionsStore.error" variant="destructive" class="mb-6 animate-fade-in">
           <AlertDescription>{{ submissionsStore.error }}</AlertDescription>
         </Alert>
 
@@ -163,6 +169,7 @@ const handleSubmit = async () => {
               placeholder="Enter your photo title"
               required
               :disabled="isSubmitting"
+              class="bg-white/5 border-white/10 focus:border-gradient-mid transition-all duration-300"
             />
           </div>
 
@@ -174,11 +181,15 @@ const handleSubmit = async () => {
               placeholder="Describe your photo (optional)"
               rows="4"
               :disabled="isSubmitting"
+              class="bg-white/5 border-white/10 focus:border-gradient-mid transition-all duration-300"
             />
           </div>
 
           <div class="space-y-2">
-            <Label for="jpgFile">JPG File*</Label>
+            <Label for="jpgFile" class="flex items-center gap-2">
+              <Image class="w-4 h-4 text-gradient-mid" />
+              JPG File*
+            </Label>
             <Input
               id="jpgFile"
               type="file"
@@ -186,14 +197,17 @@ const handleSubmit = async () => {
               @change="handleJpgFileChange"
               required
               :disabled="isSubmitting"
+              class="bg-white/5 border-white/10 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gradient-to-r file:from-gradient-start file:to-gradient-mid file:text-white file:text-sm file:font-semibold hover:file:opacity-90 cursor-pointer"
             />
-            <p class="text-sm text-muted-foreground">
-              Upload your photo in JPG or JPEG format
+            <p class="text-sm text-muted-foreground flex items-center gap-1">
+              <Info class="w-3 h-3" />
+              Upload your photo in JPG or JPEG format (max {{ MAX_JPG_SIZE_MB }}MB)
             </p>
           </div>
 
           <div class="space-y-2">
-            <Label for="rawFile">
+            <Label for="rawFile" class="flex items-center gap-2">
+              <FileImage class="w-4 h-4 text-gradient-end" />
               RAW File{{ competitionsStore.currentCompetition?.require_raw_files ? '*' : '' }}
             </Label>
             <Input
@@ -203,13 +217,15 @@ const handleSubmit = async () => {
               @change="handleRawFileChange"
               :required="competitionsStore.currentCompetition?.require_raw_files"
               :disabled="isSubmitting"
+              class="bg-white/5 border-white/10 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gradient-to-r file:from-gradient-mid file:to-gradient-end file:text-white file:text-sm file:font-semibold hover:file:opacity-90 cursor-pointer"
             />
-            <p class="text-sm text-muted-foreground">
-              Upload your RAW file for verification
+            <p class="text-sm text-muted-foreground flex items-center gap-1">
+              <Info class="w-3 h-3" />
+              Upload your RAW file for verification (max {{ MAX_RAW_SIZE_MB }}MB)
             </p>
           </div>
 
-          <div class="flex gap-4">
+          <div class="flex gap-4 pt-4">
             <Button type="button" variant="outline" @click="router.back()" :disabled="isSubmitting">
               Cancel
             </Button>

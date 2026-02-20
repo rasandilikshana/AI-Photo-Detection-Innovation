@@ -29,8 +29,15 @@ class DigitalFingerprintAnalyzer:
     """
 
     def __init__(self):
-        self.prnu_threshold = 0.02  # Minimum PRNU energy
-        self.ela_threshold = 30.0  # ELA uniformity threshold
+        # PRNU threshold - lowered significantly because well-exposed photos
+        # from modern cameras have very low sensor noise
+        self.prnu_threshold = 0.0001  # Minimum PRNU energy (was 0.02)
+
+        # ELA threshold - this measures standard deviation of compression differences
+        # Real photos have LOW uniformity (consistent compression)
+        # Manipulated images have HIGH non-uniformity (inconsistent compression)
+        self.ela_threshold = 5.0  # ELA uniformity threshold (was 30.0)
+
         self.fft_threshold = 0.15  # High-frequency content threshold
 
     async def analyze(self, jpg_path: str, raw_path: Optional[str] = None) -> Dict:
@@ -143,19 +150,25 @@ class DigitalFingerprintAnalyzer:
             prnu_energy = np.var(prnu)
 
             # Analyze PRNU pattern
+            # Real camera photos typically have PRNU energy between 0.0001 and 0.01
+            # depending on ISO, exposure, and camera sensor quality
+            # AI-generated images have essentially zero PRNU (< 0.00001)
             flags = []
             score = 1.0
 
-            if prnu_energy < self.prnu_threshold:
+            if prnu_energy < 0.00001:
+                # Extremely low - almost certainly AI-generated
                 flags.append(f"CRITICAL: Null/flat PRNU pattern detected (energy={prnu_energy:.6f})")
                 flags.append("Image lacks genuine sensor noise - likely AI-generated")
                 score = 0.0
-            elif prnu_energy < self.prnu_threshold * 2:
+            elif prnu_energy < self.prnu_threshold:
+                # Very low but detectable - suspicious
                 flags.append(f"WARNING: Weak PRNU pattern (energy={prnu_energy:.6f})")
-                score = 0.3
+                score = 0.5
             else:
+                # Normal range for real camera photos
                 flags.append(f"Valid PRNU pattern detected (energy={prnu_energy:.6f})")
-                score = min(1.0, prnu_energy / (self.prnu_threshold * 5))
+                score = 1.0
 
             return {
                 "score": score,
@@ -218,21 +231,28 @@ class DigitalFingerprintAnalyzer:
             flags = []
             score = 1.0
 
-            if uniformity < self.ela_threshold:
-                flags.append(f"SUSPICIOUS: Highly uniform ELA pattern (uniformity={uniformity:.2f})")
-                flags.append("Entire image shows consistent compression signature - AI generation indicator")
-                score = 0.2
-            elif uniformity < self.ela_threshold * 1.5:
-                flags.append(f"WARNING: Somewhat uniform ELA (uniformity={uniformity:.2f})")
-                score = 0.5
+            # ELA Logic Fix:
+            # - Genuine photos saved once at high quality have LOW and UNIFORM compression differences
+            # - Manipulated/composite images have HIGH and NON-UNIFORM compression differences
+            # - AI-generated images often have unusual patterns but not necessarily high uniformity
+
+            # Check for manipulation indicators (high non-uniformity suggests edits/composites)
+            if uniformity > 50.0:
+                flags.append(f"SUSPICIOUS: High ELA non-uniformity detected (std={uniformity:.2f})")
+                flags.append("Image shows inconsistent compression - possible manipulation")
+                score = 0.3
+            elif uniformity > 30.0:
+                flags.append(f"WARNING: Elevated ELA non-uniformity (std={uniformity:.2f})")
+                score = 0.6
             else:
-                flags.append(f"Normal ELA pattern (uniformity={uniformity:.2f})")
+                # Low uniformity is NORMAL for genuine unedited photos
+                flags.append(f"Normal ELA pattern (std={uniformity:.2f})")
                 score = 1.0
 
-            # Check for suspiciously high overall error
-            if ela_mean > 50:
-                flags.append(f"High compression error detected (mean={ela_mean:.2f})")
-                score *= 0.7
+            # Check for suspiciously high overall error (could indicate heavy editing)
+            if ela_mean > 30:
+                flags.append(f"Elevated compression error detected (mean={ela_mean:.2f})")
+                score *= 0.8
 
             return {
                 "score": score,

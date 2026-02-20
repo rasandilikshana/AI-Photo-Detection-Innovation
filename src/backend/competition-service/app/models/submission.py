@@ -72,6 +72,7 @@ class Submission(BaseModel):
     user = relationship("User", back_populates="submissions")
     competition = relationship("Competition", back_populates="submissions")
     scores = relationship("Score", back_populates="submission", cascade="all, delete-orphan")
+    score_audit_logs = relationship("ScoreAuditLog", back_populates="submission")
 
     def __repr__(self):
         return f"<Submission {self.title} by User#{self.user_id}>"

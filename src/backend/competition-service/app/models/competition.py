@@ -62,6 +62,7 @@ class Competition(BaseModel):
     # Relationships
     submissions = relationship("Submission", back_populates="competition", cascade="all, delete-orphan")
     judge_assignments = relationship("JudgeAssignment", back_populates="competition", cascade="all, delete-orphan")
+    score_audit_logs = relationship("ScoreAuditLog", back_populates="competition")
 
     def __repr__(self):
         return f"<Competition {self.title} ({self.status})>"

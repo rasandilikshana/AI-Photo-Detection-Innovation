@@ -3,18 +3,20 @@ Submission management routes
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 from typing import List, Optional
 import aiofiles
+import httpx
 import os
 from pathlib import Path
 
-from app.database import get_db
+from app.database import get_db, AsyncSessionLocal
 from app.models.user import User, UserRole
 from app.models.competition import Competition, CompetitionStatus
-from app.models.submission import Submission, SubmissionStatus
+from app.models.submission import Submission, SubmissionStatus, VerificationVerdict
 from app.schemas import SubmissionResponse, MessageResponse
 from app.utils.auth import get_current_user
 from app.utils.security import validate_file_extension, sanitize_filename
@@ -28,8 +30,124 @@ router = APIRouter()
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 
 
+def path_to_url(file_path: Optional[str]) -> Optional[str]:
+    """Convert a local file path to a web-accessible URL"""
+    if not file_path:
+        return None
+    # Extract just the filename from the path
+    filename = os.path.basename(file_path)
+    return f"/uploads/{filename}"
+
+# AI Detection Service URL
+AI_DETECTION_SERVICE_URL = os.getenv("AI_DETECTION_SERVICE_URL", "http://localhost:8001")
+
+
+async def run_ai_analysis(submission_id: int, jpg_path: str, raw_path: Optional[str]):
+    """
+    Background task to run AI detection analysis on a submission.
+    Updates the submission with verification results.
+    """
+    logger.info(f"[Submission {submission_id}] Starting AI analysis...")
+
+    try:
+        async with AsyncSessionLocal() as db:
+            # Get submission
+            result = await db.execute(
+                select(Submission).where(Submission.id == submission_id)
+            )
+            submission = result.scalar_one_or_none()
+
+            if not submission:
+                logger.error(f"[Submission {submission_id}] Submission not found")
+                return
+
+            # Update status to ANALYZING
+            submission.status = SubmissionStatus.ANALYZING
+            await db.commit()
+
+            # Prepare files for AI Detection Service
+            files = {}
+
+            # Open JPG file
+            with open(jpg_path, 'rb') as jpg_file:
+                files['jpg_file'] = (os.path.basename(jpg_path), jpg_file.read(), 'image/jpeg')
+
+            # Open RAW file if provided
+            if raw_path and os.path.exists(raw_path):
+                with open(raw_path, 'rb') as raw_file:
+                    files['raw_file'] = (os.path.basename(raw_path), raw_file.read(), 'application/octet-stream')
+
+            # Call AI Detection Service
+            logger.info(f"[Submission {submission_id}] Calling AI Detection Service at {AI_DETECTION_SERVICE_URL}")
+
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                response = await client.post(
+                    f"{AI_DETECTION_SERVICE_URL}/api/v1/analyze",
+                    files=files
+                )
+
+                if response.status_code == 200:
+                    ai_result = response.json()
+                    logger.info(f"[Submission {submission_id}] AI Analysis complete: {ai_result['verdict']}")
+
+                    # Map AI verdict to submission status and verification
+                    verdict_map = {
+                        "AUTHENTIC": (SubmissionStatus.APPROVED, VerificationVerdict.AUTHENTIC),
+                        "REJECT": (SubmissionStatus.REJECTED, VerificationVerdict.AI_GENERATED),
+                        "QUARANTINE": (SubmissionStatus.PENDING, VerificationVerdict.SUSPICIOUS),
+                    }
+
+                    new_status, verification_verdict = verdict_map.get(
+                        ai_result['verdict'],
+                        (SubmissionStatus.PENDING, VerificationVerdict.NEEDS_REVIEW)
+                    )
+
+                    # Update submission with results
+                    submission.status = new_status
+                    submission.verification_verdict = verification_verdict
+                    submission.verification_confidence = ai_result.get('confidence_score', 0.0)
+                    submission.verification_details = ai_result
+                    submission.verification_timestamp = ai_result.get('timestamp', '')
+
+                    # Extract camera info from metadata if available
+                    layer1 = ai_result.get('layer1_result', {})
+                    if layer1:
+                        metadata = layer1.get('metadata', {})
+                        submission.camera_make = metadata.get('Make', '')
+                        submission.camera_model = metadata.get('Model', '')
+                        submission.iso = metadata.get('ISO')
+                        submission.aperture = metadata.get('FNumber', '')
+                        submission.shutter_speed = metadata.get('ExposureTime', '')
+                        submission.capture_date = metadata.get('DateTimeOriginal', '')
+
+                    await db.commit()
+                    logger.info(f"[Submission {submission_id}] Updated with verdict: {verification_verdict}")
+
+                else:
+                    logger.error(f"[Submission {submission_id}] AI Detection failed: {response.status_code} - {response.text}")
+                    submission.status = SubmissionStatus.PENDING
+                    submission.verification_verdict = VerificationVerdict.NEEDS_REVIEW
+                    await db.commit()
+
+    except Exception as e:
+        logger.error(f"[Submission {submission_id}] AI analysis error: {str(e)}", exc_info=True)
+        try:
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(
+                    select(Submission).where(Submission.id == submission_id)
+                )
+                submission = result.scalar_one_or_none()
+                if submission:
+                    submission.status = SubmissionStatus.PENDING
+                    submission.verification_verdict = VerificationVerdict.NEEDS_REVIEW
+                    await db.commit()
+        except Exception as db_err:
+            logger.error(f"[Submission {submission_id}] Failed to update status: {db_err}")
+
+
 @router.post("", response_model=SubmissionResponse, status_code=status.HTTP_201_CREATED)
 async def create_submission(
+    background_tasks: BackgroundTasks,
     title: str = Form(...),
     competition_id: int = Form(...),
     description: Optional[str] = Form(None),
@@ -174,9 +292,47 @@ async def create_submission(
     await db.commit()
     await db.refresh(new_submission)
 
-    # TODO: Trigger AI analysis asynchronously
+    # Trigger AI analysis in background
+    logger.info(f"[Submission {new_submission.id}] Triggering AI analysis in background")
+    background_tasks.add_task(
+        run_ai_analysis,
+        new_submission.id,
+        str(jpg_path),
+        str(raw_path) if raw_path else None
+    )
 
-    return new_submission
+    # Re-query with competition relationship loaded to avoid greenlet error
+    result = await db.execute(
+        select(Submission)
+        .options(selectinload(Submission.competition))
+        .where(Submission.id == new_submission.id)
+    )
+    submission_with_competition = result.scalar_one()
+
+    return SubmissionResponse(
+        id=submission_with_competition.id,
+        title=submission_with_competition.title,
+        description=submission_with_competition.description,
+        jpg_file_url=path_to_url(submission_with_competition.jpg_file_url) or "",
+        raw_file_url=path_to_url(submission_with_competition.raw_file_url),
+        status=submission_with_competition.status,
+        verification_verdict=submission_with_competition.verification_verdict,
+        verification_confidence=submission_with_competition.verification_confidence,
+        verification_details=submission_with_competition.verification_details,
+        verification_timestamp=submission_with_competition.verification_timestamp,
+        camera_make=submission_with_competition.camera_make,
+        camera_model=submission_with_competition.camera_model,
+        iso=submission_with_competition.iso,
+        aperture=submission_with_competition.aperture,
+        shutter_speed=submission_with_competition.shutter_speed,
+        capture_date=submission_with_competition.capture_date,
+        total_score=submission_with_competition.total_score,
+        score_count=submission_with_competition.score_count,
+        user_id=submission_with_competition.user_id,
+        competition_id=submission_with_competition.competition_id,
+        competition=submission_with_competition.competition,
+        created_at=submission_with_competition.created_at,
+    )
 
 
 @router.get("", response_model=List[SubmissionResponse])
@@ -196,7 +352,7 @@ async def list_submissions(
     - **skip**: Pagination offset
     - **limit**: Maximum results
     """
-    query = select(Submission)
+    query = select(Submission).options(selectinload(Submission.competition))
 
     if competition_id:
         query = query.where(Submission.competition_id == competition_id)
@@ -209,7 +365,35 @@ async def list_submissions(
     result = await db.execute(query)
     submissions = result.scalars().all()
 
-    return submissions
+    # Convert file paths to URLs and build response
+    response_list = []
+    for sub in submissions:
+        response_list.append(SubmissionResponse(
+            id=sub.id,
+            title=sub.title,
+            description=sub.description,
+            jpg_file_url=path_to_url(sub.jpg_file_url) or "",
+            raw_file_url=path_to_url(sub.raw_file_url),
+            status=sub.status,
+            verification_verdict=sub.verification_verdict,
+            verification_confidence=sub.verification_confidence,
+            verification_details=sub.verification_details,
+            verification_timestamp=sub.verification_timestamp,
+            camera_make=sub.camera_make,
+            camera_model=sub.camera_model,
+            iso=sub.iso,
+            aperture=sub.aperture,
+            shutter_speed=sub.shutter_speed,
+            capture_date=sub.capture_date,
+            total_score=sub.total_score,
+            score_count=sub.score_count,
+            user_id=sub.user_id,
+            competition_id=sub.competition_id,
+            competition=sub.competition,
+            created_at=sub.created_at,
+        ))
+
+    return response_list
 
 
 @router.get("/{submission_id}", response_model=SubmissionResponse)
@@ -222,17 +406,42 @@ async def get_submission(
     Get submission by ID
     """
     result = await db.execute(
-        select(Submission).where(Submission.id == submission_id)
+        select(Submission)
+        .options(selectinload(Submission.competition))
+        .where(Submission.id == submission_id)
     )
-    submission = result.scalar_one_or_none()
+    sub = result.scalar_one_or_none()
 
-    if not submission:
+    if not sub:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Submission not found",
         )
 
-    return submission
+    return SubmissionResponse(
+        id=sub.id,
+        title=sub.title,
+        description=sub.description,
+        jpg_file_url=path_to_url(sub.jpg_file_url) or "",
+        raw_file_url=path_to_url(sub.raw_file_url),
+        status=sub.status,
+        verification_verdict=sub.verification_verdict,
+        verification_confidence=sub.verification_confidence,
+        verification_details=sub.verification_details,
+        verification_timestamp=sub.verification_timestamp,
+        camera_make=sub.camera_make,
+        camera_model=sub.camera_model,
+        iso=sub.iso,
+        aperture=sub.aperture,
+        shutter_speed=sub.shutter_speed,
+        capture_date=sub.capture_date,
+        total_score=sub.total_score,
+        score_count=sub.score_count,
+        user_id=sub.user_id,
+        competition_id=sub.competition_id,
+        competition=sub.competition,
+        created_at=sub.created_at,
+    )
 
 
 @router.delete("/{submission_id}", response_model=MessageResponse)

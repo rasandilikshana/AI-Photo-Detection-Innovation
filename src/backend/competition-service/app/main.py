@@ -16,8 +16,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from datetime import datetime
 import logging
+from pathlib import Path
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -142,6 +144,11 @@ async def root():
 
 # Include API routes
 app.include_router(api_router)
+
+# Mount static files for uploads
+uploads_path = Path(settings.UPLOAD_DIR)
+uploads_path.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
 
 
 # Run with uvicorn
