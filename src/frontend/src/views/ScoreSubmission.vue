@@ -223,8 +223,9 @@ const getImageUrl = (url: string) => {
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
-  const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:8080'
-  return `${baseUrl}${url}`
+  // Extract just the filename and return as /uploads/filename
+  const filename = url.split('/').pop() || url
+  return `/uploads/${filename}`
 }
 
 const getVerdictVariant = (verdict: string | null) => {

@@ -75,6 +75,32 @@ SAMPLE_COMPETITIONS = [
         "prize_amount": 40000,  # $400 in cents
         "prize_description": "First: $400, Second: $200",
     },
+    {
+        "title": "PhotoTechno Competition 2026",
+        "description": "The premier photography technology competition showcasing the intersection of traditional photography and cutting-edge techniques. Submit your best work demonstrating technical excellence and creative vision.",
+        "rules": "1. All photographs must be original work\n2. RAW files are mandatory for verification\n3. Post-processing allowed but must maintain authenticity\n4. AI-generated images strictly prohibited\n5. Multiple camera formats accepted",
+        "submission_start": datetime.utcnow(),
+        "submission_end": datetime.utcnow() + timedelta(days=45),
+        "status": CompetitionStatus.OPEN,
+        "max_submissions_per_user": 5,
+        "require_raw_files": True,
+        "allow_ai_generated": False,
+        "prize_amount": 100000,  # $1000 in cents
+        "prize_description": "Grand Prize: $1000, Runner-up: $500, Third Place: $250",
+    },
+    {
+        "title": "NPAS Monthly Competition - April 2026",
+        "description": "NPAS's monthly photography competition for April 2026. Open to all skill levels. This month's theme: 'Moments in Time' - capture fleeting moments that tell a story.",
+        "rules": "1. Theme: Moments in Time\n2. Original photographs only\n3. RAW file submission required\n4. Minimal post-processing encouraged\n5. No AI-generated content allowed",
+        "submission_start": datetime.utcnow(),
+        "submission_end": datetime.utcnow() + timedelta(days=30),
+        "status": CompetitionStatus.OPEN,
+        "max_submissions_per_user": 3,
+        "require_raw_files": True,
+        "allow_ai_generated": False,
+        "prize_amount": 25000,  # $250 in cents
+        "prize_description": "Winner: $250 + Featured in NPAS Gallery",
+    },
 ]
 
 

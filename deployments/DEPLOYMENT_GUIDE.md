@@ -7,7 +7,7 @@ This guide covers deploying AVAR to a production server with security hardening.
 **Production URL**: https://avar.studio
 **Fallback (IP)**: http://165.245.178.225
 **Server**: DigitalOcean Droplet (Singapore)
-**Last Deployed**: February 20, 2026
+**Last Deployed**: February 21, 2026
 
 ### Quick Access
 - **Frontend**: https://avar.studio

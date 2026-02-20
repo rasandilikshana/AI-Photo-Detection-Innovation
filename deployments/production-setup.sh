@@ -238,8 +238,9 @@ log_info "[8/10] Building Frontend..."
 cd "$APP_DIR/src/frontend"
 npm install
 
+# Use relative URL so it works with both IP and domain access
 cat > .env.production << EOF
-VITE_API_BASE_URL=https://$DOMAIN/api/v1
+VITE_API_BASE_URL=/api/v1
 EOF
 
 npm run build
