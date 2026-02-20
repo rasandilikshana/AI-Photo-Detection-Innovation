@@ -10,6 +10,12 @@
       "pattern": "^https://github.com/rasandilikshana/avar"
     },
     {
+      "pattern": "^https://avar.studio"
+    },
+    {
+      "pattern": "^http://165.245.178.225"
+    },
+    {
       "pattern": "\\.py$"
     },
     {
@@ -23,6 +29,15 @@
     },
     {
       "pattern": "\\.ini$"
+    },
+    {
+      "pattern": "\\.js$"
+    },
+    {
+      "pattern": "\\.css$"
+    },
+    {
+      "pattern": "\\.json$"
     },
     {
       "pattern": "^documents/"

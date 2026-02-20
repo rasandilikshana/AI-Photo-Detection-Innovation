@@ -429,4 +429,4 @@ After running seed scripts:
 For issues or questions:
 - Check logs first: `journalctl -u avar-competition -f`
 - Review this guide's troubleshooting section
-- Check GitHub issues: https://github.com/your-repo/avar/issues
+- Check GitHub issues: https://github.com/rasandilikshana/AI-Photo-Detection-Innovation/issues
