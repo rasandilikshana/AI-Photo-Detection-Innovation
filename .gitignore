@@ -91,3 +91,7 @@ Thumbs.db
 
 # Word documents (keep in documents folder only)
 *.docx
+
+# User uploads
+uploads/
+**/uploads/
