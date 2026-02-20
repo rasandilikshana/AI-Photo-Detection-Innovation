@@ -2,6 +2,27 @@
 
 This guide covers deploying AVAR to a production server with security hardening.
 
+## Live Deployment
+
+**Production URL**: https://avar.studio
+**Fallback (IP)**: http://165.245.178.225
+**Server**: DigitalOcean Droplet (Singapore)
+**Last Deployed**: February 20, 2026
+
+### Quick Access
+- **Frontend**: https://avar.studio
+- **API Health**: https://avar.studio/api/v1/competitions
+- **AI Detection**: https://avar.studio/detect/health
+
+### Test Accounts (Production)
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@avar.com | Admin@123! |
+| Judge | judge@avar.com | Judge@123! |
+| Organizer | organizer@avar.com | Organizer@123! |
+
+---
+
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
 2. [Quick Start](#quick-start)

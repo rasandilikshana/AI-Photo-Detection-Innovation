@@ -2,6 +2,7 @@
 
 **AI-Powered Authenticity Verification System for Photography Competitions**
 
+[![Live Demo](https://img.shields.io/badge/live-avar.studio-success?logo=vercel)](https://avar.studio)
 [![GitHub](https://img.shields.io/badge/github-AI--Photo--Detection--Innovation-blue?logo=github)](https://github.com/rasandilikshana/AI-Photo-Detection-Innovation)
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green?logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -20,6 +21,25 @@ A.V.A.R. is a comprehensive platform designed to safeguard photography competiti
 - Forensically proves submitted JPG files are direct derivatives of submitted RAW files
 - PRNU sensor fingerprinting that AI-generated images cannot replicate
 - Multi-layer detection funnel for efficient and accurate verification
+
+## 🌐 Live Demo
+
+**Production URL**: https://avar.studio
+
+| Access | URL |
+|--------|-----|
+| **Web Application** | https://avar.studio |
+| **API (Direct)** | https://avar.studio/api/v1 |
+| **Fallback (IP)** | http://165.245.178.225 |
+
+### Test Accounts
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@avar.com | Admin@123! |
+| Judge | judge@avar.com | Judge@123! |
+| Organizer | organizer@avar.com | Organizer@123! |
+
+> **Note**: DNS propagation may take up to 48 hours. Use the IP address as fallback.
 
 ## ✨ Features
 
@@ -134,12 +154,20 @@ cd src/backend/api-gateway
 
 ### 🌐 Access Points
 
+#### Production (Live)
+| Service | URL |
+|---------|-----|
+| Frontend | https://avar.studio |
+| API | https://avar.studio/api/v1 |
+| AI Detection | https://avar.studio/detect |
+
+#### Local Development
 | Service | URL | Documentation |
 |---------|-----|---------------|
 | AI Detection API | http://localhost:8001 | http://localhost:8001/docs |
 | Competition API | http://localhost:8080 | http://localhost:8080/docs |
 | API Gateway | http://localhost:8000 | http://localhost:8000/docs |
-| Frontend | http://localhost:3000 | (Coming Soon) |
+| Frontend | http://localhost:5173 | - |
 
 ## 📊 Tech Stack
 
@@ -213,6 +241,11 @@ AI-Photo-Detection-Innovation/
 - 🏗️ [System Architecture](docs/architecture/SYSTEM_ARCHITECTURE.md)
 - 📊 [Database Schema](docs/architecture/DATABASE_SCHEMA.md) _(planned)_
 - 🔄 [Detection Pipeline](docs/architecture/DETECTION_PIPELINE.md) _(planned)_
+
+### Deployment
+- 🚀 [Production Deployment Guide](deployments/DEPLOYMENT_GUIDE.md)
+- 🔒 [Environment Template](deployments/.env.production.template)
+- 🌐 [Nginx SSL Configuration](deployments/nginx-ssl.conf)
 
 ### Implementation
 - ✅ [Phase 1: AI Detection](docs/implementation/PHASE1_SUMMARY.md) _(to be created)_
@@ -360,12 +393,15 @@ Final Verdict:          AUTHENTIC (100% confidence)
 ```
 
 ### Production Readiness
-- **Current State**: Beta/Demo Ready
-- **For Production**: Requires validation study, security hardening, API integration
-- **See**: [CURRENT_STATUS.md](CURRENT_STATUS.md) for detailed assessment
+- **Current State**: ✅ **DEPLOYED TO PRODUCTION**
+- **Live URL**: https://avar.studio
+- **Server**: DigitalOcean Droplet (Singapore)
+- **SSL**: Let's Encrypt (Auto-renewing)
+- **Security**: UFW Firewall, Fail2Ban, Non-root services
+- **See**: [Deployment Guide](deployments/DEPLOYMENT_GUIDE.md) for details
 
 ---
 
-**Status**: ✅ Phase 1, 2 & 3 Complete | Mobile Responsive | Score Audit System
-**Version**: v1.2.0 (Mobile Responsive + Score Audit Logs)
+**Status**: ✅ Phase 1, 2 & 3 Complete | 🌐 Live at avar.studio | Mobile Responsive | Score Audit System
+**Version**: v1.3.0 (Production Deployment)
 **Last Updated**: February 21, 2026
