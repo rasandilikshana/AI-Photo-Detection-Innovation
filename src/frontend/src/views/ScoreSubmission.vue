@@ -15,7 +15,7 @@ import {
   ShieldCheck, ShieldAlert, ShieldQuestion, AlertTriangle, Loader2,
   CheckCircle, XCircle, Layers, Eye, Link, FileImage, Fingerprint, Globe,
   ChevronDown, ChevronUp, Info, Cpu, Waves, Grid3X3, ImageIcon, Hash, BarChart2,
-  ThumbsUp, ThumbsDown, AlertCircle
+  ThumbsUp, ThumbsDown, AlertCircle, ZoomIn, ZoomOut, X, Maximize2, RotateCw
 } from 'lucide-vue-next'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import apiClient from '@/api/client'
@@ -112,6 +112,15 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const submissionId = Number(route.params.submissionId)
+const competitionId = route.query.competition ? Number(route.query.competition) : null
+
+// Back navigation URL - go to specific competition if available
+const backUrl = computed(() => {
+  if (competitionId) {
+    return `/judge/competition/${competitionId}`
+  }
+  return '/judge'
+})
 
 const submission = ref<SubmissionDetail | null>(null)
 const compositionScore = ref<number>(5)
@@ -139,6 +148,14 @@ const reviewAction = ref<'approve' | 'reject'>('approve')
 const reviewReason = ref('')
 const isSubmittingReview = ref(false)
 
+// Image lightbox state
+const showImageLightbox = ref(false)
+const imageZoom = ref(1)
+const imageRotation = ref(0)
+const isDragging = ref(false)
+const dragStart = ref({ x: 0, y: 0 })
+const imagePosition = ref({ x: 0, y: 0 })
+
 // Check if submission needs manual review
 const needsManualReview = computed(() => {
   if (!submission.value) return false
@@ -151,6 +168,18 @@ const needsManualReview = computed(() => {
 const canBeScored = computed(() => {
   if (!submission.value) return false
   return submission.value.status?.toLowerCase() === 'approved'
+})
+
+// Check if submission is already approved (for corrective actions)
+const isApproved = computed(() => {
+  if (!submission.value) return false
+  return submission.value.status?.toLowerCase() === 'approved'
+})
+
+// Check if submission is already rejected (for corrective actions)
+const isRejected = computed(() => {
+  if (!submission.value) return false
+  return submission.value.status?.toLowerCase() === 'rejected'
 })
 
 const toggleLayer = (layer: string) => {
@@ -408,12 +437,88 @@ const submitReview = async () => {
     isSubmittingReview.value = false
   }
 }
+
+// Image lightbox functions
+const openImageLightbox = () => {
+  showImageLightbox.value = true
+  imageZoom.value = 1
+  imageRotation.value = 0
+  imagePosition.value = { x: 0, y: 0 }
+}
+
+const closeImageLightbox = () => {
+  showImageLightbox.value = false
+}
+
+const zoomIn = () => {
+  if (imageZoom.value < 5) {
+    imageZoom.value = Math.min(5, imageZoom.value + 0.1)
+  }
+}
+
+const zoomOut = () => {
+  if (imageZoom.value > 0.25) {
+    imageZoom.value = Math.max(0.25, imageZoom.value - 0.1)
+  }
+}
+
+const resetZoom = () => {
+  imageZoom.value = 1
+  imagePosition.value = { x: 0, y: 0 }
+}
+
+const rotateImage = () => {
+  imageRotation.value = (imageRotation.value + 90) % 360
+}
+
+const handleWheel = (e: WheelEvent) => {
+  e.preventDefault()
+  if (e.deltaY < 0) {
+    zoomIn()
+  } else {
+    zoomOut()
+  }
+}
+
+const handleMouseDown = (e: MouseEvent) => {
+  if (imageZoom.value > 1) {
+    isDragging.value = true
+    dragStart.value = { x: e.clientX - imagePosition.value.x, y: e.clientY - imagePosition.value.y }
+  }
+}
+
+const handleMouseMove = (e: MouseEvent) => {
+  if (isDragging.value && imageZoom.value > 1) {
+    imagePosition.value = {
+      x: e.clientX - dragStart.value.x,
+      y: e.clientY - dragStart.value.y
+    }
+  }
+}
+
+const handleMouseUp = () => {
+  isDragging.value = false
+}
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (!showImageLightbox.value) return
+  if (e.key === 'Escape') closeImageLightbox()
+  if (e.key === '+' || e.key === '=') zoomIn()
+  if (e.key === '-') zoomOut()
+  if (e.key === '0') resetZoom()
+  if (e.key === 'r') rotateImage()
+}
+
+// Add keyboard listener
+if (typeof window !== 'undefined') {
+  window.addEventListener('keydown', handleKeydown)
+}
 </script>
 
 <template>
   <div class="container mx-auto px-4 md:px-6 py-6 md:py-10 max-w-6xl">
     <div class="mb-4 md:mb-6">
-      <Button variant="ghost" size="sm" @click="router.back()" class="group">
+      <Button variant="ghost" size="sm" @click="router.push(backUrl)" class="group">
         <ArrowLeft class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
         Back to Dashboard
       </Button>
@@ -505,6 +610,54 @@ const submitReview = async () => {
         </AlertDescription>
       </Alert>
 
+      <!-- Corrective Actions Card - Show when already approved or rejected (allows judges to change decision) -->
+      <Card v-if="isApproved || isRejected" class="mb-6 border-2 border-dashed border-orange-500/50 bg-orange-500/5">
+        <CardContent class="pt-6">
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center"
+                   :class="isApproved ? 'bg-green-500/20' : 'bg-red-500/20'">
+                <component :is="isApproved ? CheckCircle : XCircle"
+                           :class="isApproved ? 'text-green-500' : 'text-red-500'"
+                           class="w-5 h-5" />
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold">
+                  {{ isApproved ? 'Submission Approved' : 'Submission Rejected' }}
+                </h3>
+                <p class="text-xs text-muted-foreground">
+                  {{ isApproved
+                    ? 'This submission has been approved and can be scored.'
+                    : 'This submission was rejected with the reason shown above.'
+                  }}
+                </p>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <!-- Show Approve button if currently rejected -->
+              <Button
+                v-if="isRejected"
+                variant="default"
+                class="bg-green-600 hover:bg-green-700"
+                @click="openReviewDialog('approve')"
+              >
+                <ThumbsUp class="w-4 h-4 mr-2" />
+                Change to Approved
+              </Button>
+              <!-- Show Reject button if currently approved -->
+              <Button
+                v-if="isApproved"
+                variant="destructive"
+                @click="openReviewDialog('reject')"
+              >
+                <ThumbsDown class="w-4 h-4 mr-2" />
+                Change to Rejected
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div class="grid lg:grid-cols-5 gap-4 md:gap-6 lg:gap-8">
         <!-- Left Column: Submission Details (3 cols) -->
         <div class="lg:col-span-3 space-y-4 md:space-y-6">
@@ -525,17 +678,31 @@ const submitReview = async () => {
             </CardHeader>
             <CardContent>
               <!-- Image preview -->
-              <div class="rounded-xl overflow-hidden border bg-muted mb-6">
+              <div class="rounded-xl overflow-hidden border bg-muted mb-6 relative group">
                 <img
                   v-if="submission.jpg_file_url"
                   :src="getImageUrl(submission.jpg_file_url)"
                   :alt="submission.title"
-                  class="w-full h-auto object-contain"
+                  class="w-full h-auto object-contain cursor-zoom-in transition-transform hover:scale-[1.02]"
                   style="max-height: 500px;"
+                  @click="openImageLightbox"
                   @error="(e) => { (e.target as HTMLImageElement).style.display = 'none' }"
                 />
                 <div v-else class="h-64 flex items-center justify-center">
                   <Camera class="w-12 h-12 text-muted-foreground" />
+                </div>
+                <!-- View Full Size Button Overlay -->
+                <div v-if="submission.jpg_file_url"
+                     class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center pointer-events-none">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    class="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto shadow-lg"
+                    @click="openImageLightbox"
+                  >
+                    <Maximize2 class="w-4 h-4 mr-2" />
+                    View Full Size
+                  </Button>
                 </div>
               </div>
 
@@ -1292,5 +1459,111 @@ const submitReview = async () => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <!-- Image Lightbox Modal -->
+    <Teleport to="body">
+      <Transition name="lightbox">
+        <div
+          v-if="showImageLightbox && submission?.jpg_file_url"
+          class="fixed inset-0 z-50 bg-black/95 flex flex-col"
+          @wheel.prevent="handleWheel"
+          @mouseup="handleMouseUp"
+          @mouseleave="handleMouseUp"
+        >
+          <!-- Lightbox Header -->
+          <div class="flex items-center justify-between p-4 bg-black/50">
+            <div class="text-white">
+              <h3 class="font-semibold">{{ submission.title }}</h3>
+              <p class="text-sm text-gray-400">{{ submission.camera_make }} {{ submission.camera_model }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <!-- Zoom Controls -->
+              <div class="flex items-center gap-1 bg-white/10 rounded-lg p-1">
+                <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" @click="zoomOut">
+                  <ZoomOut class="w-4 h-4" />
+                </Button>
+                <span class="text-white text-sm font-mono w-14 text-center">{{ (imageZoom * 100).toFixed(0) }}%</span>
+                <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" @click="zoomIn">
+                  <ZoomIn class="w-4 h-4" />
+                </Button>
+              </div>
+              <!-- Reset Zoom -->
+              <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" @click="resetZoom" title="Reset zoom (0)">
+                <Maximize2 class="w-4 h-4" />
+              </Button>
+              <!-- Rotate -->
+              <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" @click="rotateImage" title="Rotate (R)">
+                <RotateCw class="w-4 h-4" />
+              </Button>
+              <!-- Close -->
+              <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" @click="closeImageLightbox">
+                <X class="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+
+          <!-- Image Container -->
+          <div
+            class="flex-1 overflow-hidden flex items-center justify-center cursor-grab"
+            :class="{ 'cursor-grabbing': isDragging }"
+            @mousedown="handleMouseDown"
+            @mousemove="handleMouseMove"
+          >
+            <img
+              :src="getImageUrl(submission.jpg_file_url)"
+              :alt="submission.title"
+              class="max-w-none select-none transition-transform duration-150"
+              :style="{
+                transform: `translate(${imagePosition.x}px, ${imagePosition.y}px) scale(${imageZoom}) rotate(${imageRotation}deg)`,
+                maxHeight: imageZoom === 1 ? '90vh' : 'none',
+                maxWidth: imageZoom === 1 ? '95vw' : 'none'
+              }"
+              draggable="false"
+            />
+          </div>
+
+          <!-- Lightbox Footer - Keyboard Shortcuts -->
+          <div class="p-3 bg-black/50 text-center">
+            <p class="text-xs text-gray-400">
+              <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-white">+</kbd> / <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-white">-</kbd> Zoom
+              <span class="mx-2">|</span>
+              <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-white">0</kbd> Reset
+              <span class="mx-2">|</span>
+              <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-white">R</kbd> Rotate
+              <span class="mx-2">|</span>
+              <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-white">Esc</kbd> Close
+              <span class="mx-2">|</span>
+              <span class="text-gray-500">Scroll to zoom • Drag to pan when zoomed</span>
+            </p>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+/* Lightbox transition animations */
+.lightbox-enter-active,
+.lightbox-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.lightbox-enter-from,
+.lightbox-leave-to {
+  opacity: 0;
+}
+
+.lightbox-enter-active img,
+.lightbox-leave-active img {
+  transition: transform 0.3s ease;
+}
+
+.lightbox-enter-from img {
+  transform: scale(0.9);
+}
+
+.lightbox-leave-to img {
+  transform: scale(0.9);
+}
+</style>

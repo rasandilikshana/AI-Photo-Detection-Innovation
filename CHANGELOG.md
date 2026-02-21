@@ -5,6 +5,115 @@ All notable changes to the A.V.A.R. project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-02-21
+
+### Added
+- **Judge Dashboard UX Enhancements**
+  - Dropdown filter menus replacing button-based filters (Status, Verdict, Scored)
+  - Clickable submission cards - entire card navigates to scoring page
+  - Pagination with 12 items per page and full navigation controls
+  - Competition-aware navigation preserving context via URL query params
+  - Route watcher for same-component navigation handling
+
+- **Score Submission Page Improvements**
+  - Image lightbox viewer with full-screen capability
+  - Smooth zoom controls with 10% increments (10%-500%)
+  - Corrective action buttons for quick judge operations
+  - Back button preserves competition context
+
+### Fixed
+- Navigation issue when clicking "Judge Panel" from competition-specific URL
+- Vue Router same-component navigation not resetting state
+
+### Changed
+- Filter buttons converted to cleaner dropdown menu components
+- Submission cards now fully clickable with event propagation control
+
+---
+
+## [1.3.0] - 2026-02-21
+
+### Added
+- **Production Deployment**
+  - Live deployment at avar.studio
+  - DigitalOcean Droplet hosting (Singapore)
+  - Let's Encrypt SSL certificates (auto-renewing)
+  - Nginx reverse proxy configuration
+  - UFW Firewall and Fail2Ban security
+
+- **GitHub Actions CI/CD**
+  - Docker image builds on release
+  - Push to Docker Hub on release tags
+  - Telegram notifications for releases
+  - Automated deployment workflow
+
+- **Deployment Documentation**
+  - Production deployment guide
+  - Nginx SSL configuration templates
+  - Environment variable templates
+
+### Changed
+- Updated server IP from 64.23.136.61 to 165.245.178.225
+- Fixed deployment path to /var/www/avar/src/frontend/dist/
+
+---
+
+## [1.2.0] - 2026-02-20
+
+### Added
+- **Score Audit Log System**
+  - Complete tracking of all scoring actions
+  - IP address, User-agent, Session ID logging
+  - Credential sharing detection capabilities
+  - Audit log viewer in Admin Panel and Judge Dashboard
+
+- **Admin Panel**
+  - User management with role assignment
+  - Competition oversight dashboard
+  - System-wide statistics
+  - Score audit log access
+
+- **Organizer Panel**
+  - Competition creation wizard
+  - Competition management interface
+  - Submission tracking for own competitions
+
+### Fixed
+- JWT token refresh handling
+- Role-based navigation guards
+
+---
+
+## [1.1.0] - 2026-02-15
+
+### Added
+- **Vue 3 Frontend Application**
+  - TypeScript with Composition API
+  - Mobile responsive design (hamburger menu, responsive grids)
+  - Role-based authentication (Participant, Judge, Organizer, Admin)
+  - Real-time submission status updates
+
+- **Judge Dashboard**
+  - Score submissions with multi-criteria system
+  - Composition (40%), Technical (30%), Creativity (30%)
+  - View AI detection results
+  - Filter submissions by competition and status
+
+- **Competition Management**
+  - CRUD operations with slug-based URLs
+  - Competition browsing interface
+  - Submission portal with multi-file uploads (JPG + RAW)
+
+- **User Authentication**
+  - JWT tokens with bcrypt password hashing
+  - Login and registration interfaces
+  - Role-based access control navigation guards
+
+### Changed
+- Competition Service migrated from PHP Laravel to Python FastAPI
+
+---
+
 ## [1.0.0] - 2025-11-06
 
 ### Added
@@ -76,26 +185,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned for v1.1.0
-- [ ] Frontend application (Vue.js/React)
-- [ ] PHP Laravel competition service
-- [ ] User authentication system
-- [ ] Competition management workflow
-- [ ] Judge dashboard
-- [ ] Admin panel
-
-### Planned for v1.2.0
-- [ ] Machine learning model integration
+### Planned for v1.5.0
+- [ ] Real-time WebSocket updates for submission status
+- [ ] Batch processing capabilities for bulk submissions
 - [ ] Custom AI signature database
-- [ ] Real-time WebSocket updates
-- [ ] Batch processing capabilities
 
 ### Planned for v2.0.0
-- [ ] Cloud deployment (AWS/GCP)
+- [ ] Machine learning model integration
 - [ ] Kubernetes orchestration
 - [ ] Advanced analytics dashboard
-- [ ] Mobile application
-- [ ] Multi-language support
+- [ ] Mobile application (React Native/Flutter)
+- [ ] Multi-language support (i18n)
+- [ ] Public leaderboard feature
 
 ---
 
@@ -116,8 +217,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-**Current Version**: 1.0.0
-**Release Date**: November 6, 2025
-**Status**: Production Ready
+**Current Version**: 1.4.0
+**Release Date**: February 21, 2026
+**Status**: Production Ready (Live at avar.studio)
 **Author**: Rasan Dilikshana
 **License**: Academic Research Project

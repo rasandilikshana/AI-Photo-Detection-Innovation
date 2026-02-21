@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,11 +10,19 @@ import {
   Gavel, Calendar, Camera, CheckCircle, XCircle, Image, Clock, ArrowLeft,
   BarChart3, ShieldCheck, ShieldAlert, ShieldQuestion, AlertTriangle,
   Eye, Star, FileCheck, Loader2, FileImage, Fingerprint, Globe,
-  History, Network, Monitor, User as UserIcon, RefreshCw, AlertCircle, ThumbsUp, ThumbsDown
+  History, Network, Monitor, User as UserIcon, RefreshCw, AlertCircle, ThumbsUp, ThumbsDown,
+  ChevronDown, Filter, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-vue-next'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import apiClient from '@/api/client'
 
 interface JudgeAssignment {
@@ -103,10 +111,12 @@ interface AuditLogListResponse {
 }
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const assignments = ref<JudgeAssignment[]>([])
 const selectedCompetition = ref<number | null>(null)
+const selectedCompetitionTitle = ref<string>('')
 const competitionStats = ref<CompetitionStats | null>(null)
 const submissions = ref<JudgeSubmission[]>([])
 const isLoading = ref(true)
@@ -118,6 +128,10 @@ const error = ref('')
 const statusFilter = ref<string>('all')
 const verdictFilter = ref<string>('all')
 const scoredFilter = ref<string>('all')
+
+// Pagination state
+const currentPage = ref(1)
+const itemsPerPage = ref(12)
 
 // Audit log state
 const showAuditLogs = ref(false)
@@ -151,6 +165,45 @@ const filteredSubmissions = computed(() => {
   })
 })
 
+// Pagination computed
+const totalPages = computed(() => Math.ceil(filteredSubmissions.value.length / itemsPerPage.value))
+
+const paginatedSubmissions = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredSubmissions.value.slice(start, end)
+})
+
+// Reset page when filters change
+watch([statusFilter, verdictFilter, scoredFilter], () => {
+  currentPage.value = 1
+})
+
+// Watch for route changes (handles navigation between /judge and /judge/competition/:id)
+watch(() => route.params.competitionId, async (newCompetitionId, oldCompetitionId) => {
+  // If navigating from competition view to main judge panel
+  if (oldCompetitionId && !newCompetitionId) {
+    // Reset to assignments view
+    selectedCompetition.value = null
+    selectedCompetitionTitle.value = ''
+    competitionStats.value = null
+    submissions.value = []
+    showAuditLogs.value = false
+    auditLogs.value = []
+    auditLogStats.value = null
+    currentPage.value = 1
+  }
+  // If navigating to a different competition
+  else if (newCompetitionId && newCompetitionId !== oldCompetitionId) {
+    const id = Number(newCompetitionId)
+    const assignment = assignments.value.find(a => a.competition_id === id)
+    if (assignment) {
+      selectedCompetitionTitle.value = assignment.competition_title
+      await loadCompetitionData(id, false)
+    }
+  }
+})
+
 onMounted(async () => {
   if (!isJudge.value) {
     router.push('/')
@@ -162,6 +215,18 @@ onMounted(async () => {
     error.value = ''
     const response = await apiClient.get('/scores/my-assignments')
     assignments.value = response.data
+
+    // Check if we have a competitionId in the route
+    const competitionId = route.params.competitionId
+    if (competitionId) {
+      const id = Number(competitionId)
+      // Find the assignment to get the title
+      const assignment = assignments.value.find(a => a.competition_id === id)
+      if (assignment) {
+        selectedCompetitionTitle.value = assignment.competition_title
+        await loadCompetitionData(id, false) // Don't update URL since we're already there
+      }
+    }
   } catch (err: unknown) {
     error.value = 'Failed to load judge assignments'
     console.error('Failed to load assignments:', err)
@@ -170,11 +235,17 @@ onMounted(async () => {
   }
 })
 
-const loadCompetitionData = async (competitionId: number) => {
+const loadCompetitionData = async (competitionId: number, updateUrl: boolean = true) => {
   selectedCompetition.value = competitionId
   statusFilter.value = 'all'
   verdictFilter.value = 'all'
   scoredFilter.value = 'all'
+  currentPage.value = 1
+
+  // Update the URL to include competition ID (for back navigation)
+  if (updateUrl) {
+    router.replace(`/judge/competition/${competitionId}`)
+  }
 
   // Load stats and submissions in parallel
   isLoadingStats.value = true
@@ -187,6 +258,7 @@ const loadCompetitionData = async (competitionId: number) => {
     ])
     competitionStats.value = statsResponse.data
     submissions.value = submissionsResponse.data
+    selectedCompetitionTitle.value = competitionStats.value?.competition_title || ''
   } catch (err) {
     error.value = 'Failed to load competition data'
     console.error('Failed to load competition data:', err)
@@ -198,11 +270,14 @@ const loadCompetitionData = async (competitionId: number) => {
 
 const goBackToAssignments = () => {
   selectedCompetition.value = null
+  selectedCompetitionTitle.value = ''
   competitionStats.value = null
   submissions.value = []
   showAuditLogs.value = false
   auditLogs.value = []
   auditLogStats.value = null
+  // Update URL to main judge page
+  router.replace('/judge')
 }
 
 const loadAuditLogs = async () => {
@@ -597,8 +672,69 @@ const getImageUrl = (url: string) => {
           </CardContent>
         </Card>
 
-        <!-- Scoring Activity Toggle Button -->
-        <div class="flex justify-end mb-4">
+        <!-- Filters and Scoring Activity Button Row -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <!-- Filter Dropdowns -->
+          <div class="flex flex-wrap items-center gap-2">
+            <Filter class="w-4 h-4 text-muted-foreground hidden sm:block" />
+
+            <!-- Status Filter Dropdown -->
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" class="min-w-[110px] justify-between">
+                  <span class="truncate">{{ statusFilter === 'all' ? 'All Status' : statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) }}</span>
+                  <ChevronDown class="w-4 h-4 ml-2 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" class="w-40">
+                <DropdownMenuRadioGroup v-model="statusFilter">
+                  <DropdownMenuRadioItem value="all">All Status</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="approved">Approved</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="pending">Pending</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="analyzing">Analyzing</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="rejected">Rejected</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <!-- AI Verdict Filter Dropdown -->
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" class="min-w-[130px] justify-between">
+                  <span class="truncate">{{ verdictFilter === 'all' ? 'All Verdicts' : verdictFilter.replace('_', ' ').split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') }}</span>
+                  <ChevronDown class="w-4 h-4 ml-2 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" class="w-44">
+                <DropdownMenuRadioGroup v-model="verdictFilter">
+                  <DropdownMenuRadioItem value="all">All Verdicts</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="authentic">Authentic</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="suspicious">Suspicious</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="needs_review">Needs Review</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="ai_generated">AI Generated</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <!-- Scoring Filter Dropdown -->
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" class="min-w-[110px] justify-between">
+                  <span class="truncate">{{ scoredFilter === 'all' ? 'All Scoring' : scoredFilter.charAt(0).toUpperCase() + scoredFilter.slice(1) }}</span>
+                  <ChevronDown class="w-4 h-4 ml-2 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" class="w-36">
+                <DropdownMenuRadioGroup v-model="scoredFilter">
+                  <DropdownMenuRadioItem value="all">All Scoring</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="unscored">Unscored</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="scored">Scored</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <!-- Scoring Activity Button -->
           <Button
             variant="outline"
             @click="toggleAuditLogs"
@@ -733,60 +869,6 @@ const getImageUrl = (url: string) => {
         </Card>
       </div>
 
-      <!-- Filters -->
-      <div class="mb-6 space-y-3">
-        <!-- Status Filter -->
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-          <span class="text-sm font-medium shrink-0">Status:</span>
-          <div class="flex gap-1 flex-wrap">
-            <Button
-              v-for="status in ['all', 'approved', 'pending', 'analyzing', 'rejected']"
-              :key="status"
-              size="sm"
-              class="text-xs md:text-sm"
-              :variant="statusFilter === status ? 'default' : 'outline'"
-              @click="statusFilter = status"
-            >
-              {{ status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1) }}
-            </Button>
-          </div>
-        </div>
-
-        <!-- Verdict Filter -->
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-          <span class="text-sm font-medium shrink-0">AI Verdict:</span>
-          <div class="flex gap-1 flex-wrap">
-            <Button
-              v-for="verdict in ['all', 'authentic', 'suspicious', 'needs_review', 'ai_generated']"
-              :key="verdict"
-              size="sm"
-              class="text-xs md:text-sm"
-              :variant="verdictFilter === verdict ? 'default' : 'outline'"
-              @click="verdictFilter = verdict"
-            >
-              {{ verdict === 'all' ? 'All' : verdict.replace('_', ' ').split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') }}
-            </Button>
-          </div>
-        </div>
-
-        <!-- Scored Filter -->
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-          <span class="text-sm font-medium shrink-0">Scoring:</span>
-          <div class="flex gap-1 flex-wrap">
-            <Button
-              v-for="scored in ['all', 'unscored', 'scored']"
-              :key="scored"
-              size="sm"
-              class="text-xs md:text-sm"
-              :variant="scoredFilter === scored ? 'default' : 'outline'"
-              @click="scoredFilter = scored"
-            >
-              {{ scored === 'all' ? 'All' : scored.charAt(0).toUpperCase() + scored.slice(1) }}
-            </Button>
-          </div>
-        </div>
-      </div>
-
       <!-- Submissions Loading -->
       <div v-if="isLoadingSubmissions" class="text-center py-12">
         <Loader2 class="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
@@ -806,10 +888,11 @@ const getImageUrl = (url: string) => {
       <!-- Submissions Grid -->
       <div v-else class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card
-          v-for="submission in filteredSubmissions"
+          v-for="submission in paginatedSubmissions"
           :key="submission.id"
-          class="overflow-hidden hover:shadow-lg transition-all"
+          class="overflow-hidden hover:shadow-lg transition-all cursor-pointer hover:border-primary/50"
           :class="{ 'border-green-500/50 bg-green-500/5': submission.is_scored_by_me }"
+          @click="router.push(`/judge/score/${submission.id}?competition=${selectedCompetition}`)"
         >
           <!-- Thumbnail -->
           <div class="aspect-[4/3] bg-muted relative overflow-hidden">
@@ -961,7 +1044,7 @@ const getImageUrl = (url: string) => {
             <Button
               v-if="submission.status?.toLowerCase() === 'approved' && !submission.is_scored_by_me"
               class="w-full"
-              @click="router.push(`/judge/score/${submission.id}`)"
+              @click.stop="router.push(`/judge/score/${submission.id}?competition=${selectedCompetition}`)"
             >
               <Star class="w-4 h-4 mr-2" />
               Score This Entry
@@ -972,7 +1055,7 @@ const getImageUrl = (url: string) => {
               v-else-if="submission.is_scored_by_me"
               variant="outline"
               class="w-full"
-              @click="router.push(`/judge/score/${submission.id}`)"
+              @click.stop="router.push(`/judge/score/${submission.id}?competition=${selectedCompetition}`)"
             >
               <Eye class="w-4 h-4 mr-2" />
               View Details
@@ -984,7 +1067,7 @@ const getImageUrl = (url: string) => {
                 <Button
                   variant="default"
                   class="flex-1 bg-green-600 hover:bg-green-700"
-                  @click="openReviewDialog(submission.id, 'approve')"
+                  @click.stop="openReviewDialog(submission.id, 'approve')"
                 >
                   <ThumbsUp class="w-4 h-4 mr-1" />
                   Approve
@@ -992,7 +1075,7 @@ const getImageUrl = (url: string) => {
                 <Button
                   variant="destructive"
                   class="flex-1"
-                  @click="openReviewDialog(submission.id, 'reject')"
+                  @click.stop="openReviewDialog(submission.id, 'reject')"
                 >
                   <ThumbsDown class="w-4 h-4 mr-1" />
                   Reject
@@ -1001,7 +1084,7 @@ const getImageUrl = (url: string) => {
               <Button
                 variant="outline"
                 class="w-full"
-                @click="router.push(`/judge/score/${submission.id}`)"
+                @click.stop="router.push(`/judge/score/${submission.id}?competition=${selectedCompetition}`)"
               >
                 <Eye class="w-4 h-4 mr-2" />
                 View Full Details
@@ -1013,12 +1096,82 @@ const getImageUrl = (url: string) => {
               v-else
               variant="secondary"
               class="w-full"
+              @click.stop
               disabled
             >
               {{ submission.status?.toLowerCase() === 'analyzing' ? 'Analyzing...' : submission.status?.toLowerCase() === 'rejected' ? 'Rejected' : 'Not Ready for Scoring' }}
             </Button>
           </CardContent>
         </Card>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div v-if="filteredSubmissions.length > itemsPerPage" class="flex items-center justify-between mt-8 px-2">
+        <div class="text-sm text-muted-foreground">
+          Showing {{ (currentPage - 1) * itemsPerPage + 1 }} - {{ Math.min(currentPage * itemsPerPage, filteredSubmissions.length) }} of {{ filteredSubmissions.length }} submissions
+        </div>
+        <div class="flex items-center gap-1">
+          <!-- First Page -->
+          <Button
+            variant="outline"
+            size="icon"
+            class="h-8 w-8"
+            :disabled="currentPage === 1"
+            @click="currentPage = 1"
+          >
+            <ChevronsLeft class="w-4 h-4" />
+          </Button>
+          <!-- Previous Page -->
+          <Button
+            variant="outline"
+            size="icon"
+            class="h-8 w-8"
+            :disabled="currentPage === 1"
+            @click="currentPage--"
+          >
+            <ChevronLeft class="w-4 h-4" />
+          </Button>
+
+          <!-- Page Numbers -->
+          <div class="flex items-center gap-1 mx-2">
+            <template v-for="page in totalPages" :key="page">
+              <Button
+                v-if="page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)"
+                :variant="page === currentPage ? 'default' : 'outline'"
+                size="sm"
+                class="h-8 w-8 p-0"
+                @click="currentPage = page"
+              >
+                {{ page }}
+              </Button>
+              <span
+                v-else-if="page === currentPage - 2 || page === currentPage + 2"
+                class="px-1 text-muted-foreground"
+              >...</span>
+            </template>
+          </div>
+
+          <!-- Next Page -->
+          <Button
+            variant="outline"
+            size="icon"
+            class="h-8 w-8"
+            :disabled="currentPage === totalPages"
+            @click="currentPage++"
+          >
+            <ChevronRight class="w-4 h-4" />
+          </Button>
+          <!-- Last Page -->
+          <Button
+            variant="outline"
+            size="icon"
+            class="h-8 w-8"
+            :disabled="currentPage === totalPages"
+            @click="currentPage = totalPages"
+          >
+            <ChevronsRight class="w-4 h-4" />
+          </Button>
+        </div>
       </div>
     </template>
 

@@ -53,6 +53,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresJudge: true },
     },
     {
+      path: '/judge/competition/:competitionId',
+      name: 'JudgeCompetition',
+      component: () => import('./views/JudgeDashboard.vue'),
+      meta: { requiresAuth: true, requiresJudge: true },
+    },
+    {
       path: '/judge/score/:submissionId',
       name: 'ScoreSubmission',
       component: () => import('./views/ScoreSubmission.vue'),

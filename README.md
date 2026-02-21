@@ -358,9 +358,20 @@ The frontend is fully responsive across all device sizes:
 | Role | Dashboard | Features |
 |------|-----------|----------|
 | **Admin** | Admin Panel | User management, competition oversight, score audit logs, system stats |
-| **Judge** | Judge Dashboard | Score submissions, view audit history, filter by competition/status |
+| **Judge** | Judge Dashboard | Score submissions, dropdown filters, clickable cards, pagination, image lightbox, corrective actions, audit history |
 | **Organizer** | Organizer Panel | Create competitions, manage own competitions |
 | **Participant** | My Submissions | View submissions, track AI analysis status, see scores |
+
+### Judge Dashboard Features (v1.4.0)
+
+| Feature | Description |
+|---------|-------------|
+| **Dropdown Filters** | Clean dropdown menus for Status, Verdict, and Scored filters |
+| **Clickable Cards** | Click anywhere on submission card to navigate to scoring page |
+| **Pagination** | 12 submissions per page with full navigation controls |
+| **Image Lightbox** | Full-screen image viewer with zoom controls (10% increments) |
+| **Corrective Actions** | Quick action buttons for common judge operations |
+| **Competition-Aware Navigation** | URL query params preserve competition context across pages |
 
 ### Score Audit Log System
 Tracks all scoring actions for transparency and security:
@@ -403,5 +414,5 @@ Final Verdict:          AUTHENTIC (100% confidence)
 ---
 
 **Status**: ✅ Phase 1, 2 & 3 Complete | 🌐 Live at avar.studio | Mobile Responsive | Score Audit System
-**Version**: v1.3.0 (Production Deployment)
+**Version**: v1.4.0 (Judge Dashboard UX Enhancements)
 **Last Updated**: February 21, 2026

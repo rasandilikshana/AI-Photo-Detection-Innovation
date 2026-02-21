@@ -80,7 +80,8 @@
       "Bash(grep:*)",
       "Bash(dig:*)",
       "Bash(test:*)",
-      "Bash(PGPASSWORD=postgres psql:*)"
+      "Bash(PGPASSWORD=postgres psql:*)",
+      "Bash(gh run rerun:*)"
     ],
     "deny": [],
     "ask": []
