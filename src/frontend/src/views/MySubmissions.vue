@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { Camera, Clock, ImageIcon, Trophy, Search, X, AlertCircle, XCircle, Info } from 'lucide-vue-next'
+import { Camera, Clock, ImageIcon, Trophy, Search, X, AlertCircle, XCircle, Info, CheckCircle, UserCheck, Gavel } from 'lucide-vue-next'
 import type { Submission } from '@/types'
 
 const authStore = useAuthStore()
@@ -134,6 +134,21 @@ const formatDate = (date: string) => {
   })
 }
 
+const formatDateTime = (date: string) => {
+  return new Date(date).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// Check if submission was manually reviewed by a judge
+const wasManuallyReviewed = (submission: Submission) => {
+  return submission.reviewed_at && submission.reviewed_by
+}
+
 const getImageUrl = (url: string) => {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -248,7 +263,22 @@ const getImageUrl = (url: string) => {
           <!-- Rejection reason preview -->
           <div v-if="submission.rejection_reason" class="flex items-start gap-2 text-destructive text-sm mb-3 p-2 bg-destructive/10 rounded-md">
             <XCircle class="w-4 h-4 shrink-0 mt-0.5" />
-            <span class="line-clamp-2">{{ submission.rejection_reason }}</span>
+            <div>
+              <span class="line-clamp-2">{{ submission.rejection_reason }}</span>
+              <p v-if="submission.reviewed_at" class="text-xs opacity-70 mt-1">
+                Reviewed {{ formatDate(submission.reviewed_at) }}
+              </p>
+            </div>
+          </div>
+          <!-- Manually approved indicator -->
+          <div v-else-if="wasManuallyReviewed(submission) && submission.status === 'approved'" class="flex items-start gap-2 text-green-500 text-sm mb-3 p-2 bg-green-500/10 rounded-md">
+            <CheckCircle class="w-4 h-4 shrink-0 mt-0.5" />
+            <div>
+              <span>Approved by Judge</span>
+              <p v-if="submission.reviewed_at" class="text-xs opacity-70 mt-0.5">
+                {{ formatDate(submission.reviewed_at) }}
+              </p>
+            </div>
           </div>
           <!-- Analysis error preview -->
           <div v-else-if="submission.analysis_error" class="flex items-start gap-2 text-orange-500 text-sm mb-3 p-2 bg-orange-500/10 rounded-md">
@@ -284,20 +314,43 @@ const getImageUrl = (url: string) => {
         </DialogHeader>
 
         <div v-if="selectedSubmission" class="space-y-6 mt-4">
-          <!-- Rejection Reason Alert -->
-          <Alert v-if="selectedSubmission.rejection_reason" variant="destructive">
-            <XCircle class="w-4 h-4" />
-            <AlertDescription>
-              <strong>Rejection Reason:</strong> {{ selectedSubmission.rejection_reason }}
-            </AlertDescription>
-          </Alert>
+          <!-- Judge Review Card - Shows for both approved and rejected manual reviews -->
+          <div v-if="wasManuallyReviewed(selectedSubmission)"
+               class="rounded-xl border-2 p-4"
+               :class="selectedSubmission.status === 'approved'
+                 ? 'border-green-500/50 bg-green-500/10'
+                 : 'border-red-500/50 bg-red-500/10'">
+            <div class="flex items-start gap-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                   :class="selectedSubmission.status === 'approved' ? 'bg-green-500/20' : 'bg-red-500/20'">
+                <Gavel class="w-5 h-5" :class="selectedSubmission.status === 'approved' ? 'text-green-500' : 'text-red-500'" />
+              </div>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-semibold" :class="selectedSubmission.status === 'approved' ? 'text-green-400' : 'text-red-400'">
+                    {{ selectedSubmission.status === 'approved' ? 'Approved by Judge' : 'Rejected by Judge' }}
+                  </span>
+                </div>
+                <p v-if="selectedSubmission.reviewed_at" class="text-sm text-muted-foreground mb-2">
+                  Reviewed on {{ formatDateTime(selectedSubmission.reviewed_at) }}
+                </p>
+                <div v-if="selectedSubmission.rejection_reason" class="mt-3 p-3 rounded-lg bg-background/50">
+                  <p class="text-sm font-medium mb-1 text-muted-foreground">Judge's Feedback:</p>
+                  <p class="text-base">{{ selectedSubmission.rejection_reason }}</p>
+                </div>
+                <p v-else-if="selectedSubmission.status === 'approved'" class="text-sm text-muted-foreground">
+                  Your submission has been manually approved and is now eligible for scoring.
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <!-- Analysis Error Alert -->
-          <Alert v-if="selectedSubmission.analysis_error" variant="destructive">
+          <!-- Analysis Error Alert (only if not yet reviewed) -->
+          <Alert v-if="selectedSubmission.analysis_error && !wasManuallyReviewed(selectedSubmission)" variant="destructive">
             <AlertCircle class="w-4 h-4" />
             <AlertDescription>
               <strong>Analysis Error:</strong> {{ selectedSubmission.analysis_error }}
-              <p class="text-xs mt-1 opacity-80">A judge may review this submission manually.</p>
+              <p class="text-xs mt-1 opacity-80">A judge will review this submission manually.</p>
             </AlertDescription>
           </Alert>
 
@@ -306,6 +359,14 @@ const getImageUrl = (url: string) => {
             <Info class="w-4 h-4 text-blue-500" />
             <AlertDescription class="text-blue-200">
               Your submission is being analyzed by our AI verification system. This usually takes a few minutes.
+            </AlertDescription>
+          </Alert>
+
+          <!-- Pending Review Info (when pending and not analyzing) -->
+          <Alert v-if="selectedSubmission.status === 'pending' && !selectedSubmission.analysis_error" class="border-yellow-500 bg-yellow-500/10">
+            <Clock class="w-4 h-4 text-yellow-500" />
+            <AlertDescription class="text-yellow-200">
+              Your submission is pending review. A judge will evaluate it shortly.
             </AlertDescription>
           </Alert>
 

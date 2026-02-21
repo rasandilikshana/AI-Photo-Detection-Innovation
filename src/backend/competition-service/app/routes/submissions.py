@@ -408,6 +408,11 @@ async def list_submissions(
             competition_id=sub.competition_id,
             competition=sub.competition,
             created_at=sub.created_at,
+            # Review/error fields
+            analysis_error=sub.analysis_error,
+            rejection_reason=sub.rejection_reason,
+            reviewed_by=sub.reviewed_by,
+            reviewed_at=sub.reviewed_at,
         ))
 
     return response_list
@@ -458,6 +463,11 @@ async def get_submission(
         competition_id=sub.competition_id,
         competition=sub.competition,
         created_at=sub.created_at,
+        # Review/error fields
+        analysis_error=sub.analysis_error,
+        rejection_reason=sub.rejection_reason,
+        reviewed_by=sub.reviewed_by,
+        reviewed_at=sub.reviewed_at,
     )
 
 
