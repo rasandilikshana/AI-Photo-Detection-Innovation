@@ -3,7 +3,7 @@ name: Release - Automated Deployment
 on:
   push:
     tags:
-      - 'v*.*.*'  # Trigger on version tags (v1.0.0, v1.2.3, etc.)
+      - 'v*.*.*'
 
 env:
   DOCKERHUB_USERNAME: rasandilikshana
@@ -25,7 +25,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch all history for changelog
+          fetch-depth: 0
 
       - name: Get version from tag
         id: get_version
@@ -34,7 +34,6 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          # Extract changelog for this version
           VERSION="${{ steps.get_version.outputs.version }}"
           CHANGELOG=$(awk "/## \[$VERSION\]/,/## \[/" CHANGELOG.md | sed '$d' || echo "See CHANGELOG.md for details")
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
@@ -69,13 +68,10 @@ jobs:
 
             **Version**: ${{ steps.get_version.outputs.version }}
 
-            ### 🐳 Docker Images
+            ### Docker Images
 
             ```bash
-            # Pull AI Detection Service
             docker pull rasandilikshana/avar-ai-detection:${{ steps.get_version.outputs.version }}
-
-            # Pull Competition Service
             docker pull rasandilikshana/avar-competition:${{ steps.get_version.outputs.version }}
             ```
 
@@ -83,31 +79,21 @@ jobs:
 
             ${{ steps.changelog.outputs.changelog }}
 
-            ### Installation
-
-            ```bash
-            # Clone the repository
-            git clone https://github.com/${{ github.repository }}.git
-            cd AI-Photo-Detection-Innovation
-            git checkout v${{ steps.get_version.outputs.version }}
-
-            # Run quick start
-            ./quickstart.sh
-            ```
-
-            ### 🌐 Live Demo
+            ### Live Demo
 
             - **Production**: https://avar.studio
             - **API Docs**: https://avar.studio/api/v1/docs
 
-            ### Documentation
+            ### Installation
 
-            - [Deployment Guide](deployments/DEPLOYMENT_GUIDE.md)
-            - [Testing Guide](docs/guides/TESTING_GUIDE.md)
-            - [Current Status](CURRENT_STATUS.md)
+            ```bash
+            git clone https://github.com/${{ github.repository }}.git
+            cd AI-Photo-Detection-Innovation
+            git checkout v${{ steps.get_version.outputs.version }}
+            ./quickstart.sh
+            ```
 
             ---
-
             **Full Changelog**: https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md
           draft: false
           prerelease: false
@@ -116,6 +102,20 @@ jobs:
             avar-v${{ steps.get_version.outputs.version }}-docs.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Telegram - Release Started
+        if: success()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VERSION: ${{ steps.get_version.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          MESSAGE="🚀 <b>A.V.A.R. Release v${VERSION}</b>%0A%0A📦 GitHub Release created!%0A🔗 <a href='https://github.com/${REPO}/releases/tag/v${VERSION}'>View Release</a>%0A%0A⏳ Building Docker images..."
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d parse_mode="HTML" \
+            -d text="${MESSAGE}"
 
   # ============================================================================
   # Build and Push Docker Images to Docker Hub
@@ -178,31 +178,54 @@ jobs:
             VCS_REF=${{ github.sha }}
 
   # ============================================================================
-  # Notification
+  # Send Telegram Notification
   # ============================================================================
-  notify:
-    name: Send Notifications
+  notify-telegram:
+    name: Send Telegram Notification
     runs-on: ubuntu-latest
     needs: [create-release, build-and-push-images]
     if: always()
 
     steps:
-      - name: Release Summary
+      - name: Send Success Notification
+        if: needs.build-and-push-images.result == 'success'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VERSION: ${{ needs.create-release.outputs.version }}
+          REPO: ${{ github.repository }}
         run: |
-          echo "========================================"
-          echo "  A.V.A.R. Release v${{ needs.create-release.outputs.version }}"
-          echo "========================================"
-          echo ""
-          echo "GitHub Release: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.create-release.outputs.version }}"
-          echo ""
-          echo "Docker Images:"
-          echo "  - rasandilikshana/avar-ai-detection:${{ needs.create-release.outputs.version }}"
-          echo "  - rasandilikshana/avar-competition:${{ needs.create-release.outputs.version }}"
-          echo ""
-          echo "Docker Hub: https://hub.docker.com/u/rasandilikshana"
+          MESSAGE="✅ <b>A.V.A.R. v${VERSION} Released!</b>%0A%0A🐳 <b>Docker Images:</b>%0A• <code>rasandilikshana/avar-ai-detection:${VERSION}</code>%0A• <code>rasandilikshana/avar-competition:${VERSION}</code>%0A%0A📦 <b>Artifacts:</b>%0A• Source: avar-v${VERSION}-source.tar.gz%0A• Docs: avar-v${VERSION}-docs.tar.gz%0A%0A🔗 <b>Links:</b>%0A• <a href='https://github.com/${REPO}/releases/tag/v${VERSION}'>GitHub Release</a>%0A• <a href='https://hub.docker.com/u/rasandilikshana'>Docker Hub</a>%0A• <a href='https://avar.studio'>Live Demo</a>%0A%0A🎉 Deployment successful!"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d parse_mode="HTML" \
+            -d text="${MESSAGE}"
 
-      - name: Check build status
+      - name: Send Failure Notification
         if: needs.build-and-push-images.result == 'failure'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VERSION: ${{ needs.create-release.outputs.version }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
         run: |
-          echo "⚠️ Docker build failed - check the workflow logs"
-          exit 1
+          MESSAGE="❌ <b>A.V.A.R. v${VERSION} Build Failed!</b>%0A%0A⚠️ Docker image build failed.%0A%0A🔗 <a href='https://github.com/${REPO}/actions/runs/${RUN_ID}'>View Workflow Logs</a>%0A%0APlease check the logs and fix the issue."
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d parse_mode="HTML" \
+            -d text="${MESSAGE}"
+
+      - name: Send Skipped Notification
+        if: needs.build-and-push-images.result == 'skipped'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          VERSION: ${{ needs.create-release.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          MESSAGE="⏭️ <b>A.V.A.R. v${VERSION}</b>%0A%0ADocker build was skipped.%0A%0A🔗 <a href='https://github.com/${REPO}/releases/tag/v${VERSION}'>GitHub Release</a>"
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
+            -d parse_mode="HTML" \
+            -d text="${MESSAGE}"
