@@ -690,6 +690,11 @@ async def get_competition_submissions_for_judge(
             "score_count": sub.score_count,
             "is_scored_by_me": is_scored,
             "created_at": sub.created_at,
+            # Review/error fields for judge actions
+            "analysis_error": sub.analysis_error,
+            "rejection_reason": sub.rejection_reason,
+            "reviewed_by": sub.reviewed_by,
+            "reviewed_at": sub.reviewed_at.isoformat() if sub.reviewed_at else None,
         })
 
     return response_list
@@ -781,6 +786,11 @@ async def get_submission_detail_for_judge(
             "comments": my_score.comments,
         } if my_score else None,
         "created_at": sub.created_at,
+        # Review/error fields for judge actions
+        "analysis_error": sub.analysis_error,
+        "rejection_reason": sub.rejection_reason,
+        "reviewed_by": sub.reviewed_by,
+        "reviewed_at": sub.reviewed_at.isoformat() if sub.reviewed_at else None,
     }
 
 
@@ -1136,3 +1146,93 @@ async def get_my_scoring_activity(
     logs = result.scalars().all()
 
     return [ScoreAuditLogResponse.model_validate(log) for log in logs]
+
+
+# ============================================================================
+# Judge Manual Review endpoints
+# ============================================================================
+
+@router.post("/review/{submission_id}")
+async def review_submission(
+    submission_id: int,
+    action: str = Query(..., description="Action: approve or reject"),
+    reason: Optional[str] = Query(None, description="Reason for rejection (required for reject)"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Manually approve or reject a submission.
+    Used when AI analysis fails or needs manual review.
+
+    - **action**: 'approve' or 'reject'
+    - **reason**: Required when rejecting, explains why
+    """
+    from datetime import datetime
+
+    if current_user.role not in [UserRole.JUDGE, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only judges and admins can review submissions",
+        )
+
+    if action not in ['approve', 'reject']:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Action must be 'approve' or 'reject'",
+        )
+
+    if action == 'reject' and not reason:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reason is required when rejecting a submission",
+        )
+
+    # Get submission
+    result = await db.execute(
+        select(Submission).where(Submission.id == submission_id)
+    )
+    submission = result.scalar_one_or_none()
+
+    if not submission:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Submission not found",
+        )
+
+    # Verify judge is assigned to this competition (unless admin)
+    if current_user.role == UserRole.JUDGE:
+        assignment_result = await db.execute(
+            select(JudgeAssignment).where(
+                JudgeAssignment.judge_id == current_user.id,
+                JudgeAssignment.competition_id == submission.competition_id,
+                JudgeAssignment.is_active == True,
+            )
+        )
+        if not assignment_result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not assigned to this competition",
+            )
+
+    # Update submission status
+    if action == 'approve':
+        submission.status = SubmissionStatus.APPROVED
+        submission.rejection_reason = None
+    else:
+        submission.status = SubmissionStatus.REJECTED
+        submission.rejection_reason = reason
+
+    submission.reviewed_by = current_user.id
+    submission.reviewed_at = datetime.utcnow()
+
+    await db.commit()
+
+    logger.info(f"Judge {current_user.id} {action}d submission {submission_id}: {reason or 'No reason'}")
+
+    return {
+        "message": f"Submission {action}d successfully",
+        "submission_id": submission_id,
+        "new_status": submission.status.value,
+        "reviewed_by": current_user.id,
+        "reason": reason,
+    }

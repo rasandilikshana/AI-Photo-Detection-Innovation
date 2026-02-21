@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { Camera, Clock, ImageIcon, Trophy, Search, X } from 'lucide-vue-next'
+import { Camera, Clock, ImageIcon, Trophy, Search, X, AlertCircle, XCircle, Info } from 'lucide-vue-next'
 import type { Submission } from '@/types'
 
 const authStore = useAuthStore()
@@ -32,6 +32,7 @@ const statusOptions = [
   { value: 'analyzing', label: 'Analyzing' },
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
+  { value: 'disqualified', label: 'Disqualified' },
 ]
 
 const filteredSubmissions = computed(() => {
@@ -244,6 +245,16 @@ const getImageUrl = (url: string) => {
             <Trophy class="w-4 h-4" />
             <span class="text-sm line-clamp-1">{{ submission.competition.title }}</span>
           </div>
+          <!-- Rejection reason preview -->
+          <div v-if="submission.rejection_reason" class="flex items-start gap-2 text-destructive text-sm mb-3 p-2 bg-destructive/10 rounded-md">
+            <XCircle class="w-4 h-4 shrink-0 mt-0.5" />
+            <span class="line-clamp-2">{{ submission.rejection_reason }}</span>
+          </div>
+          <!-- Analysis error preview -->
+          <div v-else-if="submission.analysis_error" class="flex items-start gap-2 text-orange-500 text-sm mb-3 p-2 bg-orange-500/10 rounded-md">
+            <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
+            <span class="line-clamp-2">Analysis failed - pending review</span>
+          </div>
           <div class="flex items-center text-sm text-muted-foreground">
             <Clock class="w-4 h-4 mr-2" />
             {{ formatDate(submission.created_at) }}
@@ -273,6 +284,31 @@ const getImageUrl = (url: string) => {
         </DialogHeader>
 
         <div v-if="selectedSubmission" class="space-y-6 mt-4">
+          <!-- Rejection Reason Alert -->
+          <Alert v-if="selectedSubmission.rejection_reason" variant="destructive">
+            <XCircle class="w-4 h-4" />
+            <AlertDescription>
+              <strong>Rejection Reason:</strong> {{ selectedSubmission.rejection_reason }}
+            </AlertDescription>
+          </Alert>
+
+          <!-- Analysis Error Alert -->
+          <Alert v-if="selectedSubmission.analysis_error" variant="destructive">
+            <AlertCircle class="w-4 h-4" />
+            <AlertDescription>
+              <strong>Analysis Error:</strong> {{ selectedSubmission.analysis_error }}
+              <p class="text-xs mt-1 opacity-80">A judge may review this submission manually.</p>
+            </AlertDescription>
+          </Alert>
+
+          <!-- Analyzing Status Info -->
+          <Alert v-if="selectedSubmission.status === 'analyzing'" class="border-blue-500 bg-blue-500/10">
+            <Info class="w-4 h-4 text-blue-500" />
+            <AlertDescription class="text-blue-200">
+              Your submission is being analyzed by our AI verification system. This usually takes a few minutes.
+            </AlertDescription>
+          </Alert>
+
           <!-- Submitted Image -->
           <div v-if="selectedSubmission.jpg_file_url">
             <div class="rounded-xl overflow-hidden border bg-muted/20">

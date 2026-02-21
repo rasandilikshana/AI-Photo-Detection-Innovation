@@ -113,6 +113,12 @@ export interface Submission {
   total_score: number
   score_count: number
   average_score?: number
+  // Analysis error (when AI analysis fails)
+  analysis_error?: string
+  // Review/Rejection info (when judge manually reviews)
+  rejection_reason?: string
+  reviewed_by?: number
+  reviewed_at?: string
   user_id: number
   competition_id: number
   user?: User

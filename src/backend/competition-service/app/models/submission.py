@@ -2,7 +2,7 @@
 Submission model for photo submissions
 """
 
-from sqlalchemy import Column, String, Integer, ForeignKey, Enum as SQLEnum, Text, JSON, Float
+from sqlalchemy import Column, String, Integer, ForeignKey, Enum as SQLEnum, Text, JSON, Float, DateTime
 from sqlalchemy.orm import relationship
 import enum
 from app.models.base import BaseModel
@@ -64,12 +64,21 @@ class Submission(BaseModel):
     total_score = Column(Float, default=0.0, nullable=False)
     score_count = Column(Integer, default=0, nullable=False)
 
+    # Analysis Error (when AI analysis fails)
+    analysis_error = Column(Text, nullable=True)
+
+    # Review/Rejection Info (when judge manually reviews)
+    rejection_reason = Column(Text, nullable=True)
+    reviewed_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+
     # Foreign Keys
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     competition_id = Column(Integer, ForeignKey("competitions.id"), nullable=False)
 
     # Relationships
-    user = relationship("User", back_populates="submissions")
+    user = relationship("User", back_populates="submissions", foreign_keys=[user_id])
+    reviewer = relationship("User", foreign_keys=[reviewed_by])
     competition = relationship("Competition", back_populates="submissions")
     scores = relationship("Score", back_populates="submission", cascade="all, delete-orphan")
     score_audit_logs = relationship("ScoreAuditLog", back_populates="submission")

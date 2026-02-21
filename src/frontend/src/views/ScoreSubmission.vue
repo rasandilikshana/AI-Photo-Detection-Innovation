@@ -14,8 +14,10 @@ import {
   ArrowLeft, Camera, Aperture, Clock, Gauge, Star, Sparkles, Target,
   ShieldCheck, ShieldAlert, ShieldQuestion, AlertTriangle, Loader2,
   CheckCircle, XCircle, Layers, Eye, Link, FileImage, Fingerprint, Globe,
-  ChevronDown, ChevronUp, Info, Cpu, Waves, Grid3X3, ImageIcon, Hash, BarChart2
+  ChevronDown, ChevronUp, Info, Cpu, Waves, Grid3X3, ImageIcon, Hash, BarChart2,
+  ThumbsUp, ThumbsDown, AlertCircle
 } from 'lucide-vue-next'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import apiClient from '@/api/client'
 
 interface MyScore {
@@ -98,6 +100,11 @@ interface SubmissionDetail {
   } | null
   my_score: MyScore | null
   created_at: string
+  // Review/error fields
+  analysis_error: string | null
+  rejection_reason: string | null
+  reviewed_by: number | null
+  reviewed_at: string | null
 }
 
 const route = useRoute()
@@ -124,6 +131,26 @@ const expandedLayers = ref<Record<string, boolean>>({
   layer2: false,
   layer3: false,
   rawLinkage: false,
+})
+
+// Review dialog state
+const showReviewDialog = ref(false)
+const reviewAction = ref<'approve' | 'reject'>('approve')
+const reviewReason = ref('')
+const isSubmittingReview = ref(false)
+
+// Check if submission needs manual review
+const needsManualReview = computed(() => {
+  if (!submission.value) return false
+  const status = submission.value.status?.toLowerCase()
+  const verdict = submission.value.verification_verdict?.toLowerCase()
+  return status === 'pending' || verdict === 'needs_review' || !!submission.value.analysis_error
+})
+
+// Can the submission be scored (must be approved first)
+const canBeScored = computed(() => {
+  if (!submission.value) return false
+  return submission.value.status?.toLowerCase() === 'approved'
 })
 
 const toggleLayer = (layer: string) => {
@@ -330,6 +357,57 @@ const scoreCategories = [
     model: creativityScore,
   },
 ]
+
+// Review dialog functions
+const openReviewDialog = (action: 'approve' | 'reject') => {
+  reviewAction.value = action
+  reviewReason.value = ''
+  showReviewDialog.value = true
+}
+
+const closeReviewDialog = () => {
+  showReviewDialog.value = false
+  reviewReason.value = ''
+}
+
+const submitReview = async () => {
+  if (!submission.value) return
+  if (reviewAction.value === 'reject' && !reviewReason.value.trim()) {
+    error.value = 'Please provide a reason for rejection'
+    return
+  }
+
+  isSubmittingReview.value = true
+  error.value = ''
+
+  try {
+    const params = new URLSearchParams({
+      action: reviewAction.value,
+    })
+    if (reviewAction.value === 'reject') {
+      params.append('reason', reviewReason.value.trim())
+    }
+
+    await apiClient.post(`/scores/review/${submission.value.id}?${params.toString()}`)
+
+    // Update the local submission state
+    submission.value.status = reviewAction.value === 'approve' ? 'approved' : 'rejected'
+    if (reviewAction.value === 'reject') {
+      submission.value.rejection_reason = reviewReason.value.trim()
+    } else {
+      submission.value.rejection_reason = null
+    }
+
+    closeReviewDialog()
+    success.value = `Submission ${reviewAction.value}d successfully!`
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to submit review'
+    error.value = errorMessage
+    console.error('Failed to submit review:', err)
+  } finally {
+    isSubmittingReview.value = false
+  }
+}
 </script>
 
 <template>
@@ -358,6 +436,72 @@ const scoreCategories = [
         <CheckCircle class="w-4 h-4 text-green-600" />
         <AlertDescription class="text-green-800">
           You have already scored this submission. You can update your scores below.
+        </AlertDescription>
+      </Alert>
+
+      <!-- Manual Review Required Banner -->
+      <div v-if="needsManualReview && !canBeScored" class="mb-6 space-y-4">
+        <!-- Analysis Error Alert -->
+        <Alert v-if="submission.analysis_error" variant="destructive">
+          <AlertCircle class="w-4 h-4" />
+          <AlertDescription>
+            <strong>Analysis Error:</strong> {{ submission.analysis_error }}
+            <p class="text-xs mt-1 opacity-80">This submission requires manual review by a judge.</p>
+          </AlertDescription>
+        </Alert>
+
+        <!-- Needs Review Alert -->
+        <Alert v-else-if="submission.verification_verdict?.toLowerCase() === 'needs_review'" class="border-yellow-500 bg-yellow-500/10">
+          <ShieldQuestion class="w-4 h-4 text-yellow-500" />
+          <AlertDescription class="text-yellow-200">
+            <strong>Manual Review Required:</strong> The AI verification flagged this submission for human review.
+          </AlertDescription>
+        </Alert>
+
+        <!-- Pending Status Alert -->
+        <Alert v-else-if="submission.status?.toLowerCase() === 'pending'" class="border-blue-500 bg-blue-500/10">
+          <Info class="w-4 h-4 text-blue-500" />
+          <AlertDescription class="text-blue-200">
+            <strong>Pending Approval:</strong> This submission is awaiting manual review before it can be scored.
+          </AlertDescription>
+        </Alert>
+
+        <!-- Approve/Reject Actions -->
+        <Card class="border-2 border-dashed border-primary/50 bg-primary/5">
+          <CardContent class="pt-6">
+            <div class="text-center mb-4">
+              <h3 class="text-lg font-semibold mb-2">Judge Action Required</h3>
+              <p class="text-sm text-muted-foreground">
+                Review the submission details and AI analysis above, then approve or reject this entry.
+              </p>
+            </div>
+            <div class="flex gap-4 justify-center">
+              <Button
+                variant="default"
+                class="bg-green-600 hover:bg-green-700 px-8"
+                @click="openReviewDialog('approve')"
+              >
+                <ThumbsUp class="w-4 h-4 mr-2" />
+                Approve Submission
+              </Button>
+              <Button
+                variant="destructive"
+                class="px-8"
+                @click="openReviewDialog('reject')"
+              >
+                <ThumbsDown class="w-4 h-4 mr-2" />
+                Reject Submission
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Rejected Submission Banner -->
+      <Alert v-if="submission.status?.toLowerCase() === 'rejected' && submission.rejection_reason" variant="destructive" class="mb-6">
+        <XCircle class="w-4 h-4" />
+        <AlertDescription>
+          <strong>Rejected:</strong> {{ submission.rejection_reason }}
         </AlertDescription>
       </Alert>
 
@@ -980,21 +1124,37 @@ const scoreCategories = [
                 <div>
                   <CardTitle>{{ alreadyScored ? 'Update Score' : 'Score This Submission' }}</CardTitle>
                   <CardDescription>
-                    Rate each category from 0 to 10
+                    {{ canBeScored ? 'Rate each category from 0 to 10' : 'Submission must be approved before scoring' }}
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <Alert v-if="error" variant="destructive" class="mb-4">
-                <AlertDescription>{{ error }}</AlertDescription>
-              </Alert>
+              <!-- Not approved message -->
+              <div v-if="!canBeScored && !alreadyScored" class="text-center py-8">
+                <div class="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                  <AlertCircle class="w-8 h-8 text-muted-foreground" />
+                </div>
+                <p class="font-medium text-muted-foreground mb-2">Cannot Score Yet</p>
+                <p class="text-sm text-muted-foreground">
+                  {{ submission.status?.toLowerCase() === 'pending' || submission.analysis_error
+                    ? 'Please approve or reject this submission using the buttons above.'
+                    : submission.status?.toLowerCase() === 'rejected'
+                    ? 'This submission has been rejected and cannot be scored.'
+                    : 'This submission is not ready for scoring.' }}
+                </p>
+              </div>
+              <!-- Scoring form (only shown when can be scored) -->
+              <div v-if="canBeScored || alreadyScored">
+                <Alert v-if="error" variant="destructive" class="mb-4">
+                  <AlertDescription>{{ error }}</AlertDescription>
+                </Alert>
 
-              <Alert v-if="success" class="mb-4 bg-green-50 text-green-800 border-green-200">
-                <AlertDescription>{{ success }}</AlertDescription>
-              </Alert>
+                <Alert v-if="success" class="mb-4 bg-green-50 text-green-800 border-green-200">
+                  <AlertDescription>{{ success }}</AlertDescription>
+                </Alert>
 
-              <form @submit.prevent="handleSubmit" class="space-y-5">
+                <form @submit.prevent="handleSubmit" class="space-y-5">
                 <!-- Score Categories -->
                 <div
                   v-for="category in scoreCategories"
@@ -1078,10 +1238,59 @@ const scoreCategories = [
                   </Button>
                 </div>
               </form>
+              </div>
             </CardContent>
           </Card>
         </div>
       </div>
     </template>
+
+    <!-- Review Dialog -->
+    <Dialog :open="showReviewDialog" @update:open="closeReviewDialog">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {{ reviewAction === 'approve' ? 'Approve Submission' : 'Reject Submission' }}
+          </DialogTitle>
+          <DialogDescription>
+            {{ reviewAction === 'approve'
+              ? 'This will approve the submission for scoring by all judges.'
+              : 'Please provide a reason for rejecting this submission. This will be visible to the participant.'
+            }}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-4 py-4">
+          <div class="space-y-2">
+            <Label :for="'review-reason'">
+              {{ reviewAction === 'approve' ? 'Note (optional)' : 'Reason for rejection *' }}
+            </Label>
+            <Textarea
+              id="review-reason"
+              v-model="reviewReason"
+              :placeholder="reviewAction === 'approve'
+                ? 'Optional note for this approval...'
+                : 'e.g., Invalid RAW file format, suspected AI manipulation, etc.'
+              "
+              rows="3"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" @click="closeReviewDialog" :disabled="isSubmittingReview">
+            Cancel
+          </Button>
+          <Button
+            :variant="reviewAction === 'approve' ? 'default' : 'destructive'"
+            @click="submitReview"
+            :disabled="isSubmittingReview || (reviewAction === 'reject' && !reviewReason.trim())"
+          >
+            <Loader2 v-if="isSubmittingReview" class="w-4 h-4 mr-2 animate-spin" />
+            {{ reviewAction === 'approve' ? 'Approve' : 'Reject' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

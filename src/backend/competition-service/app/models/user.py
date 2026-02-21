@@ -41,7 +41,8 @@ class User(BaseModel):
 
     # Relationships
     submissions = relationship(
-        "Submission", back_populates="user", cascade="all, delete-orphan"
+        "Submission", back_populates="user", cascade="all, delete-orphan",
+        foreign_keys="[Submission.user_id]"
     )
     competitions_created = relationship(
         "Competition", back_populates="organizer", cascade="all, delete-orphan"

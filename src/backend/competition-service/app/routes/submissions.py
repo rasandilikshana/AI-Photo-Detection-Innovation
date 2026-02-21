@@ -124,9 +124,16 @@ async def run_ai_analysis(submission_id: int, jpg_path: str, raw_path: Optional[
                     logger.info(f"[Submission {submission_id}] Updated with verdict: {verification_verdict}")
 
                 else:
-                    logger.error(f"[Submission {submission_id}] AI Detection failed: {response.status_code} - {response.text}")
+                    # Extract error message from response
+                    try:
+                        error_detail = response.json().get('detail', 'Unknown error')
+                    except Exception:
+                        error_detail = response.text or 'Unknown error'
+
+                    logger.error(f"[Submission {submission_id}] AI Detection failed: {response.status_code} - {error_detail}")
                     submission.status = SubmissionStatus.PENDING
                     submission.verification_verdict = VerificationVerdict.NEEDS_REVIEW
+                    submission.analysis_error = f"AI Analysis failed: {error_detail}"
                     await db.commit()
 
     except Exception as e:
@@ -140,6 +147,7 @@ async def run_ai_analysis(submission_id: int, jpg_path: str, raw_path: Optional[
                 if submission:
                     submission.status = SubmissionStatus.PENDING
                     submission.verification_verdict = VerificationVerdict.NEEDS_REVIEW
+                    submission.analysis_error = f"Analysis error: {str(e)}"
                     await db.commit()
         except Exception as db_err:
             logger.error(f"[Submission {submission_id}] Failed to update status: {db_err}")
@@ -212,6 +220,15 @@ async def create_submission(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="RAW file is required for this competition",
         )
+
+    # Validate RAW file extension if provided
+    ALLOWED_RAW_EXTENSIONS = ['cr2', 'cr3', 'nef', 'arw', 'dng', 'raf', 'orf', 'rw2', 'pef', 'srw', 'raw']
+    if raw_file:
+        if not validate_file_extension(raw_file.filename, ALLOWED_RAW_EXTENSIONS):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid RAW file format. Supported formats: {', '.join([ext.upper() for ext in ALLOWED_RAW_EXTENSIONS])}",
+            )
 
     # Validate file sizes before saving
     jpg_file.file.seek(0, 2)

@@ -29,6 +29,7 @@ const loadError = ref('')
 // Constants for file validation
 const MAX_JPG_SIZE_MB = 50
 const MAX_RAW_SIZE_MB = 200
+const ALLOWED_RAW_EXTENSIONS = ['cr2', 'cr3', 'nef', 'arw', 'dng', 'raf', 'orf', 'rw2', 'pef', 'srw', 'raw']
 
 onMounted(async () => {
   try {
@@ -67,8 +68,19 @@ const handleRawFileChange = (event: Event) => {
 
   if (target.files && target.files[0]) {
     const file = target.files[0]
-    const fileSizeMB = file.size / (1024 * 1024)
 
+    // Validate file extension
+    const fileName = file.name.toLowerCase()
+    const extension = fileName.split('.').pop() || ''
+    if (!ALLOWED_RAW_EXTENSIONS.includes(extension)) {
+      submissionsStore.error = `Invalid RAW file format. Supported formats: ${ALLOWED_RAW_EXTENSIONS.map(ext => ext.toUpperCase()).join(', ')}`
+      target.value = ''
+      rawFile.value = null
+      return
+    }
+
+    // Validate file size
+    const fileSizeMB = file.size / (1024 * 1024)
     if (fileSizeMB > MAX_RAW_SIZE_MB) {
       submissionsStore.error = `RAW file too large. Maximum size is ${MAX_RAW_SIZE_MB}MB`
       target.value = ''
@@ -213,7 +225,7 @@ const handleSubmit = async () => {
             <Input
               id="rawFile"
               type="file"
-              accept=".raw,.cr2,.nef,.arw,.dng"
+              accept=".cr2,.cr3,.nef,.arw,.dng,.raf,.orf,.rw2,.pef,.srw,.raw"
               @change="handleRawFileChange"
               :required="competitionsStore.currentCompetition?.require_raw_files"
               :disabled="isSubmitting"
@@ -221,7 +233,7 @@ const handleSubmit = async () => {
             />
             <p class="text-sm text-muted-foreground flex items-center gap-1">
               <Info class="w-3 h-3" />
-              Upload your RAW file for verification (max {{ MAX_RAW_SIZE_MB }}MB)
+              Supported: CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2, PEF, SRW (max {{ MAX_RAW_SIZE_MB }}MB)
             </p>
           </div>
 

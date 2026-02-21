@@ -10,8 +10,11 @@ import {
   Gavel, Calendar, Camera, CheckCircle, XCircle, Image, Clock, ArrowLeft,
   BarChart3, ShieldCheck, ShieldAlert, ShieldQuestion, AlertTriangle,
   Eye, Star, FileCheck, Loader2, FileImage, Fingerprint, Globe,
-  History, Network, Monitor, User as UserIcon, RefreshCw
+  History, Network, Monitor, User as UserIcon, RefreshCw, AlertCircle, ThumbsUp, ThumbsDown
 } from 'lucide-vue-next'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import apiClient from '@/api/client'
 
 interface JudgeAssignment {
@@ -62,6 +65,10 @@ interface JudgeSubmission {
   score_count: number
   is_scored_by_me: boolean
   created_at: string
+  analysis_error: string | null
+  rejection_reason: string | null
+  reviewed_by: number | null
+  reviewed_at: string | null
 }
 
 interface ScoreAuditLog {
@@ -117,6 +124,13 @@ const showAuditLogs = ref(false)
 const auditLogs = ref<ScoreAuditLog[]>([])
 const auditLogStats = ref<{ total_count: number; unique_sessions: number; unique_ips: number } | null>(null)
 const isLoadingAuditLogs = ref(false)
+
+// Review dialog state
+const showReviewDialog = ref(false)
+const reviewSubmissionId = ref<number | null>(null)
+const reviewAction = ref<'approve' | 'reject'>('approve')
+const reviewReason = ref('')
+const isSubmittingReview = ref(false)
 
 // Check if user is a judge
 const isJudge = computed(() => {
@@ -319,6 +333,58 @@ const getLayerStatus = (verdict: string | null) => {
     return { status: 'REVIEW', isPass: null }
   }
   return { status: verdict.toUpperCase(), isPass: null }
+}
+
+const openReviewDialog = (submissionId: number, action: 'approve' | 'reject') => {
+  reviewSubmissionId.value = submissionId
+  reviewAction.value = action
+  reviewReason.value = ''
+  showReviewDialog.value = true
+}
+
+const closeReviewDialog = () => {
+  showReviewDialog.value = false
+  reviewSubmissionId.value = null
+  reviewReason.value = ''
+}
+
+const submitReview = async () => {
+  if (!reviewSubmissionId.value) return
+  if (reviewAction.value === 'reject' && !reviewReason.value.trim()) {
+    error.value = 'Please provide a reason for rejection'
+    return
+  }
+
+  isSubmittingReview.value = true
+  error.value = ''
+
+  try {
+    const params = new URLSearchParams({
+      action: reviewAction.value,
+    })
+    if (reviewAction.value === 'reject') {
+      params.append('reason', reviewReason.value.trim())
+    }
+
+    await apiClient.post(`/scores/review/${reviewSubmissionId.value}?${params.toString()}`)
+
+    // Update the submission in the local state
+    const index = submissions.value.findIndex(s => s.id === reviewSubmissionId.value)
+    if (index !== -1) {
+      submissions.value[index].status = reviewAction.value === 'approve' ? 'approved' : 'rejected'
+      if (reviewAction.value === 'reject') {
+        submissions.value[index].rejection_reason = reviewReason.value.trim()
+      }
+    }
+
+    closeReviewDialog()
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to submit review'
+    error.value = errorMessage
+    console.error('Failed to submit review:', err)
+  } finally {
+    isSubmittingReview.value = false
+  }
 }
 
 const getImageUrl = (url: string) => {
@@ -856,6 +922,22 @@ const getImageUrl = (url: string) => {
           </CardHeader>
 
           <CardContent>
+            <!-- Analysis Error Alert -->
+            <Alert v-if="submission.analysis_error" variant="destructive" class="mb-3">
+              <AlertCircle class="w-4 h-4" />
+              <AlertDescription class="text-xs">
+                <strong>Analysis Error:</strong> {{ submission.analysis_error }}
+              </AlertDescription>
+            </Alert>
+
+            <!-- Rejection Reason Alert -->
+            <Alert v-if="submission.rejection_reason" variant="destructive" class="mb-3">
+              <XCircle class="w-4 h-4" />
+              <AlertDescription class="text-xs">
+                <strong>Rejected:</strong> {{ submission.rejection_reason }}
+              </AlertDescription>
+            </Alert>
+
             <!-- Camera Info -->
             <div v-if="submission.camera_make" class="flex items-center gap-2 text-sm text-muted-foreground mb-3">
               <Camera class="w-4 h-4" />
@@ -874,15 +956,18 @@ const getImageUrl = (url: string) => {
               {{ formatDate(submission.created_at) }}
             </p>
 
-            <!-- Action Button -->
+            <!-- Action Buttons -->
+            <!-- Score button for approved submissions -->
             <Button
-              v-if="submission.status === 'approved' && !submission.is_scored_by_me"
+              v-if="submission.status?.toLowerCase() === 'approved' && !submission.is_scored_by_me"
               class="w-full"
               @click="router.push(`/judge/score/${submission.id}`)"
             >
               <Star class="w-4 h-4 mr-2" />
               Score This Entry
             </Button>
+
+            <!-- View details for scored submissions -->
             <Button
               v-else-if="submission.is_scored_by_me"
               variant="outline"
@@ -892,17 +977,97 @@ const getImageUrl = (url: string) => {
               <Eye class="w-4 h-4 mr-2" />
               View Details
             </Button>
+
+            <!-- Manual review buttons for pending/needs_review/analysis_error submissions -->
+            <div v-else-if="submission.status?.toLowerCase() === 'pending' || submission.verification_verdict?.toLowerCase() === 'needs_review' || submission.analysis_error" class="space-y-2">
+              <div class="flex gap-2">
+                <Button
+                  variant="default"
+                  class="flex-1 bg-green-600 hover:bg-green-700"
+                  @click="openReviewDialog(submission.id, 'approve')"
+                >
+                  <ThumbsUp class="w-4 h-4 mr-1" />
+                  Approve
+                </Button>
+                <Button
+                  variant="destructive"
+                  class="flex-1"
+                  @click="openReviewDialog(submission.id, 'reject')"
+                >
+                  <ThumbsDown class="w-4 h-4 mr-1" />
+                  Reject
+                </Button>
+              </div>
+              <Button
+                variant="outline"
+                class="w-full"
+                @click="router.push(`/judge/score/${submission.id}`)"
+              >
+                <Eye class="w-4 h-4 mr-2" />
+                View Full Details
+              </Button>
+            </div>
+
+            <!-- Not ready message for analyzing or rejected -->
             <Button
               v-else
               variant="secondary"
               class="w-full"
               disabled
             >
-              {{ submission.status === 'analyzing' ? 'Analyzing...' : 'Not Ready for Scoring' }}
+              {{ submission.status?.toLowerCase() === 'analyzing' ? 'Analyzing...' : submission.status?.toLowerCase() === 'rejected' ? 'Rejected' : 'Not Ready for Scoring' }}
             </Button>
           </CardContent>
         </Card>
       </div>
     </template>
+
+    <!-- Review Dialog -->
+    <Dialog :open="showReviewDialog" @update:open="closeReviewDialog">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {{ reviewAction === 'approve' ? 'Approve Submission' : 'Reject Submission' }}
+          </DialogTitle>
+          <DialogDescription>
+            {{ reviewAction === 'approve'
+              ? 'This will approve the submission for scoring. You can optionally add a note.'
+              : 'Please provide a reason for rejecting this submission. This will be visible to the participant.'
+            }}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-4 py-4">
+          <div class="space-y-2">
+            <Label :for="'review-reason'">
+              {{ reviewAction === 'approve' ? 'Note (optional)' : 'Reason for rejection *' }}
+            </Label>
+            <Textarea
+              id="review-reason"
+              v-model="reviewReason"
+              :placeholder="reviewAction === 'approve'
+                ? 'Optional note for this approval...'
+                : 'e.g., Invalid RAW file format, suspected AI manipulation, etc.'
+              "
+              rows="3"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" @click="closeReviewDialog" :disabled="isSubmittingReview">
+            Cancel
+          </Button>
+          <Button
+            :variant="reviewAction === 'approve' ? 'default' : 'destructive'"
+            @click="submitReview"
+            :disabled="isSubmittingReview || (reviewAction === 'reject' && !reviewReason.trim())"
+          >
+            <Loader2 v-if="isSubmittingReview" class="w-4 h-4 mr-2 animate-spin" />
+            {{ reviewAction === 'approve' ? 'Approve' : 'Reject' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

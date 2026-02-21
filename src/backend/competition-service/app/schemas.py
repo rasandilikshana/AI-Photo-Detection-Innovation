@@ -222,6 +222,12 @@ class SubmissionResponse(BaseModel):
     competition_id: int
     competition: Optional[CompetitionBasic] = None
     created_at: datetime
+    # Analysis error (when AI analysis fails)
+    analysis_error: Optional[str] = None
+    # Review/Rejection info (when judge manually reviews)
+    rejection_reason: Optional[str] = None
+    reviewed_by: Optional[int] = None
+    reviewed_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
