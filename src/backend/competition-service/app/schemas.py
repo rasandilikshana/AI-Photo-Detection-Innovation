@@ -336,3 +336,150 @@ class PaginatedResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+# ============================================================================
+# Camera Reputation Schemas (v2.0)
+# ============================================================================
+
+class CameraFingerprintResponse(BaseModel):
+    """Camera PRNU fingerprint response"""
+    id: int
+    submission_id: int
+    user_id: int
+    camera_make: str
+    camera_model: str
+    prnu_energy: float
+    prnu_hash: str
+    similarity_to_profile: Optional[float] = None
+    trust_boost_applied: float
+    verified: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CameraTrustProfileResponse(BaseModel):
+    """Camera trust profile response"""
+    id: int
+    camera_make: str
+    camera_model: str
+    total_submissions: int
+    authentic_count: int
+    suspicious_count: int
+    ai_generated_count: int
+    rejected_count: int
+    avg_trust_score: float
+    prnu_pattern_stability: float
+    avg_prnu_energy: Optional[float] = None
+    authenticity_rate: float
+    rejection_rate: float
+    last_updated: Optional[datetime] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CameraComparisonResponse(BaseModel):
+    """PRNU pattern comparison result"""
+    fingerprint1_id: int
+    fingerprint2_id: int
+    similarity_score: float
+    correlation: Optional[float] = None
+    distance_metric: Optional[str] = None
+    same_camera_likely: bool
+
+
+class TrustScoreResponse(BaseModel):
+    """Trust score calculation result"""
+    trust_score: float
+    boost: float
+    message: str
+    similarity_to_profile: Optional[float] = None
+    max_similarity: Optional[float] = None
+    previous_submissions: int
+    verdict: str
+    verdict_consistency: Optional[float] = None
+
+
+class FraudDetectionResponse(BaseModel):
+    """Camera fraud detection result"""
+    fraud_likelihood: float
+    verdict: str
+    recommendation: str
+    indicators: List[str]
+    trust_score: float
+    explanation: str
+
+
+class UserCameraHistoryResponse(BaseModel):
+    """User's camera usage history"""
+    camera_make: str
+    camera_model: str
+    submission_count: int
+    first_used: datetime
+    last_used: datetime
+    avg_trust_score: float
+
+
+# ============================================================================
+# Judge Analytics Schemas (v2.0)
+# ============================================================================
+
+class JudgeScoringProfileResponse(BaseModel):
+    """Judge scoring profile response"""
+    id: int
+    judge_id: int
+    competition_id: int
+    submission_count: int
+    avg_score_given: Optional[float] = None
+    score_std_dev: Optional[float] = None
+    bias_score: Optional[float] = None
+    bias_category: str
+    consistency_score: Optional[float] = None
+    outlier_count: int
+    last_analyzed: Optional[datetime] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class JudgeConsensusAnalysisResponse(BaseModel):
+    """Judge consensus analysis response"""
+    id: int
+    competition_id: int
+    submission_id: int
+    judge_count: int
+    score_mean: Optional[float] = None
+    score_std_dev: Optional[float] = None
+    icc_value: Optional[float] = None
+    consensus_verdict: Optional[str] = None
+    consensus_quality: str
+    confidence_level: Optional[float] = None
+    flagged_for_review: bool
+    outlier_judges: Optional[List[int]] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CredentialSharingDetectionResponse(BaseModel):
+    """Credential sharing detection response"""
+    id: int
+    competition_id: int
+    judge_id: int
+    unique_ip_count: Optional[int] = None
+    unique_session_count: Optional[int] = None
+    risk_score: Optional[float] = None
+    risk_level: Optional[str] = None
+    is_suspicious: bool
+    alert_triggered: bool
+    investigation_status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

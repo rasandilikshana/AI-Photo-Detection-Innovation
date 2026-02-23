@@ -8,8 +8,12 @@ Contains service layer implementations for:
 
 from app.services.prnu_extractor import PRNUExtractor
 from app.services.camera_reputation import CameraReputationManager
+from app.services.judge_consensus import JudgeConsensusAnalyzer
+from app.services.credential_sharing import CredentialSharingDetector
 
 __all__ = [
     "PRNUExtractor",
     "CameraReputationManager",
+    "JudgeConsensusAnalyzer",
+    "CredentialSharingDetector",
 ]
