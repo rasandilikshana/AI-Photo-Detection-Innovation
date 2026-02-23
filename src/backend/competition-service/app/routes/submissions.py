@@ -42,6 +42,117 @@ def path_to_url(file_path: Optional[str]) -> Optional[str]:
 AI_DETECTION_SERVICE_URL = os.getenv("AI_DETECTION_SERVICE_URL", "http://localhost:8001")
 
 
+async def integrate_camera_reputation(
+    submission_id: int,
+    submission: Submission,
+    jpg_path: str,
+    db: AsyncSession
+):
+    """
+    Integrate camera reputation system after AI analysis completes.
+
+    Steps:
+    1. Extract PRNU fingerprint
+    2. Calculate trust score
+    3. Apply trust boost
+    4. Detect fraud
+    5. Update camera profile
+    """
+    from app.services import PRNUExtractor, CameraReputationManager
+
+    logger.info(f"[Submission {submission_id}] Integrating camera reputation...")
+
+    # 1. Extract PRNU fingerprint
+    extractor = PRNUExtractor()
+    prnu_result = await extractor.extract_prnu_fingerprint(
+        jpg_path,
+        submission.camera_make,
+        submission.camera_model
+    )
+
+    if not prnu_result["valid"]:
+        logger.warning(f"[Submission {submission_id}] PRNU fingerprint invalid (energy too low)")
+        return
+
+    # 2. Store fingerprint and calculate trust score
+    manager = CameraReputationManager(db)
+
+    capture_context = {
+        "iso": submission.iso,
+        "aperture": submission.aperture,
+        "shutter_speed": submission.shutter_speed,
+        "capture_date": submission.capture_date,
+    }
+
+    fingerprint = await manager.store_fingerprint(
+        submission_id=submission_id,
+        prnu_data=prnu_result,
+        camera_make=submission.camera_make,
+        camera_model=submission.camera_model,
+        user_id=submission.user_id,
+        capture_context=capture_context
+    )
+
+    # 3. Calculate trust score
+    trust_result = await manager.calculate_trust_score(
+        prnu_result["pattern"],
+        submission.camera_make,
+        submission.camera_model,
+        submission.user_id
+    )
+
+    # 4. Apply trust boost to verification confidence
+    original_confidence = submission.verification_confidence
+    submission.verification_confidence += trust_result["boost"]
+    submission.verification_confidence = min(1.0, max(0.0, submission.verification_confidence))
+
+    # 5. Update submission with camera reputation data
+    submission.prnu_fingerprint_id = fingerprint.id
+    submission.prnu_extracted_energy = prnu_result["energy"]
+    submission.camera_trust_score = trust_result["trust_score"]
+
+    logger.info(
+        f"[Submission {submission_id}] Camera reputation applied: "
+        f"Trust={trust_result['trust_score']:.2f}, "
+        f"Boost={trust_result['boost']:+.2%}, "
+        f"Confidence={original_confidence:.2%} → {submission.verification_confidence:.2%}"
+    )
+
+    # 6. Detect fraud
+    fraud_result = await manager.detect_camera_fraud(
+        submission_id,
+        prnu_result["pattern"],
+        submission.camera_make,
+        submission.camera_model,
+        submission.user_id
+    )
+
+    if fraud_result["fraud_likelihood"] > 0.7:
+        logger.warning(
+            f"[Submission {submission_id}] HIGH FRAUD RISK DETECTED: "
+            f"{fraud_result['fraud_likelihood']:.1%} - {fraud_result['explanation']}"
+        )
+        submission.status = SubmissionStatus.REJECTED
+        submission.rejection_reason = f"Camera fraud detected: {fraud_result['explanation']}"
+    elif fraud_result["fraud_likelihood"] > 0.4:
+        logger.info(
+            f"[Submission {submission_id}] Moderate fraud risk: "
+            f"{fraud_result['fraud_likelihood']:.1%}"
+        )
+        submission.verification_verdict = VerificationVerdict.NEEDS_REVIEW
+
+    # 7. Update camera profile statistics
+    await manager.update_profile_stats(
+        submission.camera_make,
+        submission.camera_model,
+        str(submission.verification_verdict.value) if submission.verification_verdict else "pending",
+        prnu_result["energy"]
+    )
+
+    await db.commit()
+    logger.info(f"[Submission {submission_id}] Camera reputation integration complete")
+
+
 async def run_ai_analysis(submission_id: int, jpg_path: str, raw_path: Optional[str]):
     """
     Background task to run AI detection analysis on a submission.
@@ -122,6 +233,14 @@ async def run_ai_analysis(submission_id: int, jpg_path: str, raw_path: Optional[
 
                     await db.commit()
                     logger.info(f"[Submission {submission_id}] Updated with verdict: {verification_verdict}")
+
+                    # === NEW: Camera Reputation Integration (v2.0) ===
+                    if submission.camera_make and submission.camera_model and new_status == SubmissionStatus.APPROVED:
+                        try:
+                            await integrate_camera_reputation(submission_id, submission, jpg_path, db)
+                        except Exception as rep_err:
+                            logger.error(f"[Submission {submission_id}] Camera reputation integration failed: {rep_err}")
+                            # Don't fail submission if reputation fails
 
                 else:
                     # Extract error message from response
