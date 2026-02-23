@@ -10,9 +10,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Users, Trophy, Image, Activity, Settings, RefreshCw, Eye, Calendar, Search, X,
-  Gavel, Plus, Trash2, Loader2, UserPlus, History, Network, Monitor, User as UserIcon
+  Gavel, Plus, Trash2, Loader2, UserPlus, History, Network, Monitor, User as UserIcon, BarChart3, Shield
 } from 'lucide-vue-next'
 import apiClient from '@/api/client'
+import { useV2AnalyticsStore } from '@/stores/v2Analytics'
+import { BiasReportDashboard, CredentialSharingAlert } from '@/components/v2'
 
 interface User {
   id: number
@@ -87,9 +89,10 @@ interface AuditLogListResponse {
 
 const router = useRouter()
 const authStore = useAuthStore()
+const v2Analytics = useV2AnalyticsStore()
 
 // State
-const activeTab = ref<'users' | 'competitions' | 'judges' | 'stats' | 'scoring'>('stats')
+const activeTab = ref<'users' | 'competitions' | 'judges' | 'stats' | 'scoring' | 'v2analytics'>('stats')
 const users = ref<User[]>([])
 const competitions = ref<Competition[]>([])
 const judges = ref<Judge[]>([])
@@ -501,6 +504,18 @@ const statCards = computed(() => [
           >
             <History class="w-4 h-4 mr-1 md:mr-2" />
             <span class="hidden sm:inline">Score</span> Audit
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            :class="[
+              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'v2analytics' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+            ]"
+            @click="handleTabChange('v2analytics')"
+          >
+            <BarChart3 class="w-4 h-4 mr-1 md:mr-2" />
+            <span class="hidden sm:inline">V2</span> Analytics
           </Button>
         </div>
       </div>
@@ -998,6 +1013,104 @@ const statCards = computed(() => [
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- V2 Analytics Tab -->
+      <div v-if="activeTab === 'v2analytics'" class="space-y-4 md:space-y-6">
+        <Card>
+          <CardHeader>
+            <div class="flex items-center justify-between">
+              <div>
+                <CardTitle class="flex items-center gap-2">
+                  <BarChart3 class="w-5 h-5" />
+                  V2.0 Advanced Analytics
+                </CardTitle>
+                <CardDescription>
+                  Camera reputation, judge bias analysis, and credential sharing detection
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <!-- Camera Reputation Statistics -->
+        <Card>
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2">
+              <Shield class="w-5 h-5" />
+              Camera Reputation System
+            </CardTitle>
+            <CardDescription>PRNU fingerprinting and trust scoring</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="space-y-4">
+              <Alert>
+                <Activity class="h-4 w-4" />
+                <AlertDescription>
+                  Camera reputation system tracks PRNU (Photo Response Non-Uniformity) fingerprints to verify photo authenticity and build trust profiles for camera models.
+                </AlertDescription>
+              </Alert>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card>
+                  <CardContent class="pt-6 text-center">
+                    <p class="text-3xl font-bold text-blue-500">Coming Soon</p>
+                    <p class="text-sm text-muted-foreground mt-2">Camera Profiles</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent class="pt-6 text-center">
+                    <p class="text-3xl font-bold text-green-500">Active</p>
+                    <p class="text-sm text-muted-foreground mt-2">PRNU Extraction</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent class="pt-6 text-center">
+                    <p class="text-3xl font-bold text-purple-500">Ready</p>
+                    <p class="text-sm text-muted-foreground mt-2">Fraud Detection</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Judge Bias Analysis Dashboard -->
+        <BiasReportDashboard
+          v-if="competitions.length > 0"
+          :competition-id="competitions[0]?.id"
+        />
+
+        <!-- Credential Sharing Alerts -->
+        <Card>
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2">
+              <Shield class="w-5 h-5" />
+              Credential Sharing Detection
+            </CardTitle>
+            <CardDescription>Monitor for suspicious judge account activity</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Alert>
+              <Activity class="h-4 w-4" />
+              <AlertDescription>
+                The system monitors IP addresses, session patterns, and user agents to detect potential credential sharing among judges.
+                Real-time alerts will appear here when suspicious activity is detected.
+              </AlertDescription>
+            </Alert>
+
+            <div v-if="v2Analytics.isLoading" class="text-center py-8">
+              <Loader2 class="w-8 h-8 animate-spin mx-auto text-primary" />
+              <p class="text-sm text-muted-foreground mt-2">Checking for alerts...</p>
+            </div>
+
+            <div v-else class="mt-4">
+              <p class="text-sm text-muted-foreground text-center py-8">
+                No credential sharing alerts at this time. The system is actively monitoring all judge activities.
+              </p>
             </div>
           </CardContent>
         </Card>

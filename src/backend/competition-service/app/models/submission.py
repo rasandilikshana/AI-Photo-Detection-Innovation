@@ -87,7 +87,7 @@ class Submission(BaseModel):
     competition = relationship("Competition", back_populates="submissions")
     scores = relationship("Score", back_populates="submission", cascade="all, delete-orphan")
     score_audit_logs = relationship("ScoreAuditLog", back_populates="submission")
-    camera_fingerprint = relationship("CameraFingerprint", back_populates="submission", uselist=False)
+    # Removed bidirectional relationship - use camera_fingerprint table to query
 
     def __repr__(self):
         return f"<Submission {self.title} by User#{self.user_id}>"

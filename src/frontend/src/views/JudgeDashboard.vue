@@ -24,6 +24,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import apiClient from '@/api/client'
+import { useV2AnalyticsStore } from '@/stores/v2Analytics'
+import { JudgeProfileBadge, ConsensusAnalysisCard } from '@/components/v2'
 
 interface JudgeAssignment {
   assignment_id: number
@@ -113,6 +115,7 @@ interface AuditLogListResponse {
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const v2Analytics = useV2AnalyticsStore()
 
 const assignments = ref<JudgeAssignment[]>([])
 const selectedCompetition = ref<number | null>(null)
@@ -572,7 +575,16 @@ const getImageUrl = (url: string) => {
       <!-- Stats Cards -->
       <div v-else-if="competitionStats" class="mb-8">
         <div class="flex items-center justify-between mb-4">
-          <h2 class="text-2xl font-bold">{{ competitionStats.competition_title }}</h2>
+          <div>
+            <h2 class="text-2xl font-bold">{{ competitionStats.competition_title }}</h2>
+            <!-- V2.0: Judge Profile Badge -->
+            <JudgeProfileBadge
+              v-if="authStore.user?.id && selectedCompetition"
+              :judge-id="authStore.user.id"
+              :competition-id="selectedCompetition"
+              class="mt-2"
+            />
+          </div>
           <Badge :variant="getStatusVariant(competitionStats.competition_status)" class="text-sm">
             {{ competitionStats.competition_status.toUpperCase() }}
           </Badge>

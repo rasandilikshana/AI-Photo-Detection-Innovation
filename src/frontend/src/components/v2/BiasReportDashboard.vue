@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { BarChart3, TrendingDown, TrendingUp, AlertTriangle, Users, CheckCircle } from 'lucide-vue-next'
-import axios from 'axios'
+import apiClient from '@/api/client'
 
 interface JudgeProfile {
   judge_id: number
@@ -48,8 +48,8 @@ const loadReport = async () => {
   try {
     loading.value = true
     error.value = ''
-    const response = await axios.get(
-      `/api/v1/judges-analytics/competition/${props.competitionId}/bias-report`
+    const response = await apiClient.get(
+      `/judges-analytics/competition/${props.competitionId}/bias-report`
     )
     report.value = response.data
   } catch (err: any) {

@@ -19,6 +19,8 @@ import {
 } from 'lucide-vue-next'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import apiClient from '@/api/client'
+import { useV2AnalyticsStore } from '@/stores/v2Analytics'
+import { CameraReputationCard, ConsensusIndicator } from '@/components/v2'
 
 interface MyScore {
   id: number
@@ -110,6 +112,7 @@ interface SubmissionDetail {
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const v2Analytics = useV2AnalyticsStore()
 
 const submissionId = Number(route.params.submissionId)
 const competitionId = route.query.competition ? Number(route.query.competition) : null
@@ -1278,6 +1281,23 @@ if (typeof window !== 'undefined') {
               </div>
             </CardContent>
           </Card>
+
+          <!-- V2.0: Camera Reputation Card -->
+          <CameraReputationCard
+            v-if="submission.camera_make && submission.camera_model"
+            :submission-id="submission.id"
+            :camera-make="submission.camera_make"
+            :camera-model="submission.camera_model"
+            class="mt-4"
+          />
+
+          <!-- V2.0: Consensus Indicator -->
+          <ConsensusIndicator
+            v-if="submission.id"
+            :submission-id="submission.id"
+            :show-details="true"
+            class="mt-4"
+          />
         </div>
 
         <!-- Right Column: Scoring Form (2 cols) -->

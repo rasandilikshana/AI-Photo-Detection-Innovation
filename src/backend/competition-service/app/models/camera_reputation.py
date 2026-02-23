@@ -42,7 +42,7 @@ class CameraFingerprint(BaseModel):
     verified = Column(Boolean, default=False)
 
     # Relationships
-    submission = relationship("Submission", back_populates="camera_fingerprint")
+    submission = relationship("Submission", foreign_keys="CameraFingerprint.submission_id")
     user = relationship("User")
     comparisons_as_fingerprint1 = relationship(
         "PRNUComparison",

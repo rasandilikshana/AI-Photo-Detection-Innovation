@@ -84,7 +84,10 @@
       "Bash(gh run rerun:*)",
       "Bash(xxd:*)",
       "Bash(printf:*)",
-      "Bash(scp:*)"
+      "Bash(scp:*)",
+      "Bash(ping:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": []
