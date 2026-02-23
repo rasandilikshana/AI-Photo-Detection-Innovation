@@ -64,6 +64,11 @@ class Submission(BaseModel):
     total_score = Column(Float, default=0.0, nullable=False)
     score_count = Column(Integer, default=0, nullable=False)
 
+    # Camera Reputation (v2.0)
+    prnu_fingerprint_id = Column(Integer, ForeignKey("camera_fingerprints.id"), nullable=True)
+    prnu_extracted_energy = Column(Float, nullable=True)
+    camera_trust_score = Column(Float, default=0.5, nullable=True)
+
     # Analysis Error (when AI analysis fails)
     analysis_error = Column(Text, nullable=True)
 
@@ -82,6 +87,7 @@ class Submission(BaseModel):
     competition = relationship("Competition", back_populates="submissions")
     scores = relationship("Score", back_populates="submission", cascade="all, delete-orphan")
     score_audit_logs = relationship("ScoreAuditLog", back_populates="submission")
+    camera_fingerprint = relationship("CameraFingerprint", back_populates="submission", uselist=False)
 
     def __repr__(self):
         return f"<Submission {self.title} by User#{self.user_id}>"

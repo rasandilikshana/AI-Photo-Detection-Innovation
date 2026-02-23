@@ -166,6 +166,71 @@ async def create_score(
 
     logger.info(f"Judge {current_user.id} scored submission {submission_id} with {overall_score:.2f} from IP {client_info['ip_address']}")
 
+    # === NEW: Judge Consensus Analysis Integration (v2.0) ===
+    # Check if all assigned judges have scored this submission
+    try:
+        from app.services import JudgeConsensusAnalyzer
+
+        # Count total judges assigned
+        judge_count_result = await db.execute(
+            select(func.count(JudgeAssignment.id))
+            .where(
+                and_(
+                    JudgeAssignment.competition_id == submission.competition_id,
+                    JudgeAssignment.is_active == True
+                )
+            )
+        )
+        total_judges = judge_count_result.scalar_one()
+
+        # Count scores for this submission
+        score_count_result = await db.execute(
+            select(func.count(Score.id))
+            .where(Score.submission_id == submission_id)
+        )
+        scores_received = score_count_result.scalar_one()
+
+        logger.info(f"[Score Created] Submission {submission_id}: {scores_received}/{total_judges} judges scored")
+
+        # If all judges have scored, run consensus analysis
+        if scores_received >= total_judges and total_judges >= 2:
+            logger.info(f"[Consensus] Running analysis for submission {submission_id}")
+
+            analyzer = JudgeConsensusAnalyzer(db)
+
+            # Analyze consensus
+            consensus_result = await analyzer.analyze_submission_scores(submission_id)
+
+            # Store consensus analysis
+            await analyzer.store_consensus_analysis(
+                submission_id,
+                submission.competition_id,
+                consensus_result
+            )
+
+            # Update judge profile
+            profile_data = await analyzer.build_judge_profile(
+                current_user.id,
+                submission.competition_id
+            )
+            await analyzer.store_judge_profile(
+                current_user.id,
+                submission.competition_id,
+                profile_data
+            )
+
+            await db.commit()
+
+            logger.info(
+                f"[Consensus] Complete for submission {submission_id}: "
+                f"Verdict={consensus_result['verdict']}, "
+                f"ICC={consensus_result.get('icc', 'N/A')}"
+            )
+
+    except Exception as consensus_err:
+        logger.error(f"[Consensus] Analysis failed for submission {submission_id}: {consensus_err}")
+        # Don't fail the score creation if consensus fails
+
     return new_score
 
 

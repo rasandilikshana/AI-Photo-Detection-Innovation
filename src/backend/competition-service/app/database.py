@@ -45,7 +45,21 @@ async def get_db():
 async def init_db():
     """Initialize database tables"""
     from app.models.base import Base
-    from app.models import User, Competition, Submission, Judge, JudgeAssignment, Score, ScoreAuditLog
+    from app.models import (
+        User,
+        Competition,
+        Submission,
+        Judge,
+        JudgeAssignment,
+        Score,
+        ScoreAuditLog,
+        CameraFingerprint,
+        CameraTrustProfile,
+        PRNUComparison,
+        JudgeScoringProfile,
+        JudgeConsensusAnalysis,
+        CredentialSharingDetection,
+    )
 
     async with engine.begin() as conn:
         # Create all tables

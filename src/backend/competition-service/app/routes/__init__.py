@@ -3,7 +3,7 @@ API Routes for Competition Service
 """
 
 from fastapi import APIRouter
-from app.routes import auth, competitions, submissions, users, scores
+from app.routes import auth, competitions, submissions, users, scores, cameras, judges_analytics
 
 # Create main API router
 api_router = APIRouter(prefix="/api/v1")
@@ -19,6 +19,12 @@ api_router.include_router(
 )
 api_router.include_router(
     scores.router, prefix="/scores", tags=["Scoring"]
+)
+api_router.include_router(
+    cameras.router, tags=["Camera Reputation"]
+)
+api_router.include_router(
+    judges_analytics.router, tags=["Judge Analytics"]
 )
 
 __all__ = ["api_router"]
