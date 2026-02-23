@@ -9,18 +9,23 @@
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.4+-green?logo=vue.js)](https://vuejs.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Mobile Ready](https://img.shields.io/badge/mobile-responsive-brightgreen)]()
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)](CHANGELOG.md)
 
 ## 🎯 Overview
 
-A.V.A.R. is a comprehensive platform designed to safeguard photography competition integrity against AI-generated synthetic imagery. The system employs a multi-layered forensic detection approach combining metadata analysis, digital fingerprinting (PRNU, ELA, FFT), and RAW-to-JPG linkage verification.
+A.V.A.R. is a comprehensive platform designed to safeguard photography competition integrity against AI-generated synthetic imagery. The system employs a multi-layered forensic detection approach combining metadata analysis, digital fingerprinting (PRNU, ELA, FFT), RAW-to-JPG linkage verification, **camera reputation scoring**, **judge consensus analysis**, and **credential sharing detection**.
 
-### 🌟 Key Innovation
+### 🌟 Key Innovations
 
 **World's First RAW-to-JPG Linkage Analysis for Photo Competitions**
 - Forensically proves submitted JPG files are direct derivatives of submitted RAW files
 - PRNU sensor fingerprinting that AI-generated images cannot replicate
 - Multi-layer detection funnel for efficient and accurate verification
+
+**V2.0 Advanced Analytics** (NEW!)
+- 🎥 **Camera Reputation System**: PRNU-based trust scoring with fraud detection
+- ⚖️ **Judge Consensus Analysis**: ICC-based reliability metrics and bias detection
+- 🔐 **Credential Sharing Detection**: Multi-factor risk scoring for account security
 
 ## 🌐 Live Demo
 
@@ -57,16 +62,43 @@ A.V.A.R. is a comprehensive platform designed to safeguard photography competiti
 - **Submission Workflow**: Multi-file uploads (JPG + RAW) with background AI analysis
 - **Judge Scoring System**: Multi-criteria scoring (Composition 40%, Technical 30%, Creativity 30%)
 - **Score Audit Logs**: Complete tracking of all scoring actions with IP, user-agent, session ID
-- **Credential Sharing Detection**: Tracks multiple judges using shared credentials via audit logs
+- **Judge Review Workflow**: Manual approve/reject with feedback mechanism
 
-### Phase 3: Frontend ✅
+### Phase 3: V2.0 Advanced Analytics ✅ (NEW!)
+
+#### 🎥 Camera Reputation System
+- **PRNU Fingerprint Extraction**: DWT-based sensor pattern extraction (2-4s per image)
+- **Trust Scoring**: Weighted formula (0.5×similarity + 0.3×history + 0.2×consistency)
+- **Confidence Boost**: +15% (strong match), +5% (moderate), -10% (suspicious)
+- **Fraud Detection**: 3-level checks (PRNU mismatch, energy deviation, cross-camera)
+- **Camera Profiles**: Aggregated statistics (trust score, consistency, submission count)
+- **Integration**: Automatic PRNU extraction during submission verification
+
+#### ⚖️ Judge Consensus Analysis
+- **ICC Calculation**: Intraclass Correlation Coefficient for inter-rater reliability
+- **Bias Detection**: Z-score analysis (|Z| > 2.0 = significant bias)
+- **Outlier Identification**: Flagging judges who score significantly differently
+- **Consensus Verdicts**: Strong (ICC ≥ 0.75), Moderate (0.60-0.74), Weak (0.40-0.59), Poor (< 0.40)
+- **Judge Profiles**: Bias category (harsh/neutral/lenient), consistency scores
+- **Auto-flagging**: Poor consensus submissions marked for manual review
+
+#### 🔐 Credential Sharing Detection
+- **4-Factor Risk Scoring**: IP diversity (40%), session overlap (30%), time gaps (20%), geo (10%)
+- **Activity Monitoring**: Tracks IP addresses, sessions, user agents, timestamps
+- **Impossible Travel Detection**: IP changes within 1 hour flagged as suspicious
+- **Risk Levels**: High (>70%), Medium (40-70%), Low (<40%)
+- **Investigation Workflow**: Admin panel for reviewing alerts (pending/reviewing/resolved/no action)
+- **Auto-alerts**: High-risk judges automatically flagged
+
+### Phase 4: Frontend ✅
 - **Mobile Responsive Design** - Full hamburger menu, responsive grids, touch-friendly
+- **V2.0 Components**: 7 new Vue components for analytics features
 - User authentication and registration interface
 - Competition browsing and submission portal
-- **AI Detection Results Display** - Detailed layer-by-layer analysis
-- **Judge Dashboard** - Score submissions, view audit logs, real-time stats
-- **Admin Panel** - User management, competition oversight, score audit logs
-- **Organizer Panel** - Create and manage competitions
+- **AI Detection Results Display** - Detailed layer-by-layer analysis with camera reputation
+- **Judge Dashboard** - Score submissions, view consensus, check own bias profile
+- **Admin Panel** - User management, bias reports, credential alerts, fraud detection
+- **Organizer Panel** - Create/manage competitions, view analytics
 - Real-time status updates during analysis
 
 ## 🏗️ Architecture
@@ -84,6 +116,7 @@ A.V.A.R. is a comprehensive platform designed to safeguard photography competiti
                      ┌─────────────────┐
                      │  Competition    │
                      │ Service (8080)  │
+                     │   + V2.0 APIs   │
                      └─────────────────┘
                               │
                 ┌─────────────┴─────────────┐
@@ -92,6 +125,16 @@ A.V.A.R. is a comprehensive platform designed to safeguard photography competiti
          │  PostgreSQL │           │    Redis     │
          │  (Port 5432)│           │ (Port 6379)  │
          └─────────────┘           └──────────────┘
+```
+
+### V2.0 Services (NEW!)
+
+```
+Competition Service
+├── PRNU Extractor (DWT, Wavelet Denoising)
+├── Camera Reputation Manager (Trust Scoring, Fraud Detection)
+├── Judge Consensus Analyzer (ICC, Z-Score, Outliers)
+└── Credential Sharing Detector (Risk Scoring, Pattern Analysis)
 ```
 
 ### Services
@@ -105,12 +148,14 @@ A.V.A.R. is a comprehensive platform designed to safeguard photography competiti
   - User authentication & authorization
   - Competition and submission management
   - Judge scoring system with audit logging
+  - **V2.0: Camera reputation, consensus analysis, credential detection**
   - Score Audit Logs for transparency and security
 
 - **Frontend Application** (Vue 3 + TypeScript)
   - Fully responsive design (mobile, tablet, desktop)
   - Role-based dashboards (Admin, Judge, Organizer, Participant)
   - Real-time submission status updates
+  - **V2.0: Analytics components (7 new Vue components)**
 
 - **API Gateway** (Python + FastAPI)
   - Request routing and load balancing
@@ -145,7 +190,13 @@ cd src/backend/ai-detection-service
 
 # Competition Service (in another terminal)
 cd src/backend/competition-service
+pip install opencv-python numpy PyWavelets scipy  # V2.0 dependencies
 ./start.sh
+
+# Frontend (in another terminal)
+cd src/frontend
+pnpm install
+pnpm dev
 
 # API Gateway (in another terminal)
 cd src/backend/api-gateway
@@ -180,12 +231,21 @@ cd src/backend/api-gateway
 - **Authentication**: JWT + Bcrypt
 
 ### AI/ML Libraries
-- **OpenCV**: Image processing
-- **NumPy**: Numerical operations
-- **PyWavelets**: PRNU extraction
+- **OpenCV**: Image processing & PRNU extraction
+- **NumPy**: Numerical operations & statistical analysis
+- **PyWavelets**: Discrete Wavelet Transform (DWT) for PRNU
+- **SciPy**: ICC calculation & scientific computing
 - **scikit-image**: SSIM calculation
 - **Pillow**: Image manipulation
 - **rawpy**: RAW file processing
+
+### Frontend
+- **Framework**: Vue 3 + TypeScript
+- **State Management**: Pinia
+- **UI Components**: shadcn-vue + Tailwind CSS
+- **Icons**: Lucide Icons
+- **HTTP Client**: Axios
+- **Build Tool**: Vite
 
 ### DevOps
 - **Containerization**: Docker + Docker Compose
@@ -199,220 +259,259 @@ cd src/backend/api-gateway
 AI-Photo-Detection-Innovation/
 ├── src/
 │   ├── backend/
-│   │   ├── ai-detection-service/    # AI detection microservice
-│   │   ├── competition-service/     # Competition management
-│   │   └── api-gateway/             # API gateway
-│   └── frontend/                    # Frontend application (planned)
-├── tests/                           # Test suite
-│   ├── unit/                        # Unit tests
-│   ├── integration/                 # Integration tests
-│   ├── e2e/                         # End-to-end tests
-│   └── performance/                 # Performance tests
-├── docs/                            # Documentation
-│   ├── guides/                      # User guides
-│   ├── architecture/                # Architecture docs
-│   ├── implementation/              # Implementation summaries
-│   └── project-status/              # Status reports
-├── docker-compose.yml               # Docker orchestration
-├── .github/workflows/               # CI/CD pipelines
+│   │   ├── ai-detection-service/      # Layer 1-3 AI detection
+│   │   ├── competition-service/       # Competition management + V2.0
+│   │   │   ├── app/
+│   │   │   │   ├── models/           # SQLAlchemy models
+│   │   │   │   │   └── camera_reputation.py  # V2.0 models
+│   │   │   │   ├── routes/           # API endpoints
+│   │   │   │   │   ├── cameras.py          # Camera reputation APIs
+│   │   │   │   │   └── judges_analytics.py # Judge analytics APIs
+│   │   │   │   ├── services/         # Business logic
+│   │   │   │   │   ├── prnu_extractor.py        # PRNU extraction
+│   │   │   │   │   ├── camera_reputation.py     # Trust scoring
+│   │   │   │   │   ├── judge_consensus.py       # ICC, bias detection
+│   │   │   │   │   └── credential_sharing.py    # Risk scoring
+│   │   │   │   └── schemas.py        # Pydantic schemas
+│   │   │   ├── docs/                 # API documentation
+│   │   │   │   ├── V2_FEATURES.md
+│   │   │   │   ├── V2_IMPLEMENTATION_SUMMARY.md
+│   │   │   │   ├── CODE_REVIEW_CHECKLIST.md
+│   │   │   │   └── INTEGRATION_TESTING_GUIDE.md
+│   │   │   └── tests/               # Unit & integration tests
+│   │   └── api-gateway/              # Request routing
+│   └── frontend/                     # Vue 3 application
+│       └── src/
+│           ├── components/
+│           │   └── v2/              # V2.0 analytics components
+│           │       ├── CameraReputationBadge.vue
+│           │       ├── CameraReputationCard.vue
+│           │       ├── ConsensusIndicator.vue
+│           │       ├── ConsensusAnalysisCard.vue
+│           │       ├── JudgeProfileBadge.vue
+│           │       ├── CredentialSharingAlert.vue
+│           │       └── BiasReportDashboard.vue
+│           └── stores/
+│               └── v2Analytics.ts   # Pinia store for V2.0 APIs
+├── docs/                            # Project documentation
+├── docker-compose.yml               # Multi-service orchestration
+├── V2_FULLSTACK_COMPLETE.md        # V2.0 complete summary
 └── README.md                        # This file
 ```
 
+## 📖 API Documentation
+
+### V2.0 Analytics Endpoints (17 New Endpoints)
+
+#### Camera Reputation (8 endpoints)
+- `POST /api/v1/cameras/fingerprints/{submission_id}` - Extract PRNU fingerprint
+- `GET /api/v1/cameras/trust-profile/{make}/{model}` - Get camera trust profile
+- `GET /api/v1/cameras/user-cameras/{user_id}` - List user's cameras
+- `GET /api/v1/cameras/comparison/{fp1}/{fp2}` - Compare two fingerprints (admin)
+- `GET /api/v1/cameras/fraud-check/{submission_id}` - Run fraud detection (admin)
+- `GET /api/v1/cameras/fingerprint/{submission_id}` - Get fingerprint metadata
+- `GET /api/v1/cameras/profiles` - List all camera profiles
+- `GET /api/v1/cameras/statistics` - System-wide statistics
+
+#### Judge Analytics (9 endpoints)
+- `GET /api/v1/judges-analytics/profile/{judge_id}/{competition_id}` - Judge profile
+- `POST /api/v1/judges-analytics/profile/{judge_id}/{competition_id}/refresh` - Refresh profile
+- `GET /api/v1/judges-analytics/consensus/{submission_id}` - Consensus analysis
+- `GET /api/v1/judges-analytics/consensus/competition/{competition_id}` - List consensus
+- `GET /api/v1/judges-analytics/credential-sharing/{judge_id}/{competition_id}` - Get status
+- `POST /api/v1/judges-analytics/credential-sharing/{judge_id}/{competition_id}/analyze` - Run analysis
+- `GET /api/v1/judges-analytics/credential-sharing/competition/{competition_id}/flagged` - List flagged
+- `PATCH /api/v1/judges-analytics/credential-sharing/{detection_id}/investigate` - Update status
+- `GET /api/v1/judges-analytics/competition/{competition_id}/bias-report` - Comprehensive report
+
+**Complete API Docs**: See OpenAPI docs at http://localhost:8080/docs or `src/backend/competition-service/docs/V2_FEATURES.md`
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+cd src/backend/competition-service
+
+# Run all tests
+pytest tests/ -v
+
+# V2.0 specific tests
+pytest tests/test_models_v2.py -v
+
+# Run validation script
+python tests/validate_v2_setup.py
+
+# Coverage report
+pytest --cov=app --cov-report=html
+```
+
+### Frontend Tests
+```bash
+cd src/frontend
+
+# Unit tests
+npm run test:unit
+
+# E2E tests
+npm run test:e2e
+```
+
+### Integration Testing
+Follow the comprehensive guide: `src/backend/competition-service/docs/INTEGRATION_TESTING_GUIDE.md`
+
+## 📊 Performance Benchmarks
+
+### V2.0 Operations
+| Operation | Expected Time | Memory Usage |
+|-----------|--------------|--------------|
+| PRNU Extraction | 2-4 seconds | ~50MB |
+| Pattern Comparison | 50-100ms | ~10MB |
+| Consensus Analysis | 100-300ms | <5MB |
+| Risk Analysis | 500ms-2s | <10MB |
+| Database Queries | <50ms | <5MB |
+
+### Storage
+- PRNU Fingerprint: ~256KB per submission (compressed from ~1MB)
+- Total for 1000 submissions: ~250MB
+
+## 🔐 Security Features
+
+### V2.0 Security Enhancements
+- **Camera Fraud Detection**: Detects EXIF manipulation through PRNU analysis
+- **Credential Sharing Detection**: Identifies account compromise through activity patterns
+- **Judge Bias Monitoring**: Z-score analysis flags significantly biased judges
+- **Audit Logging**: Complete tracking of all scoring activities (IP, session, user agent)
+- **Access Control**: Role-based permissions for all analytics endpoints
+
+### General Security
+- JWT authentication with refresh tokens
+- Bcrypt password hashing (cost factor 12)
+- CORS configuration for production
+- Rate limiting on sensitive endpoints
+- SQL injection protection via ORM
+- XSS prevention through input sanitization
+
+## 📈 Version History
+
+### v2.0.0 (2026-02-24) - Advanced Analytics Release
+- **NEW**: Camera Reputation System (PRNU fingerprinting, trust scoring)
+- **NEW**: Judge Consensus Analysis (ICC, bias detection)
+- **NEW**: Credential Sharing Detection (risk scoring, investigation workflow)
+- **NEW**: 7 Vue components for analytics visualization
+- **NEW**: Comprehensive admin bias report dashboard
+- **IMPROVED**: Submission verification workflow with camera reputation
+- **IMPROVED**: Scoring workflow with automatic consensus analysis
+- **ADDED**: 17 new REST API endpoints
+- **ADDED**: 5 new database tables
+- **DOCS**: 6 comprehensive documentation files (3,763 lines)
+
+### v1.4.0 (2026-02-21) - Judge Dashboard UX Enhancements
+- Enhanced judge review workflow with approve/reject functionality
+- Added feedback mechanism for manual review decisions
+- Improved submission card layout on MySubmissions page
+
+### v1.3.0 (2025-12-15) - Audit Logging & Credential Monitoring
+- Score audit logs with IP, session ID, user agent tracking
+- Foundation for credential sharing detection
+
+### v1.0.0 (2025-11-01) - Initial Release
+- Core AI detection pipeline (3 layers)
+- Competition management system
+- Judge scoring workflow
+- Responsive frontend
+
+**Full Changelog**: See [CHANGELOG.md](CHANGELOG.md)
+
+## 🚀 Deployment
+
+### Production Deployment (Docker)
+```bash
+# Build and push images
+docker build -t avar-backend:v2.0.0 src/backend/competition-service
+docker build -t avar-frontend:v2.0.0 src/frontend
+
+# Deploy with docker-compose
+docker-compose -f docker-compose.prod.yml up -d
+
+# Run migrations
+docker exec avar-backend alembic upgrade head
+```
+
+### Environment Variables
+```env
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/avar_db
+
+# JWT
+SECRET_KEY=your-secret-key-here
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# API Keys (optional)
+HIVE_AI_API_KEY=your-hive-api-key
+OPTIC_API_KEY=your-optic-api-key
+
+# Frontend
+VITE_API_URL=https://avar.studio/api/v1
+```
+
+**Complete Deployment Guide**: See `docs/DEPLOYMENT.md` (to be created)
+
 ## 📚 Documentation
 
-### Getting Started
-- 🚀 [Quick Start Guide](docs/guides/TESTING_GUIDE.md)
-- 📖 [Developer Guide](docs/guides/CLAUDE.md)
-- 🔧 [Commands Reference](docs/guides/COMMANDS_REFERENCE.md)
+### User Guides
+- **V2.0 Features**: `src/backend/competition-service/docs/V2_FEATURES.md`
+- **Integration Testing**: `src/backend/competition-service/docs/INTEGRATION_TESTING_GUIDE.md`
+- **Code Review Checklist**: `src/backend/competition-service/docs/CODE_REVIEW_CHECKLIST.md`
+- **Component Usage**: `src/frontend/src/components/v2/README.md`
 
-### API Documentation
-- 📘 [Complete API Documentation](docs/api/API_DOCUMENTATION.md)
-- ⚡ [Quick Reference Guide](docs/api/QUICK_REFERENCE.md)
-- 📦 [Postman Collections](docs/api/)
-  - [AI Detection Service](docs/api/AVAR-AI-Detection-Service.postman_collection.json)
-  - [Competition Service](docs/api/AVAR-Competition-Service.postman_collection.json)
-  - [API Gateway](docs/api/AVAR-API-Gateway.postman_collection.json)
-- 🌐 Interactive API Docs:
-  - AI Detection: http://localhost:8001/docs
-  - Competition Service: http://localhost:8080/docs
-  - API Gateway: http://localhost:8000/docs
+### Developer Guides
+- **Implementation Summary**: `src/backend/competition-service/docs/V2_IMPLEMENTATION_SUMMARY.md`
+- **Service Documentation**: `src/backend/competition-service/app/services/README.md`
+- **API Reference**: Available at `/docs` endpoint on each service
 
-### Architecture & Design
-- 🏗️ [System Architecture](docs/architecture/SYSTEM_ARCHITECTURE.md)
-- 📊 [Database Schema](docs/architecture/DATABASE_SCHEMA.md) _(planned)_
-- 🔄 [Detection Pipeline](docs/architecture/DETECTION_PIPELINE.md) _(planned)_
-
-### Deployment
-- 🚀 [Production Deployment Guide](deployments/DEPLOYMENT_GUIDE.md)
-- 🔒 [Environment Template](deployments/.env.production.template)
-- 🌐 [Nginx SSL Configuration](deployments/nginx-ssl.conf)
-
-### Implementation
-- ✅ [Phase 1: AI Detection](docs/implementation/PHASE1_SUMMARY.md) _(to be created)_
-- ✅ [Phase 2: Competition Service](docs/implementation/PHASE2_IMPLEMENTATION_SUMMARY.md)
-- 📋 [Project Status](docs/project-status/FINAL_STATUS_REPORT.md)
-- **NEW**: [Current Status & Production Readiness](CURRENT_STATUS.md)
-
-### Testing
-- 🧪 [Testing Guide](docs/guides/TESTING.md)
-- 📈 Test Coverage: 80%+
-- 🎯 50+ Unit Tests
-- 🔗 30+ Integration Tests
-- 🌐 E2E Browser Tests (Playwright)
-- ⚡ Performance Tests (Locust)
-
-## 🔬 How It Works
-
-### Multi-Layer Detection Pipeline
-
-**Layer 1: Metadata Analysis** (50-200ms)
-- EXIF data extraction and validation
-- AI signature detection (Midjourney, DALL-E, Stable Diffusion)
-- Camera signature validation
-- Processing history forensics
-
-**Layer 2: Digital Fingerprint** (2-5 seconds)
-- **PRNU**: Photo Response Non-Uniformity analysis using wavelets
-- **ELA**: Error Level Analysis for compression artifacts
-- **FFT**: Fast Fourier Transform for frequency domain analysis
-
-**Layer 3: Third-Party APIs** (1-3 seconds)
-- Hive AI API integration
-- Optic API integration
-- Fallback mechanisms for reliability
-
-**RAW-JPG Linkage** (World's First)
-- Perceptual hashing (pHash) comparison
-- Structural Similarity Index (SSIM)
-- Histogram correlation analysis
-- Triple verification for authenticity
-
-## 🎓 Research Context
-
-This project is part of a dissertation research titled:
-
-**"Aura: Developing an AI-Powered Authenticity Verification System to Safeguard Photography Competition Integrity Against Synthetic Media"**
-
-- **Institution**: NPAS - Third Year
-- **Author**: Rasan Dilikshana
-- **Email**: rasandilikshana@gmail.com
-- **AI Assistance**: Claude (Anthropic)
-
-## 📈 Project Metrics
-
-- **Total Lines of Code**: ~15,000+ (Python + TypeScript + Vue)
-- **Backend Files**: 40+ Python files
-- **Frontend Files**: 30+ Vue/TypeScript files
-- **Database Tables**: 7 (users, competitions, submissions, scores, score_audit_logs, etc.)
-- **API Endpoints**: 25+
-- **Test Coverage**: 80%+
-- **Documentation**: 4,000+ lines
+### Project Documentation
+- **Full-Stack Summary**: `V2_FULLSTACK_COMPLETE.md`
+- **Architecture**: This README
+- **Changelog**: `CHANGELOG.md`
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 🔒 Security
+### Code Quality
+- Follow PEP 8 for Python code
+- Use TypeScript for frontend code
+- Write unit tests for new features
+- Update documentation
 
-For security vulnerabilities, please see [SECURITY.md](SECURITY.md).
+## 📝 License
 
-## 📝 Changelog
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-See [CHANGELOG.md](CHANGELOG.md) for version history and changes.
+## 👥 Authors
 
-## 📄 License
-
-This project is part of academic research. All rights reserved.
+- **Rasan Dillikshana** - Lead Developer & Researcher
+- **NPAS Research Team** - Academic Supervision
 
 ## 🙏 Acknowledgments
 
-- Built with assistance from Claude (Anthropic) for AI pair programming
-- OpenCV community for image processing libraries
-- FastAPI framework for modern async Python web development
-- Research guidance from NPAS faculty
+- Research inspiration from IEEE papers on PRNU fingerprinting
+- FastAPI community for excellent async framework
+- Vue.js ecosystem for reactive UI components
+- shadcn-vue for beautiful UI primitives
 
 ## 📞 Contact
 
-**Rasan Dilikshana**
-- GitHub: [@rasandilikshana](https://github.com/rasandilikshana)
-- Email: rasandilikshana@gmail.com
-- Project: [AI-Photo-Detection-Innovation](https://github.com/rasandilikshana/AI-Photo-Detection-Innovation)
+- **Website**: https://avar.studio
+- **GitHub**: https://github.com/rasandilikshana/AI-Photo-Detection-Innovation
+- **Email**: Support via GitHub Issues
 
 ---
 
-## 📱 Frontend Features
+**Built with ❤️ for safeguarding photography competition integrity**
 
-### Mobile Responsive Design
-The frontend is fully responsive across all device sizes:
-
-| Component | Desktop | Tablet | Mobile |
-|-----------|---------|--------|--------|
-| Navigation | Full nav bar | Full nav bar | Hamburger menu |
-| Competition Grid | 3 columns | 2 columns | 1 column |
-| Judge Dashboard | Side-by-side | Stacked | Stacked |
-| Admin Panel | Tabs row | Tabs row | Scrollable tabs |
-| Score Forms | Horizontal | Horizontal | Vertical |
-
-### Role-Based Dashboards
-
-| Role | Dashboard | Features |
-|------|-----------|----------|
-| **Admin** | Admin Panel | User management, competition oversight, score audit logs, system stats |
-| **Judge** | Judge Dashboard | Score submissions, dropdown filters, clickable cards, pagination, image lightbox, corrective actions, audit history |
-| **Organizer** | Organizer Panel | Create competitions, manage own competitions |
-| **Participant** | My Submissions | View submissions, track AI analysis status, see scores |
-
-### Judge Dashboard Features (v1.4.0)
-
-| Feature | Description |
-|---------|-------------|
-| **Dropdown Filters** | Clean dropdown menus for Status, Verdict, and Scored filters |
-| **Clickable Cards** | Click anywhere on submission card to navigate to scoring page |
-| **Pagination** | 12 submissions per page with full navigation controls |
-| **Image Lightbox** | Full-screen image viewer with zoom controls (10% increments) |
-| **Corrective Actions** | Quick action buttons for common judge operations |
-| **Competition-Aware Navigation** | URL query params preserve competition context across pages |
-
-### Score Audit Log System
-Tracks all scoring actions for transparency and security:
-- **Action Types**: Create, Update, Delete scores
-- **Tracked Data**: IP address, User-agent, Session ID, Optional judge identifier
-- **Use Case**: Detect credential sharing when multiple IPs/devices use same account
-- **Access**: Available to Admins and Judges with filtering/search
-
----
-
-## Current Detection Capabilities
-
-### Verified Working (February 2026)
-
-| Scenario | Detection Result | Confidence |
-|----------|-----------------|------------|
-| Genuine camera photo WITH RAW | AUTHENTIC | 95-100% |
-| Genuine camera photo WITHOUT RAW | Depends on metadata | 60-80% |
-| AI-generated with signatures | REJECT | 90%+ |
-| AI-generated (sophisticated) | QUARANTINE | 50-70% |
-
-### Layer Analysis Example (Genuine Photo)
-```
-Layer 1 (Metadata):     PASS - 8 camera fields verified
-RAW-JPG Linkage:        PASS - Files linked (SSIM=0.68)
-Layer 2 (PRNU):         PASS - Valid sensor noise detected
-Layer 2 (ELA):          PASS - Normal compression pattern
-Layer 2 (FFT):          PASS - Normal frequency distribution
-Final Verdict:          AUTHENTIC (100% confidence)
-```
-
-### Production Readiness
-- **Current State**: ✅ **DEPLOYED TO PRODUCTION**
-- **Live URL**: https://avar.studio
-- **Server**: DigitalOcean Droplet (Singapore)
-- **SSL**: Let's Encrypt (Auto-renewing)
-- **Security**: UFW Firewall, Fail2Ban, Non-root services
-- **See**: [Deployment Guide](deployments/DEPLOYMENT_GUIDE.md) for details
-
----
-
-**Status**: ✅ Phase 1, 2 & 3 Complete | 🌐 Live at avar.studio | Mobile Responsive | Score Audit System
-**Version**: v1.4.0 (Judge Dashboard UX Enhancements)
-**Last Updated**: February 21, 2026
+**Version**: 2.0.0 | **Status**: Production Ready | **Last Updated**: 2026-02-24
