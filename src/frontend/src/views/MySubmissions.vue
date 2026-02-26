@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/dialog'
 import { Camera, Clock, ImageIcon, Trophy, Search, X, AlertCircle, XCircle, Info, CheckCircle, UserCheck, Gavel } from 'lucide-vue-next'
 import type { Submission } from '@/types'
-import { CameraReputationBadge } from '@/components/v2'
 
 const authStore = useAuthStore()
 const submissionsStore = useSubmissionsStore()
@@ -291,14 +290,11 @@ const getImageUrl = (url: string) => {
               <Clock class="w-4 h-4 mr-2" />
               {{ formatDate(submission.created_at) }}
             </div>
-            <!-- V2.0: Camera Reputation Badge -->
-            <CameraReputationBadge
-              v-if="submission.camera_make"
-              :submission-id="submission.id"
-              :camera-make="submission.camera_make"
-              :camera-model="submission.camera_model || ''"
-              size="sm"
-            />
+            <!-- Simple camera info for users (verification handled in background) -->
+            <div v-if="submission.camera_make" class="flex items-center gap-2">
+              <Camera class="h-4 w-4" />
+              <span>{{ submission.camera_make }} {{ submission.camera_model }}</span>
+            </div>
           </div>
         </CardContent>
       </Card>

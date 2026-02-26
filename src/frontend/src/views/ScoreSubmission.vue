@@ -1282,12 +1282,15 @@ if (typeof window !== 'undefined') {
             </CardContent>
           </Card>
 
-          <!-- V2.0: Camera Reputation Card -->
+          <!-- V2.0: Camera Reputation Card (for judges/admins) -->
           <CameraReputationCard
             v-if="submission.camera_make && submission.camera_model"
             :submission-id="submission.id"
             :camera-make="submission.camera_make"
             :camera-model="submission.camera_model"
+            :trust-score="submission.camera_trust_score"
+            :prnu-energy="submission.prnu_extracted_energy"
+            :verified="submission.prnu_fingerprint_id != null"
             class="mt-4"
           />
 

@@ -119,6 +119,10 @@ export interface Submission {
   rejection_reason?: string
   reviewed_by?: number
   reviewed_at?: string
+  // V2.0 Camera Reputation fields
+  camera_trust_score?: number
+  prnu_fingerprint_id?: number
+  prnu_extracted_energy?: number
   user_id: number
   competition_id: number
   user?: User

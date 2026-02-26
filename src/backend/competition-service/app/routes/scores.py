@@ -760,6 +760,10 @@ async def get_competition_submissions_for_judge(
             "rejection_reason": sub.rejection_reason,
             "reviewed_by": sub.reviewed_by,
             "reviewed_at": sub.reviewed_at.isoformat() if sub.reviewed_at else None,
+            # V2.0 Camera Reputation fields
+            "camera_trust_score": sub.camera_trust_score,
+            "prnu_fingerprint_id": sub.prnu_fingerprint_id,
+            "prnu_extracted_energy": sub.prnu_extracted_energy,
         })
 
     return response_list
@@ -856,6 +860,10 @@ async def get_submission_detail_for_judge(
         "rejection_reason": sub.rejection_reason,
         "reviewed_by": sub.reviewed_by,
         "reviewed_at": sub.reviewed_at.isoformat() if sub.reviewed_at else None,
+        # V2.0 Camera Reputation fields
+        "camera_trust_score": sub.camera_trust_score,
+        "prnu_fingerprint_id": sub.prnu_fingerprint_id,
+        "prnu_extracted_energy": sub.prnu_extracted_energy,
     }
 
 

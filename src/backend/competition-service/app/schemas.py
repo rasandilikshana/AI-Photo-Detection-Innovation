@@ -228,6 +228,10 @@ class SubmissionResponse(BaseModel):
     rejection_reason: Optional[str] = None
     reviewed_by: Optional[int] = None
     reviewed_at: Optional[datetime] = None
+    # V2.0 Camera Reputation fields
+    camera_trust_score: Optional[float] = None
+    prnu_fingerprint_id: Optional[int] = None
+    prnu_extracted_energy: Optional[float] = None
 
     class Config:
         from_attributes = True

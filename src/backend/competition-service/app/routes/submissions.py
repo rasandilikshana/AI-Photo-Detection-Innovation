@@ -224,12 +224,14 @@ async def run_ai_analysis(submission_id: int, jpg_path: str, raw_path: Optional[
                     layer1 = ai_result.get('layer1_result', {})
                     if layer1:
                         metadata = layer1.get('metadata', {})
-                        submission.camera_make = metadata.get('Make', '')
-                        submission.camera_model = metadata.get('Model', '')
-                        submission.iso = metadata.get('ISO')
-                        submission.aperture = metadata.get('FNumber', '')
-                        submission.shutter_speed = metadata.get('ExposureTime', '')
-                        submission.capture_date = metadata.get('DateTimeOriginal', '')
+                        submission.camera_make = str(metadata.get('Make', '') or '')
+                        submission.camera_model = str(metadata.get('Model', '') or '')
+                        # ISO should be integer, others should be strings
+                        iso_val = metadata.get('ISO')
+                        submission.iso = int(iso_val) if iso_val and str(iso_val).isdigit() else None
+                        submission.aperture = str(metadata.get('FNumber', '') or '')
+                        submission.shutter_speed = str(metadata.get('ExposureTime', '') or '')
+                        submission.capture_date = str(metadata.get('DateTimeOriginal', '') or '')
 
                     await db.commit()
                     logger.info(f"[Submission {submission_id}] Updated with verdict: {verification_verdict}")
@@ -468,6 +470,10 @@ async def create_submission(
         competition_id=submission_with_competition.competition_id,
         competition=submission_with_competition.competition,
         created_at=submission_with_competition.created_at,
+        # V2.0 Camera Reputation fields
+        camera_trust_score=submission_with_competition.camera_trust_score,
+        prnu_fingerprint_id=submission_with_competition.prnu_fingerprint_id,
+        prnu_extracted_energy=submission_with_competition.prnu_extracted_energy,
     )
 
 
@@ -532,6 +538,10 @@ async def list_submissions(
             rejection_reason=sub.rejection_reason,
             reviewed_by=sub.reviewed_by,
             reviewed_at=sub.reviewed_at,
+            # V2.0 Camera Reputation fields
+            camera_trust_score=sub.camera_trust_score,
+            prnu_fingerprint_id=sub.prnu_fingerprint_id,
+            prnu_extracted_energy=sub.prnu_extracted_energy,
         ))
 
     return response_list
@@ -587,6 +597,10 @@ async def get_submission(
         rejection_reason=sub.rejection_reason,
         reviewed_by=sub.reviewed_by,
         reviewed_at=sub.reviewed_at,
+        # V2.0 Camera Reputation fields
+        camera_trust_score=sub.camera_trust_score,
+        prnu_fingerprint_id=sub.prnu_fingerprint_id,
+        prnu_extracted_energy=sub.prnu_extracted_energy,
     )
 
 

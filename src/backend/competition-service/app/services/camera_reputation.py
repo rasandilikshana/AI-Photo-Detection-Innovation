@@ -63,6 +63,9 @@ class CameraReputationManager:
         """
         Store PRNU fingerprint for a submission.
 
+        If a fingerprint with the same hash already exists (same image uploaded multiple times),
+        returns the existing fingerprint instead of creating a duplicate.
+
         Args:
             submission_id: ID of the submission
             prnu_data: Output from PRNUExtractor.extract_prnu_fingerprint()
@@ -72,12 +75,26 @@ class CameraReputationManager:
             capture_context: Optional EXIF data (ISO, aperture, etc.)
 
         Returns:
-            Created CameraFingerprint record
+            CameraFingerprint record (existing or newly created)
         """
         try:
             logger.info(f"Storing fingerprint for submission {submission_id}")
 
-            # Create fingerprint record
+            # Check if fingerprint with same hash already exists (same image)
+            existing = await self.db.execute(
+                select(CameraFingerprint).where(CameraFingerprint.prnu_hash == prnu_data["hash"])
+            )
+            existing_fingerprint = existing.scalar_one_or_none()
+
+            if existing_fingerprint:
+                logger.info(
+                    f"Fingerprint already exists (ID {existing_fingerprint.id}) for hash {prnu_data['hash'][:16]}... "
+                    f"- reusing for submission {submission_id}"
+                )
+                # Return existing fingerprint - the submission will link to this ID
+                return existing_fingerprint
+
+            # Create new fingerprint record
             fingerprint = CameraFingerprint(
                 submission_id=submission_id,
                 user_id=user_id,
@@ -93,7 +110,7 @@ class CameraReputationManager:
             self.db.add(fingerprint)
             await self.db.flush()  # Get ID without committing
 
-            logger.info(f"Fingerprint stored with ID {fingerprint.id}")
+            logger.info(f"New fingerprint stored with ID {fingerprint.id}")
 
             return fingerprint
 

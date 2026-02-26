@@ -116,6 +116,7 @@ class MetadataAnalyzer:
                     "confidence": confidence_score,
                     "flags": flags,
                     "metadata_present": bool(jpg_metadata),
+                    "metadata": {},  # No camera metadata for AI-generated images
                     "camera_fields_found": 0,
                     "ai_signatures_found": len(ai_flags),
                     "analysis": "AI generation signatures detected in metadata",
@@ -153,11 +154,24 @@ class MetadataAnalyzer:
 
             camera_fields_found = sum(1 for field in self.CAMERA_FIELDS if field in jpg_metadata)
 
+            # Extract key metadata values for V2 camera reputation system
+            extracted_metadata = {
+                "Make": jpg_metadata.get("Make", ""),
+                "Model": jpg_metadata.get("Model", ""),
+                "LensModel": jpg_metadata.get("LensModel", ""),
+                "ExposureTime": jpg_metadata.get("ExposureTime", ""),
+                "FNumber": jpg_metadata.get("FNumber", ""),
+                "ISO": jpg_metadata.get("ISO") or jpg_metadata.get("ISOSpeedRatings", ""),
+                "FocalLength": jpg_metadata.get("FocalLength", ""),
+                "DateTimeOriginal": jpg_metadata.get("DateTimeOriginal", ""),
+            }
+
             return {
                 "verdict": verdict,
                 "confidence": confidence_score,
                 "flags": flags,
                 "metadata_present": bool(jpg_metadata),
+                "metadata": extracted_metadata,  # Include actual metadata for V2 features
                 "camera_fields_found": camera_fields_found,
                 "ai_signatures_found": 0,
                 "camera_score": camera_score,
@@ -172,6 +186,7 @@ class MetadataAnalyzer:
                 "confidence": 0.0,
                 "flags": [f"Analysis error: {str(e)}"],
                 "metadata_present": False,
+                "metadata": {},  # Empty metadata on error
                 "camera_fields_found": 0,
                 "ai_signatures_found": 0,
                 "analysis": "Metadata analysis failed",
