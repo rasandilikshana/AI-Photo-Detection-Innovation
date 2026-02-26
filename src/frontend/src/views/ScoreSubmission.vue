@@ -159,6 +159,24 @@ const isDragging = ref(false)
 const dragStart = ref({ x: 0, y: 0 })
 const imagePosition = ref({ x: 0, y: 0 })
 
+// Compute display name avoiding duplicates like "Canon Canon EOS 600D"
+const cameraDisplayName = computed(() => {
+  if (!submission.value) return ''
+  const make = submission.value.camera_make?.trim() || ''
+  const model = submission.value.camera_model?.trim() || ''
+
+  if (!make && !model) return ''
+  if (!make) return model
+  if (!model) return make
+
+  // If model already starts with make, just show model
+  if (model.toLowerCase().startsWith(make.toLowerCase())) {
+    return model
+  }
+
+  return `${make} ${model}`
+})
+
 // Check if submission needs manual review
 const needsManualReview = computed(() => {
   if (!submission.value) return false
@@ -1254,9 +1272,9 @@ if (typeof window !== 'undefined') {
             </CardHeader>
             <CardContent>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div v-if="submission.camera_make" class="p-3 rounded-lg bg-muted/50">
+                <div v-if="cameraDisplayName" class="p-3 rounded-lg bg-muted/50">
                   <p class="text-xs text-muted-foreground mb-1">Camera</p>
-                  <p class="font-medium text-sm">{{ submission.camera_make }} {{ submission.camera_model }}</p>
+                  <p class="font-medium text-sm">{{ cameraDisplayName }}</p>
                 </div>
                 <div v-if="submission.lens_model" class="p-3 rounded-lg bg-muted/50">
                   <p class="text-xs text-muted-foreground mb-1">Lens</p>
@@ -1294,11 +1312,11 @@ if (typeof window !== 'undefined') {
             class="mt-4"
           />
 
-          <!-- V2.0: Consensus Indicator -->
+          <!-- V2.0: Consensus Indicator - Only show when there are scores from multiple judges -->
           <ConsensusIndicator
-            v-if="submission.id"
-            :submission-id="submission.id"
-            :show-details="true"
+            v-if="submission.score_count >= 2"
+            :judge-count="submission.score_count"
+            size="md"
             class="mt-4"
           />
         </div>
@@ -1497,7 +1515,7 @@ if (typeof window !== 'undefined') {
           <div class="flex items-center justify-between p-4 bg-black/50">
             <div class="text-white">
               <h3 class="font-semibold">{{ submission.title }}</h3>
-              <p class="text-sm text-gray-400">{{ submission.camera_make }} {{ submission.camera_model }}</p>
+              <p class="text-sm text-gray-400">{{ cameraDisplayName }}</p>
             </div>
             <div class="flex items-center gap-2">
               <!-- Zoom Controls -->
