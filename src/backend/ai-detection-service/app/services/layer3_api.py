@@ -84,66 +84,61 @@ class ThirdPartyAPIVerifier:
 
     async def _verify_hive_ai(self, image_path: str) -> Dict:
         """
-        Verify using Hive AI API
+        Verify using Hive AI API V3 (Playground)
 
-        Hive AI provides content moderation and AI-generated content detection
+        Hive AI provides AI-generated content detection
         API Docs: https://docs.thehive.ai/
 
-        Supports two authentication formats:
-        1. Simple token: "your_api_token"
-        2. Access Key + Secret: "access_key_id:secret_key"
+        Authentication: Bearer <SECRET_KEY>
+        Format: access_key_id:secret_key - we use the secret_key part
 
         Returns:
             Analysis result
         """
         try:
-            logger.info("Attempting Hive AI verification")
+            logger.info("Attempting Hive AI V3 verification")
 
-            # Hive AI API endpoint
-            url = "https://api.thehive.ai/api/v2/task/sync"
+            # Hive AI V3 API endpoint for AI-generated content detection
+            url = "https://api.thehive.ai/api/v3/hive/ai-generated-and-deepfake-content-detection"
 
-            # Determine authentication method
-            # If key contains ":", it's access_key:secret_key format
+            # Extract secret key if format is "access_key:secret_key"
             if ":" in self.hive_api_key:
-                # Use Token authentication with the full key (Hive accepts this format)
-                auth_header = f"Token {self.hive_api_key}"
-                logger.info("Using Access Key:Secret Key authentication format")
+                secret_key = self.hive_api_key.split(":")[1]
             else:
-                # Simple token format
-                auth_header = f"Token {self.hive_api_key}"
-                logger.info("Using simple token authentication format")
+                secret_key = self.hive_api_key
 
-            # Prepare request
+            # V3 uses Bearer authentication with the Secret Key
+            auth_header = f"Bearer {secret_key}"
+            logger.info("Using Bearer authentication with Secret Key")
+
+            # Prepare request with multipart form data
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                # Read image file
                 with open(image_path, "rb") as f:
                     files = {"media": (Path(image_path).name, f, "image/jpeg")}
+                    headers = {"authorization": auth_header}
 
-                    headers = {"Authorization": auth_header}
-
-                    # Request AI detection
-                    data = {"models": "ai_generated_media"}  # Hive's AI detection model
-
-                    response = await client.post(url, headers=headers, files=files, data=data)
+                    response = await client.post(url, headers=headers, files=files)
 
                 if response.status_code != 200:
                     logger.error(f"Hive AI API error: {response.status_code} - {response.text}")
                     return {"verdict": "ERROR"}
 
                 result = response.json()
+                logger.info(f"Hive AI response: {result}")
 
-                # Parse Hive AI response
-                # Response structure: { "status": [...], "scores": [...] }
+                # Parse Hive AI V3 response
+                # Response structure: { "output": [{ "classes": [...] }] }
                 ai_generated_score = 0.0
+                deepfake_score = 0.0
 
-                if "status" in result and result["status"]:
-                    for item in result["status"]:
-                        if "response" in item and "output" in item["response"]:
-                            for output in item["response"]["output"]:
-                                if "classes" in output:
-                                    for cls in output["classes"]:
-                                        if cls.get("class") == "ai_generated":
-                                            ai_generated_score = cls.get("score", 0.0)
+                if "output" in result and result["output"]:
+                    for output in result["output"]:
+                        if "classes" in output:
+                            for cls in output["classes"]:
+                                if cls.get("class") == "ai_generated":
+                                    ai_generated_score = cls.get("value", 0.0)
+                                elif cls.get("class") == "deepfake":
+                                    deepfake_score = cls.get("value", 0.0)
 
                 # Determine verdict
                 flags = []

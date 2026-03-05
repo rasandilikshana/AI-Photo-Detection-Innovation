@@ -161,6 +161,7 @@ async def analyze_submission(
         flags = []
         verdict = "AUTHENTIC"
         confidence_score = 1.0
+        raw_linkage_suspicious = False  # Track if RAW-JPG linkage is suspicious (spoofing detection)
 
         # === LAYER 1: METADATA ANALYSIS ===
         logger.info(f"[{submission_id}] Running Layer 1: Metadata Analysis")
@@ -220,6 +221,19 @@ async def analyze_submission(
                     processing_time_ms=processing_time,
                 )
 
+            # SECURITY FIX: Handle SUSPICIOUS RAW linkage (metadata spoofing attack detection)
+            # When metadata passes but RAW-JPG linkage is weak, this indicates possible spoofing
+            elif raw_jpg_linkage["verdict"] == "SUSPICIOUS":
+                raw_linkage_suspicious = True
+                flags.append("SECURITY WARNING: RAW-JPG linkage weak despite valid metadata - possible spoofing attack")
+                logger.warning(f"[{submission_id}] Suspicious RAW-JPG linkage detected - possible metadata spoofing")
+
+                # Force QUARANTINE when RAW linkage is suspicious
+                verdict = "QUARANTINE"
+                # Significantly reduce confidence - RAW mismatch is a critical signal
+                linkage_confidence = raw_jpg_linkage.get("confidence", 0.3)
+                confidence_score = min(confidence_score * 0.5, linkage_confidence)
+
         # === LAYER 2: DIGITAL FINGERPRINT ANALYSIS ===
         logger.info(f"[{submission_id}] Running Layer 2: Digital Fingerprint Analysis")
         layer2_result = await fingerprint_analyzer.analyze(jpg_path, raw_path)
@@ -244,8 +258,22 @@ async def analyze_submission(
                 confidence_score = layer3_result["confidence"]
                 flags.extend(layer3_result.get("flags", []))
             elif layer3_result["verdict"] == "AUTHENTIC":
-                verdict = "AUTHENTIC"
-                confidence_score = layer3_result["confidence"]
+                # SECURITY: If RAW linkage was suspicious, don't upgrade to AUTHENTIC
+                # This prevents metadata spoofing attacks from bypassing detection
+                if raw_linkage_suspicious:
+                    verdict = "QUARANTINE"
+                    confidence_score = min(confidence_score, 0.5)
+                    flags.append("Verdict kept as QUARANTINE due to suspicious RAW-JPG linkage")
+                    logger.warning(f"[{submission_id}] Prevented upgrade to AUTHENTIC due to suspicious RAW linkage")
+                else:
+                    verdict = "AUTHENTIC"
+                    confidence_score = layer3_result["confidence"]
+
+        # FINAL SECURITY CHECK: Ensure suspicious RAW linkage prevents AUTHENTIC verdict
+        if raw_linkage_suspicious and verdict == "AUTHENTIC":
+            verdict = "QUARANTINE"
+            confidence_score = min(confidence_score, 0.5)
+            flags.append("Final verdict downgraded due to RAW-JPG linkage concerns")
 
         # Calculate processing time
         processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000

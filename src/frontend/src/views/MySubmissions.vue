@@ -364,7 +364,7 @@ const getImageUrl = (url: string) => {
           <!-- Analyzing Status Info -->
           <Alert v-if="selectedSubmission.status === 'analyzing'" class="border-blue-500 bg-blue-500/10">
             <Info class="w-4 h-4 text-blue-500" />
-            <AlertDescription class="text-blue-200">
+            <AlertDescription class="text-blue-400">
               Your submission is being analyzed by our AI verification system. This usually takes a few minutes.
             </AlertDescription>
           </Alert>
@@ -372,7 +372,7 @@ const getImageUrl = (url: string) => {
           <!-- Pending Review Info (when pending and not analyzing) -->
           <Alert v-if="selectedSubmission.status === 'pending' && !selectedSubmission.analysis_error" class="border-yellow-500 bg-yellow-500/10">
             <Clock class="w-4 h-4 text-yellow-500" />
-            <AlertDescription class="text-yellow-200">
+            <AlertDescription class="text-yellow-400">
               Your submission is pending review. A judge will evaluate it shortly.
             </AlertDescription>
           </Alert>

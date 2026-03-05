@@ -579,7 +579,7 @@ if (typeof window !== 'undefined') {
         <!-- Needs Review Alert -->
         <Alert v-else-if="submission.verification_verdict?.toLowerCase() === 'needs_review'" class="border-yellow-500 bg-yellow-500/10">
           <ShieldQuestion class="w-4 h-4 text-yellow-500" />
-          <AlertDescription class="text-yellow-200">
+          <AlertDescription class="text-yellow-400">
             <strong>Manual Review Required:</strong> The AI verification flagged this submission for human review.
           </AlertDescription>
         </Alert>
@@ -587,7 +587,7 @@ if (typeof window !== 'undefined') {
         <!-- Pending Status Alert -->
         <Alert v-else-if="submission.status?.toLowerCase() === 'pending'" class="border-blue-500 bg-blue-500/10">
           <Info class="w-4 h-4 text-blue-500" />
-          <AlertDescription class="text-blue-200">
+          <AlertDescription class="text-blue-400">
             <strong>Pending Approval:</strong> This submission is awaiting manual review before it can be scored.
           </AlertDescription>
         </Alert>
