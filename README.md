@@ -1,4 +1,4 @@
-# A.V.A.R. - Aura Verification and Authentication for RAW files
+# A.V.A.R. - Authenticity Verification And Rating
 
 **AI-Powered Authenticity Verification System for Photography Competitions**
 
@@ -9,9 +9,10 @@
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.4+-green?logo=vue.js)](https://vuejs.org/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue?logo=docker)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-14%2F14%20passed-brightgreen)](tests/verify_v2_production.py)
-[![Verified](https://img.shields.io/badge/V2.0-100%25%20Verified-success)](docs/INNOVATION_ANALYSIS.md)
+[![Verified](https://img.shields.io/badge/V2.1-100%25%20Verified-success)](docs/INNOVATION_ANALYSIS.md)
+[![Innovation](https://img.shields.io/badge/Innovation-100%25%20Unique-gold)](docs/V2_INNOVATION_VERIFICATION.md)
 
 ## 🎯 Overview
 
@@ -24,7 +25,7 @@ A.V.A.R. is a comprehensive platform designed to safeguard photography competiti
 - PRNU sensor fingerprinting that AI-generated images cannot replicate
 - Multi-layer detection funnel for efficient and accurate verification
 
-**V2.0 Advanced Analytics** (NEW!)
+**V2.0+ Advanced Analytics**
 - 🎥 **Camera Reputation System**: PRNU-based trust scoring with fraud detection
 - ⚖️ **Judge Consensus Analysis**: ICC-based reliability metrics and bias detection
 - 🔐 **Credential Sharing Detection**: Multi-factor risk scoring for account security
@@ -53,7 +54,7 @@ A.V.A.R. is a comprehensive platform designed to safeguard photography competiti
 ### Phase 1: AI Detection Service ✅
 - **Layer 1**: EXIF Metadata Analysis with AI signature detection
 - **Layer 2**: Digital Fingerprint Analysis (PRNU, ELA, FFT) - *Calibrated Feb 2026*
-- **Layer 3**: Third-Party API Integration (Hive AI, Optic) - *Ready, needs API keys*
+- **Layer 3**: Third-Party API Integration (Hive AI, Optic) - *Configured and ready*
 - **Novel**: RAW-JPG Linkage Verification (pHash, SSIM, Histogram) - *Calibrated Feb 2026*
 - **Testing**: 80%+ coverage with unit, integration, and E2E tests
 
@@ -420,6 +421,14 @@ Follow the comprehensive guide: `src/backend/competition-service/docs/INTEGRATIO
 
 ## 📈 Version History
 
+### v2.1.0 (2026-03-05) - Branding & Integration Release
+- **RENAMED**: Full rebrand to "A.V.A.R. - Authenticity Verification And Rating"
+- **CONFIGURED**: Hive AI Layer 3 integration with API credentials
+- **IMPROVED**: Frontend-backend connectivity for production deployment
+- **UPDATED**: Nginx configuration for API proxying (Docker & systemd)
+- **FIXED**: Environment configuration for production (avar.studio)
+- **SYNCED**: All changes deployed to production server
+
 ### v2.0.1 (2026-02-26) - Test Verification Release
 - **VERIFIED**: All V2.0 algorithms (14/14 tests passed - 100%)
 - **ADDED**: Comprehensive test suite (86+ tests)
@@ -461,8 +470,8 @@ Follow the comprehensive guide: `src/backend/competition-service/docs/INTEGRATIO
 ### Production Deployment (Docker)
 ```bash
 # Build and push images
-docker build -t avar-backend:v2.0.0 src/backend/competition-service
-docker build -t avar-frontend:v2.0.0 src/frontend
+docker build -t avar-backend:v2.1.0 src/backend/competition-service
+docker build -t avar-frontend:v2.1.0 src/frontend
 
 # Deploy with docker-compose
 docker-compose -f docker-compose.prod.yml up -d
@@ -587,4 +596,4 @@ python tests/verify_v2_production.py
 
 **Built with passion for safeguarding photography competition integrity**
 
-**Version**: 2.0.0 | **Status**: Production Ready & Verified | **Last Updated**: 2026-02-26
+**Version**: 2.1.0 | **Status**: Production Ready & Verified | **Last Updated**: 2026-03-05
