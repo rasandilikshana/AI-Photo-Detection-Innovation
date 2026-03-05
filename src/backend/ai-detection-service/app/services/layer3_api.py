@@ -3,6 +3,7 @@ Layer 3: Third-Party API Verification Service
 Integration with professional AI detection APIs for final verdict
 """
 
+import base64
 import logging
 import os
 from pathlib import Path
@@ -29,6 +30,12 @@ class ThirdPartyAPIVerifier:
         self.hive_api_key = os.getenv("HIVE_AI_API_KEY", "")
         self.optic_api_key = os.getenv("OPTIC_API_KEY", "")
         self.timeout = 60.0  # API timeout in seconds
+
+        # Log API key status (without exposing the actual key)
+        if self.hive_api_key:
+            logger.info(f"Hive AI API key configured (length: {len(self.hive_api_key)})")
+        else:
+            logger.warning("Hive AI API key not configured")
 
     async def verify(self, image_path: str) -> Dict:
         """
@@ -82,6 +89,10 @@ class ThirdPartyAPIVerifier:
         Hive AI provides content moderation and AI-generated content detection
         API Docs: https://docs.thehive.ai/
 
+        Supports two authentication formats:
+        1. Simple token: "your_api_token"
+        2. Access Key + Secret: "access_key_id:secret_key"
+
         Returns:
             Analysis result
         """
@@ -91,13 +102,24 @@ class ThirdPartyAPIVerifier:
             # Hive AI API endpoint
             url = "https://api.thehive.ai/api/v2/task/sync"
 
+            # Determine authentication method
+            # If key contains ":", it's access_key:secret_key format
+            if ":" in self.hive_api_key:
+                # Use Token authentication with the full key (Hive accepts this format)
+                auth_header = f"Token {self.hive_api_key}"
+                logger.info("Using Access Key:Secret Key authentication format")
+            else:
+                # Simple token format
+                auth_header = f"Token {self.hive_api_key}"
+                logger.info("Using simple token authentication format")
+
             # Prepare request
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 # Read image file
                 with open(image_path, "rb") as f:
                     files = {"media": (Path(image_path).name, f, "image/jpeg")}
 
-                    headers = {"Authorization": f"Token {self.hive_api_key}"}
+                    headers = {"Authorization": auth_header}
 
                     # Request AI detection
                     data = {"models": "ai_generated_media"}  # Hive's AI detection model

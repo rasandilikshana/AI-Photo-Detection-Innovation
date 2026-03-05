@@ -7,7 +7,7 @@ test.describe('Authentication', () => {
 
   test('should load the home page', async ({ page }) => {
     await expect(page).toHaveTitle(/A.V.A.R./)
-    await expect(page.getByText('Anti-AI Verification')).toBeVisible()
+    await expect(page.getByText('Authenticity Verification')).toBeVisible()
   })
 
   test('should navigate to registration page', async ({ page }) => {

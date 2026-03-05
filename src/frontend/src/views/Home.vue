@@ -40,7 +40,7 @@ const steps = [
         A.V.A.R.
       </h1>
       <p class="text-xl text-muted-foreground">
-        Anti-AI Verification and Adjudication Registry
+        Authenticity Verification And Rating
       </p>
       <p class="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
         Join authentic photography competitions with AI-powered verification.

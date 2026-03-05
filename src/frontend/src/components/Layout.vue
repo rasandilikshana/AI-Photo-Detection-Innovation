@@ -333,7 +333,7 @@ const getRoleBadgeVariant = (role?: string) => {
     <footer class="py-6 border-t">
       <div class="container px-4 md:px-6">
         <p class="text-sm md:text-base text-center text-muted-foreground">
-          © 2026 <span class="font-semibold text-primary">A.V.A.R.</span> - Anti-AI Verification and Adjudication Registry
+          © 2026 <span class="font-semibold text-primary">A.V.A.R.</span> - Authenticity Verification And Rating
         </p>
       </div>
     </footer>
