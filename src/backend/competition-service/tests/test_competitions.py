@@ -222,6 +222,67 @@ async def test_update_competition_settings(
     assert data["entry_fee"] == 500
 
 
+def test_schemas_normalize_timezone_aware_datetimes():
+    """Browser clients send ISO dates with 'Z' — schemas must yield naive UTC datetimes
+    because the DB columns are TIMESTAMP WITHOUT TIME ZONE (asyncpg rejects aware values)"""
+    from app.schemas import CompetitionCreate, CompetitionUpdate
+
+    update = CompetitionUpdate(
+        submission_start="2026-02-20T17:47:00.000Z",
+        submission_end="2027-03-22T17:47:00.000Z",
+    )
+    assert update.submission_start.tzinfo is None
+    assert update.submission_end.tzinfo is None
+    assert update.submission_end.isoformat() == "2027-03-22T17:47:00"
+
+    create = CompetitionCreate(
+        title="TZ Normalization Test",
+        description="Ensures aware datetimes are converted to naive UTC",
+        submission_start="2026-02-20T17:47:00.000Z",
+        submission_end="2027-03-22T23:47:00.000+06:00",  # naive UTC: 17:47
+    )
+    assert create.submission_start.tzinfo is None
+    assert create.submission_end.tzinfo is None
+    assert create.submission_end.isoformat() == "2027-03-22T17:47:00"
+
+
+@pytest.mark.asyncio
+async def test_update_competition_with_utc_z_dates(
+    client: AsyncClient, authenticated_user: dict, test_competition_data: dict, db
+):
+    """Regression: PATCH with browser-style 'Z' ISO dates must persist as naive UTC"""
+    from app.models.user import User
+    from sqlalchemy import select
+
+    result = await db.execute(select(User).where(User.email == authenticated_user["user"]["email"]))
+    user = result.scalar_one()
+    user.role = UserRole.ORGANIZER
+    await db.commit()
+
+    create_response = await client.post(
+        "/api/v1/competitions",
+        json=test_competition_data,
+        headers=authenticated_user["headers"],
+    )
+    competition_id = create_response.json()["id"]
+
+    response = await client.patch(
+        f"/api/v1/competitions/{competition_id}",
+        json={
+            "submission_start": "2026-02-20T17:47:00.000Z",
+            "submission_end": "2027-03-22T17:47:00.000Z",
+            "max_submissions_per_user": 20,
+        },
+        headers=authenticated_user["headers"],
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["submission_end"] == "2027-03-22T17:47:00"
+    assert "+00:00" not in data["submission_start"]
+    assert data["max_submissions_per_user"] == 20
+
+
 @pytest.mark.asyncio
 async def test_update_competition_invalid_dates(
     client: AsyncClient, authenticated_user: dict, test_competition_data: dict, db

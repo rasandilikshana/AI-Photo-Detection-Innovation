@@ -5,8 +5,17 @@ Pydantic schemas for request/response validation
 import re
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
+
+
+def to_naive_utc(v: Optional[datetime]) -> Optional[datetime]:
+    """Normalize timezone-aware datetimes (e.g. browser ISO strings ending in 'Z')
+    to naive UTC — DB columns are TIMESTAMP WITHOUT TIME ZONE and asyncpg
+    rejects aware values for them."""
+    if v is not None and v.tzinfo is not None:
+        return v.astimezone(timezone.utc).replace(tzinfo=None)
+    return v
 
 
 # ============================================================================
@@ -125,6 +134,11 @@ class CompetitionCreate(BaseModel):
     prize_description: Optional[str] = None
     prize_amount: Optional[int] = Field(default=None, ge=0)
 
+    @field_validator('submission_start', 'submission_end')
+    @classmethod
+    def normalize_datetimes(cls, v: datetime) -> datetime:
+        return to_naive_utc(v)
+
     @field_validator('submission_end')
     @classmethod
     def end_after_start(cls, v: datetime, info) -> datetime:
@@ -149,6 +163,13 @@ class CompetitionUpdate(BaseModel):
     entry_fee: Optional[int] = Field(default=None, ge=0)
     prize_description: Optional[str] = None
     prize_amount: Optional[int] = Field(default=None, ge=0)
+
+    @field_validator(
+        'submission_start', 'submission_end', 'judging_start', 'judging_end', 'results_date'
+    )
+    @classmethod
+    def normalize_datetimes(cls, v: Optional[datetime]) -> Optional[datetime]:
+        return to_naive_utc(v)
 
 
 class CompetitionResponse(BaseModel):

@@ -5,6 +5,12 @@ All notable changes to the A.V.A.R. (Aura Verification and Authentication for RA
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2026-08-05
+
+### Fixed
+- Competition create/update failed on PostgreSQL when the browser sent ISO datetimes with a timezone (`...Z`): Pydantic produced timezone-aware datetimes, which asyncpg rejects for `TIMESTAMP WITHOUT TIME ZONE` columns (`can't subtract offset-naive and offset-aware datetimes`). All datetime fields in `CompetitionCreate`/`CompetitionUpdate` are now normalized to naive UTC at the schema boundary
+- 2 new regression tests covering `Z`-suffixed and offset datetimes
+
 ## [2.2.0] - 2026-08-05
 
 ### Added - Competition Editing
