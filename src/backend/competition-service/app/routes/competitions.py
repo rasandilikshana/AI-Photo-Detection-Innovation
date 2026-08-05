@@ -5,8 +5,8 @@ Competition management routes
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import List
-from datetime import datetime
+from typing import List, Optional
+from datetime import datetime, timezone
 
 from app.database import get_db
 from app.models.user import User, UserRole
@@ -21,6 +21,13 @@ from app.utils.auth import get_current_user
 from app.utils.security import generate_slug
 
 router = APIRouter()
+
+
+def _naive_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    """Normalize to naive UTC — stored values are naive, client values may carry a timezone"""
+    if dt is not None and dt.tzinfo is not None:
+        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
 
 
 @router.post("", response_model=CompetitionResponse, status_code=status.HTTP_201_CREATED)
@@ -179,6 +186,16 @@ async def update_competition(
 
     # Update fields
     update_data = competition_data.dict(exclude_unset=True)
+
+    # Validate the effective submission window (new value if provided, else stored)
+    new_start = update_data.get("submission_start", competition.submission_start)
+    new_end = update_data.get("submission_end", competition.submission_end)
+    if new_start and new_end and _naive_utc(new_end) <= _naive_utc(new_start):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="submission_end must be after submission_start",
+        )
+
     for field, value in update_data.items():
         setattr(competition, field, value)
 

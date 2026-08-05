@@ -174,6 +174,166 @@ async def test_update_competition(
 
 
 @pytest.mark.asyncio
+async def test_update_competition_settings(
+    client: AsyncClient, authenticated_user: dict, test_competition_data: dict, db
+):
+    """Test updating deadline, max submissions, and other settings"""
+    from datetime import datetime, timedelta
+    from app.models.user import User
+    from sqlalchemy import select
+
+    result = await db.execute(select(User).where(User.email == authenticated_user["user"]["email"]))
+    user = result.scalar_one()
+    user.role = UserRole.ORGANIZER
+    await db.commit()
+
+    create_response = await client.post(
+        "/api/v1/competitions",
+        json=test_competition_data,
+        headers=authenticated_user["headers"],
+    )
+    competition_id = create_response.json()["id"]
+
+    # Extend deadline and change settings
+    new_end = (datetime.utcnow() + timedelta(days=60)).isoformat()
+    update_data = {
+        "submission_end": new_end,
+        "max_submissions_per_user": 10,
+        "prize_amount": 250000,
+        "prize_description": "Grand prize: $2500",
+        "require_raw_files": False,
+        "allow_ai_generated": True,
+        "entry_fee": 500,
+    }
+    response = await client.patch(
+        f"/api/v1/competitions/{competition_id}",
+        json=update_data,
+        headers=authenticated_user["headers"],
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["submission_end"][:19] == new_end[:19]
+    assert data["max_submissions_per_user"] == 10
+    assert data["prize_amount"] == 250000
+    assert data["prize_description"] == "Grand prize: $2500"
+    assert data["require_raw_files"] is False
+    assert data["allow_ai_generated"] is True
+    assert data["entry_fee"] == 500
+
+
+@pytest.mark.asyncio
+async def test_update_competition_invalid_dates(
+    client: AsyncClient, authenticated_user: dict, test_competition_data: dict, db
+):
+    """Test that submission_end before submission_start is rejected"""
+    from datetime import datetime, timedelta
+    from app.models.user import User
+    from sqlalchemy import select
+
+    result = await db.execute(select(User).where(User.email == authenticated_user["user"]["email"]))
+    user = result.scalar_one()
+    user.role = UserRole.ORGANIZER
+    await db.commit()
+
+    create_response = await client.post(
+        "/api/v1/competitions",
+        json=test_competition_data,
+        headers=authenticated_user["headers"],
+    )
+    competition_id = create_response.json()["id"]
+
+    # submission_end before the existing submission_start (start is now + 1 day)
+    update_data = {"submission_end": (datetime.utcnow() - timedelta(days=5)).isoformat()}
+    response = await client.patch(
+        f"/api/v1/competitions/{competition_id}",
+        json=update_data,
+        headers=authenticated_user["headers"],
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_competition_invalid_max_submissions(
+    client: AsyncClient, authenticated_user: dict, test_competition_data: dict, db
+):
+    """Test that out-of-range max_submissions_per_user is rejected"""
+    from app.models.user import User
+    from sqlalchemy import select
+
+    result = await db.execute(select(User).where(User.email == authenticated_user["user"]["email"]))
+    user = result.scalar_one()
+    user.role = UserRole.ORGANIZER
+    await db.commit()
+
+    create_response = await client.post(
+        "/api/v1/competitions",
+        json=test_competition_data,
+        headers=authenticated_user["headers"],
+    )
+    competition_id = create_response.json()["id"]
+
+    response = await client.patch(
+        f"/api/v1/competitions/{competition_id}",
+        json={"max_submissions_per_user": 0},
+        headers=authenticated_user["headers"],
+    )
+    assert response.status_code == 422
+
+    response = await client.patch(
+        f"/api/v1/competitions/{competition_id}",
+        json={"max_submissions_per_user": 50},
+        headers=authenticated_user["headers"],
+    )
+    assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_update_competition_non_owner_forbidden(
+    client: AsyncClient, authenticated_user: dict, test_competition_data: dict, db
+):
+    """Test that a different user cannot update someone else's competition"""
+    from app.models.user import User
+    from sqlalchemy import select
+
+    result = await db.execute(select(User).where(User.email == authenticated_user["user"]["email"]))
+    user = result.scalar_one()
+    user.role = UserRole.ORGANIZER
+    await db.commit()
+
+    create_response = await client.post(
+        "/api/v1/competitions",
+        json=test_competition_data,
+        headers=authenticated_user["headers"],
+    )
+    competition_id = create_response.json()["id"]
+
+    # Register and login a second (participant) user
+    other_user_data = {
+        "email": "other@example.com",
+        "username": "otheruser",
+        "password": "OtherPassword123!",
+        "full_name": "Other User",
+    }
+    response = await client.post("/api/v1/auth/register", json=other_user_data)
+    assert response.status_code == 201
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": other_user_data["email"], "password": other_user_data["password"]},
+    )
+    assert response.status_code == 200
+    other_headers = {"Authorization": f"Bearer {response.json()['access_token']}"}
+
+    response = await client.patch(
+        f"/api/v1/competitions/{competition_id}",
+        json={"max_submissions_per_user": 10},
+        headers=other_headers,
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_delete_competition(
     client: AsyncClient, authenticated_user: dict, test_competition_data: dict, db
 ):

@@ -4,10 +4,15 @@ Judge Analytics and Consensus Models
 Tracks judge scoring patterns, detects bias, and identifies credential sharing.
 """
 
-from sqlalchemy import Column, String, Integer, ForeignKey, Float, Boolean, Text, DateTime, UniqueConstraint
+from sqlalchemy import Column, String, Integer, ForeignKey, Float, Boolean, Text, DateTime, UniqueConstraint, JSON
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
+
+# PostgreSQL-native types with portable fallbacks for other dialects (e.g. SQLite in tests)
+PortableJSONB = JSON().with_variant(JSONB(), "postgresql")
+PortableIntArray = JSON().with_variant(ARRAY(Integer), "postgresql")
+PortableStrArray = JSON().with_variant(ARRAY(String), "postgresql")
 
 
 class JudgeScoringProfile(BaseModel):
@@ -37,7 +42,7 @@ class JudgeScoringProfile(BaseModel):
     consistency_score = Column(Float, nullable=True)  # 0.0 - 1.0 (1.0 = highly consistent)
 
     # Distribution Analysis
-    score_distribution = Column(JSONB, nullable=True)  # {1: count, 2: count, ...}
+    score_distribution = Column(PortableJSONB, nullable=True)  # {1: count, 2: count, ...}
     outlier_count = Column(Integer, default=0)
     extreme_scores_ratio = Column(Float, nullable=True)  # % of 1s and 10s
 
@@ -85,7 +90,7 @@ class JudgeConsensusAnalysis(BaseModel):
 
     # Judge Participation
     judge_count = Column(Integer, nullable=False)
-    scores_received = Column(JSONB, nullable=False)  # {judge_id: score}
+    scores_received = Column(PortableJSONB, nullable=False)  # {judge_id: score}
 
     # Statistical Measures
     score_mean = Column(Float, nullable=True)
@@ -98,8 +103,8 @@ class JudgeConsensusAnalysis(BaseModel):
     coefficient_of_variation = Column(Float, nullable=True)  # std_dev / mean
 
     # Outlier Detection
-    outlier_judges = Column(ARRAY(Integer), nullable=True)  # IDs of judges with outlier scores
-    outlier_scores = Column(JSONB, nullable=True)  # {judge_id: z_score}
+    outlier_judges = Column(PortableIntArray, nullable=True)  # IDs of judges with outlier scores
+    outlier_scores = Column(PortableJSONB, nullable=True)  # {judge_id: z_score}
 
     # Consensus Decision
     consensus_verdict = Column(String(50), nullable=True)  # strong/moderate/weak/poor
@@ -118,7 +123,8 @@ class JudgeConsensusAnalysis(BaseModel):
     submission = relationship("Submission")
 
     def __repr__(self):
-        return f"<JudgeConsensusAnalysis Submission#{self.submission_id} - ICC={self.icc_value:.3f if self.icc_value else 'N/A'}>"
+        icc = f"{self.icc_value:.3f}" if self.icc_value is not None else "N/A"
+        return f"<JudgeConsensusAnalysis Submission#{self.submission_id} - ICC={icc}>"
 
     @property
     def consensus_quality(self) -> str:
@@ -153,17 +159,17 @@ class CredentialSharingDetection(BaseModel):
     unique_user_agent_count = Column(Integer, nullable=True)
 
     # Activity Data
-    ip_addresses = Column(ARRAY(String), nullable=True)
-    session_ids = Column(ARRAY(String), nullable=True)
+    ip_addresses = Column(PortableStrArray, nullable=True)
+    session_ids = Column(PortableStrArray, nullable=True)
 
     # Anomaly Detection
-    time_gap_anomalies = Column(JSONB, nullable=True)  # [{from, to, gap_seconds, expected_min}]
-    geographic_inconsistencies = Column(JSONB, nullable=True)  # [{ip1, ip2, distance_km, time_seconds}]
+    time_gap_anomalies = Column(PortableJSONB, nullable=True)  # [{from, to, gap_seconds, expected_min}]
+    geographic_inconsistencies = Column(PortableJSONB, nullable=True)  # [{ip1, ip2, distance_km, time_seconds}]
 
     # Risk Assessment
     risk_score = Column(Float, nullable=True, index=True)  # 0.0 - 1.0
     risk_level = Column(String(50), nullable=True)  # low/medium/high
-    risk_factors = Column(ARRAY(String), nullable=True)
+    risk_factors = Column(PortableStrArray, nullable=True)
 
     # Alert Management
     alert_triggered = Column(Boolean, default=False)

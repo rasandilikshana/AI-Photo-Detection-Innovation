@@ -150,7 +150,7 @@ async def proxy_ai_detection(path: str, request: Request):
 # === Competition Service Routes ===
 
 
-@app.api_route("/api/v1/competitions/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+@app.api_route("/api/v1/competitions/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
 async def proxy_competition_service(path: str, request: Request):
     """
     Proxy requests to Competition Management Service
@@ -159,7 +159,7 @@ async def proxy_competition_service(path: str, request: Request):
     try:
         url = f"{COMPETITION_SERVICE_URL}/{path}"
 
-        body = await request.body() if request.method in ["POST", "PUT"] else None
+        body = await request.body() if request.method in ["POST", "PUT", "PATCH"] else None
 
         response = await http_client.request(
             method=request.method,

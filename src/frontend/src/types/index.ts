@@ -84,9 +84,17 @@ export interface CompetitionUpdate {
   description?: string
   rules?: string
   status?: Competition['status']
+  submission_start?: string
+  submission_end?: string
   judging_start?: string
   judging_end?: string
   results_date?: string
+  max_submissions_per_user?: number
+  require_raw_files?: boolean
+  allow_ai_generated?: boolean
+  entry_fee?: number
+  prize_description?: string
+  prize_amount?: number
 }
 
 // Submission Types

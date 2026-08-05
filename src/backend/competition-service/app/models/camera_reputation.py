@@ -4,10 +4,13 @@ Camera Reputation System Models
 Tracks camera PRNU fingerprints and builds trust profiles over time.
 """
 
-from sqlalchemy import Column, String, Integer, ForeignKey, Float, Boolean, LargeBinary, DateTime, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+from sqlalchemy import Column, String, Integer, ForeignKey, Float, Boolean, LargeBinary, DateTime, UniqueConstraint, JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
+
+# JSONB on PostgreSQL, generic JSON on other dialects (e.g. SQLite in tests)
+PortableJSONB = JSON().with_variant(JSONB(), "postgresql")
 
 
 class CameraFingerprint(BaseModel):
@@ -36,7 +39,7 @@ class CameraFingerprint(BaseModel):
     trust_boost_applied = Column(Float, default=0.0)
 
     # Capture Context
-    capture_context = Column(JSONB, nullable=True)  # {iso, aperture, shutter, etc.}
+    capture_context = Column(PortableJSONB, nullable=True)  # {iso, aperture, shutter, etc.}
 
     # Verification Status
     verified = Column(Boolean, default=False)
@@ -129,7 +132,7 @@ class PRNUComparison(BaseModel):
     same_user = Column(Boolean, nullable=False)
 
     # Detailed Results
-    comparison_details = Column(JSONB, nullable=True)  # Full comparison data
+    comparison_details = Column(PortableJSONB, nullable=True)  # Full comparison data
 
     # Relationships
     fingerprint1 = relationship("CameraFingerprint", foreign_keys=[fingerprint1_id], back_populates="comparisons_as_fingerprint1")

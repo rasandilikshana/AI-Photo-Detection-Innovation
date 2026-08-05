@@ -9,18 +9,17 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Trophy, Plus, Calendar, Eye } from 'lucide-vue-next'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Trophy, Plus, Calendar, Eye, Pencil } from 'lucide-vue-next'
 import apiClient from '@/api/client'
-
-interface Competition {
-  id: number
-  title: string
-  description: string
-  status: string
-  submission_start: string
-  submission_end: string
-  prize_amount?: number
-}
+import type { Competition } from '@/types'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -65,7 +64,11 @@ const loadMyCompetitions = async () => {
     const response = await apiClient.get('/competitions')
     // Filter to show only competitions created by current user (for organizers)
     // Admin sees all
-    myCompetitions.value = response.data
+    const all: Competition[] = response.data
+    myCompetitions.value =
+      authStore.user?.role === 'admin'
+        ? all
+        : all.filter((c) => c.organizer_id === authStore.user?.id)
   } catch (err) {
     console.error('Failed to load competitions:', err)
   } finally {
@@ -121,6 +124,114 @@ const handleSubmit = async () => {
     }
   } finally {
     isSubmitting.value = false
+  }
+}
+
+// Edit competition
+const showEditDialog = ref(false)
+const editingCompetition = ref<Competition | null>(null)
+const isSaving = ref(false)
+const editError = ref('')
+const editSuccess = ref('')
+
+const editFormData = ref({
+  title: '',
+  description: '',
+  rules: '',
+  status: 'draft' as Competition['status'],
+  submission_start: '',
+  submission_end: '',
+  max_submissions_per_user: 5,
+  require_raw_files: true,
+  allow_ai_generated: false,
+  prize_description: '',
+  prize_amount: 0,
+})
+
+const statusOptions: Competition['status'][] = [
+  'draft',
+  'open',
+  'closed',
+  'judging',
+  'completed',
+  'cancelled',
+]
+
+const toDatetimeLocal = (dateStr: string) => {
+  const d = new Date(dateStr)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+const openEditDialog = (competition: Competition) => {
+  editingCompetition.value = competition
+  editError.value = ''
+  editFormData.value = {
+    title: competition.title,
+    description: competition.description,
+    rules: competition.rules || '',
+    status: competition.status,
+    submission_start: toDatetimeLocal(competition.submission_start),
+    submission_end: toDatetimeLocal(competition.submission_end),
+    max_submissions_per_user: competition.max_submissions_per_user,
+    require_raw_files: competition.require_raw_files,
+    allow_ai_generated: competition.allow_ai_generated,
+    prize_description: competition.prize_description || '',
+    prize_amount: (competition.prize_amount || 0) / 100, // cents to dollars
+  }
+  showEditDialog.value = true
+}
+
+const closeEditDialog = () => {
+  showEditDialog.value = false
+  editingCompetition.value = null
+  editError.value = ''
+}
+
+const handleEditSubmit = async () => {
+  if (!editingCompetition.value) return
+
+  try {
+    isSaving.value = true
+    editError.value = ''
+    editSuccess.value = ''
+
+    // Validate dates
+    if (new Date(editFormData.value.submission_end) <= new Date(editFormData.value.submission_start)) {
+      editError.value = 'End date must be after start date'
+      return
+    }
+
+    await apiClient.patch(`/competitions/${editingCompetition.value.id}`, {
+      title: editFormData.value.title,
+      description: editFormData.value.description,
+      rules: editFormData.value.rules,
+      status: editFormData.value.status,
+      submission_start: new Date(editFormData.value.submission_start).toISOString(),
+      submission_end: new Date(editFormData.value.submission_end).toISOString(),
+      max_submissions_per_user: editFormData.value.max_submissions_per_user,
+      require_raw_files: editFormData.value.require_raw_files,
+      allow_ai_generated: editFormData.value.allow_ai_generated,
+      prize_description: editFormData.value.prize_description,
+      prize_amount: Math.round(editFormData.value.prize_amount * 100), // Convert to cents
+    })
+
+    editSuccess.value = 'Competition updated successfully!'
+    closeEditDialog()
+    await loadMyCompetitions()
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'response' in err) {
+      const axiosErr = err as { response?: { data?: { detail?: string | Array<{ msg?: string }> } } }
+      const detail = axiosErr.response?.data?.detail
+      editError.value =
+        typeof detail === 'string'
+          ? detail
+          : detail?.[0]?.msg || 'Failed to update competition'
+    } else {
+      editError.value = 'Failed to update competition'
+    }
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -335,6 +446,10 @@ const formatDate = (dateStr: string) => {
 
       <!-- My Competitions Tab -->
       <div v-if="activeTab === 'my-competitions'">
+        <Alert v-if="editSuccess" class="mb-6 bg-green-50 text-green-800 border-green-200">
+          <AlertDescription>{{ editSuccess }}</AlertDescription>
+        </Alert>
+
         <div v-if="isLoading" class="text-center py-12">
           <div class="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p class="text-muted-foreground">Loading competitions...</p>
@@ -372,17 +487,181 @@ const formatDate = (dateStr: string) => {
                 <Calendar class="w-4 h-4" />
                 {{ formatDate(competition.submission_start) }} - {{ formatDate(competition.submission_end) }}
               </div>
-              <Button
-                variant="outline"
-                class="w-full"
-                @click="router.push(`/competitions/${competition.id}`)"
-              >
-                <Eye class="w-4 h-4 mr-2" />
-                View Details
-              </Button>
+              <div class="flex gap-2">
+                <Button
+                  variant="outline"
+                  class="flex-1"
+                  @click="router.push(`/competitions/${competition.id}`)"
+                >
+                  <Eye class="w-4 h-4 mr-2" />
+                  View Details
+                </Button>
+                <Button
+                  variant="outline"
+                  class="flex-1"
+                  @click="openEditDialog(competition)"
+                >
+                  <Pencil class="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
+
+        <!-- Edit Competition Dialog -->
+        <Dialog :open="showEditDialog" @update:open="(open: boolean) => { if (!open) closeEditDialog() }">
+          <DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Competition</DialogTitle>
+              <DialogDescription>
+                Update the details of "{{ editingCompetition?.title }}"
+              </DialogDescription>
+            </DialogHeader>
+
+            <Alert v-if="editError" variant="destructive" class="mb-4">
+              <AlertDescription>{{ editError }}</AlertDescription>
+            </Alert>
+
+            <form @submit.prevent="handleEditSubmit" class="space-y-6">
+              <div class="space-y-2">
+                <Label for="edit_title">Title *</Label>
+                <Input
+                  id="edit_title"
+                  v-model="editFormData.title"
+                  required
+                  :disabled="isSaving"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <Label for="edit_description">Description *</Label>
+                <Textarea
+                  id="edit_description"
+                  v-model="editFormData.description"
+                  rows="4"
+                  required
+                  :disabled="isSaving"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <Label for="edit_rules">Rules</Label>
+                <Textarea
+                  id="edit_rules"
+                  v-model="editFormData.rules"
+                  rows="3"
+                  :disabled="isSaving"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <Label for="edit_status">Status</Label>
+                <select
+                  id="edit_status"
+                  v-model="editFormData.status"
+                  :disabled="isSaving"
+                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option v-for="option in statusOptions" :key="option" :value="option">
+                    {{ option.charAt(0).toUpperCase() + option.slice(1) }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <Label for="edit_submission_start">Submission Start *</Label>
+                  <Input
+                    id="edit_submission_start"
+                    type="datetime-local"
+                    v-model="editFormData.submission_start"
+                    required
+                    :disabled="isSaving"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Label for="edit_submission_end">Submission End (Deadline) *</Label>
+                  <Input
+                    id="edit_submission_end"
+                    type="datetime-local"
+                    v-model="editFormData.submission_end"
+                    required
+                    :disabled="isSaving"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                  <Label for="edit_max_submissions">Max Submissions per User</Label>
+                  <Input
+                    id="edit_max_submissions"
+                    type="number"
+                    min="1"
+                    max="20"
+                    v-model.number="editFormData.max_submissions_per_user"
+                    :disabled="isSaving"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Label for="edit_prize_amount">Prize Amount ($)</Label>
+                  <Input
+                    id="edit_prize_amount"
+                    type="number"
+                    min="0"
+                    v-model.number="editFormData.prize_amount"
+                    :disabled="isSaving"
+                  />
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <Label for="edit_prize_description">Prize Description</Label>
+                <Input
+                  id="edit_prize_description"
+                  v-model="editFormData.prize_description"
+                  :disabled="isSaving"
+                />
+              </div>
+
+              <div class="flex items-center gap-6">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    v-model="editFormData.require_raw_files"
+                    class="w-4 h-4 rounded border-gray-300"
+                    :disabled="isSaving"
+                  />
+                  <span class="text-sm">Require RAW files</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    v-model="editFormData.allow_ai_generated"
+                    class="w-4 h-4 rounded border-gray-300"
+                    :disabled="isSaving"
+                  />
+                  <span class="text-sm">Allow AI-generated images</span>
+                </label>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  :disabled="isSaving"
+                  @click="closeEditDialog"
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" :disabled="isSaving">
+                  {{ isSaving ? 'Saving...' : 'Save Changes' }}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </template>
   </div>

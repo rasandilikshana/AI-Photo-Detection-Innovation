@@ -134,13 +134,21 @@ class CompetitionCreate(BaseModel):
 
 
 class CompetitionUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
+    title: Optional[str] = Field(default=None, min_length=5, max_length=255)
+    description: Optional[str] = Field(default=None, min_length=20)
     rules: Optional[str] = None
     status: Optional[CompetitionStatus] = None
+    submission_start: Optional[datetime] = None
+    submission_end: Optional[datetime] = None
     judging_start: Optional[datetime] = None
     judging_end: Optional[datetime] = None
     results_date: Optional[datetime] = None
+    max_submissions_per_user: Optional[int] = Field(default=None, ge=1, le=20)
+    require_raw_files: Optional[bool] = None
+    allow_ai_generated: Optional[bool] = None
+    entry_fee: Optional[int] = Field(default=None, ge=0)
+    prize_description: Optional[str] = None
+    prize_amount: Optional[int] = Field(default=None, ge=0)
 
 
 class CompetitionResponse(BaseModel):

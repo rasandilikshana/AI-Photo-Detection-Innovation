@@ -5,6 +5,21 @@ All notable changes to the A.V.A.R. (Aura Verification and Authentication for RA
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-08-05
+
+### Added - Competition Editing
+- **Edit Competition dialog** in the Organizer Panel: organizers (and admins) can edit title, description, rules, status, submission start/end (deadline), max submissions per user, prize amount/description, RAW-file requirement, and AI-generated policy
+- `CompetitionUpdate` API schema extended with `submission_start`, `submission_end`, `max_submissions_per_user` (1-20), `require_raw_files`, `allow_ai_generated`, `entry_fee`, `prize_description`, `prize_amount`
+- Cross-field validation on update: `submission_end` must be after `submission_start` (HTTP 422), timezone-safe comparison
+- "My Competitions" tab now lists only the signed-in organizer's competitions (admins see all)
+- 4 new backend tests: settings update persistence, invalid dates, invalid max submissions, non-owner 403
+
+### Fixed
+- API gateway now proxies `PATCH` requests and forwards their bodies (previously competition updates through the gateway returned 405)
+- PostgreSQL-only column types (`JSONB`, `ARRAY`) now use portable variants so the test suite runs on SQLite; PostgreSQL DDL unchanged
+- `JudgeConsensusAnalysis.__repr__` crash caused by an invalid f-string format specifier
+- `requirements.txt` now includes the scientific stack (`opencv-python-headless`, `numpy`, `scipy`, `PyWavelets`) required by PRNU extraction — fresh Docker images previously crashed at startup with `ModuleNotFoundError`
+
 ## [2.0.0] - 2026-02-24
 
 ### Added - Camera Reputation System
