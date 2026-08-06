@@ -41,15 +41,15 @@ const verdictLabel = computed(() => {
 const verdictColor = computed(() => {
   switch (props.verdict) {
     case 'strong_consensus':
-      return 'text-green-600 dark:text-green-400'
+      return 'text-success'
     case 'moderate_consensus':
-      return 'text-blue-600 dark:text-blue-400'
+      return 'text-info'
     case 'weak_consensus':
-      return 'text-yellow-600 dark:text-yellow-400'
+      return 'text-warning'
     case 'poor_consensus':
-      return 'text-red-600 dark:text-red-400'
+      return 'text-destructive'
     default:
-      return 'text-gray-600 dark:text-gray-400'
+      return 'text-muted-foreground'
   }
 })
 
@@ -119,13 +119,13 @@ const sizeClasses = computed(() => {
     <!-- Warning Indicators -->
     <div class="flex flex-col gap-1">
       <!-- Flagged for Review -->
-      <div v-if="flaggedForReview" class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+      <div v-if="flaggedForReview" class="flex items-center gap-1 text-xs text-warning">
         <AlertTriangle class="h-3 w-3" />
         <span>Flagged for manual review</span>
       </div>
 
       <!-- Outlier Judges -->
-      <div v-if="outlierCount > 0" class="flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+      <div v-if="outlierCount > 0" class="flex items-center gap-1 text-xs text-destructive">
         <AlertCircle class="h-3 w-3" />
         <span>{{ outlierCount }} outlier judge{{ outlierCount > 1 ? 's' : '' }} detected</span>
       </div>

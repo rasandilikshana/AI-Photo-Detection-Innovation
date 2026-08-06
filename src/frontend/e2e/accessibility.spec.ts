@@ -10,7 +10,7 @@ test.describe('Accessibility', () => {
     await expect(h1).toHaveCount(1)
 
     // Check h1 content
-    await expect(h1).toContainText(/a\.v\.a\.r\./i)
+    await expect(h1).toContainText(/authentic photography/i)
   })
 
   test('should have accessible forms with labels', async ({ page }) => {

@@ -6,7 +6,7 @@ test.describe('Competitions', () => {
   })
 
   test('should navigate to competitions page', async ({ page }) => {
-    await page.getByRole('link', { name: /browse competitions/i }).first().click()
+    await page.getByRole('button', { name: /browse competitions/i }).first().click()
     await expect(page).toHaveURL(/\/competitions/)
     await expect(page.getByRole('heading', { name: /photography competitions/i })).toBeVisible()
   })
@@ -31,17 +31,12 @@ test.describe('Competitions', () => {
     await page.waitForTimeout(2000)
 
     // Check if competitions are displayed
-    const cards = page.locator('[class*="card"]')
-    const count = await cards.count()
+    const viewButtons = page.getByRole('button', { name: /view details/i })
+    const count = await viewButtons.count()
 
     if (count > 0) {
-      // Check first competition card has required elements
-      const firstCard = cards.first()
-      await expect(firstCard).toBeVisible()
-
-      // Check for View Details button
-      const viewButton = firstCard.getByRole('button', { name: /view details/i })
-      await expect(viewButton).toBeVisible()
+      // First competition card exposes its action button
+      await expect(viewButtons.first()).toBeVisible()
     }
   })
 
@@ -49,7 +44,7 @@ test.describe('Competitions', () => {
     await page.goto('/')
 
     // Click on Competitions in the navigation
-    await page.getByRole('link', { name: /^competitions$/i }).click()
+    await page.locator('header').getByRole('link', { name: /^competitions$/i }).click()
     await expect(page).toHaveURL(/\/competitions/)
   })
 

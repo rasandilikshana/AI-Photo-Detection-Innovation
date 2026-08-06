@@ -36,13 +36,13 @@ const badgeVariant = computed(() => {
 const badgeColor = computed(() => {
   switch (props.biasCategory) {
     case 'harsh':
-      return 'bg-red-500/10 text-red-600 dark:text-red-400'
+      return 'bg-warning/10 text-warning'
     case 'lenient':
-      return 'bg-green-500/10 text-green-600 dark:text-green-400'
+      return 'bg-warning/10 text-warning'
     case 'neutral':
-      return 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+      return 'bg-secondary text-muted-foreground'
     default:
-      return 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
+      return 'bg-secondary text-muted-foreground'
   }
 })
 
@@ -74,10 +74,10 @@ const consistencyLevel = computed(() => {
 })
 
 const consistencyColor = computed(() => {
-  if (props.consistencyScore >= 0.8) return 'text-green-600 dark:text-green-400'
-  if (props.consistencyScore >= 0.6) return 'text-blue-600 dark:text-blue-400'
-  if (props.consistencyScore >= 0.4) return 'text-yellow-600 dark:text-yellow-400'
-  return 'text-red-600 dark:text-red-400'
+  if (props.consistencyScore >= 0.8) return 'text-success'
+  if (props.consistencyScore >= 0.6) return 'text-info'
+  if (props.consistencyScore >= 0.4) return 'text-warning'
+  return 'text-destructive'
 })
 
 const sizeClasses = computed(() => {
@@ -124,7 +124,7 @@ const sizeClasses = computed(() => {
       </div>
 
       <!-- Bias Explanation -->
-      <p v-if="Math.abs(biasScore) > 2.0" class="text-amber-600 dark:text-amber-400 mt-1">
+      <p v-if="Math.abs(biasScore) > 2.0" class="text-warning mt-1">
         <AlertTriangle class="h-3 w-3 inline mr-1" />
         Z-score > 2.0: Significant bias detected
       </p>

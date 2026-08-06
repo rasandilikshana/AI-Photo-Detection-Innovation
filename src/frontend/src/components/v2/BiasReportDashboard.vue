@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { BarChart3, TrendingDown, TrendingUp, AlertTriangle, Users, CheckCircle } from 'lucide-vue-next'
+import { BarChart3, TrendingDown, TrendingUp, AlertTriangle, Users, CheckCircle, Loader2 } from 'lucide-vue-next'
 import apiClient from '@/api/client'
 
 interface JudgeProfile {
@@ -100,13 +100,13 @@ const overallHealth = computed(() => {
 const healthColor = computed(() => {
   switch (overallHealth.value) {
     case 'healthy':
-      return 'text-green-600 dark:text-green-400'
+      return 'text-success'
     case 'moderate':
-      return 'text-yellow-600 dark:text-yellow-400'
+      return 'text-warning'
     case 'concerning':
-      return 'text-red-600 dark:text-red-400'
+      return 'text-destructive'
     default:
-      return 'text-gray-600 dark:text-gray-400'
+      return 'text-muted-foreground'
   }
 })
 
@@ -125,7 +125,7 @@ onMounted(() => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h2 class="text-2xl font-bold">Judge Bias Report</h2>
+        <h2 class="text-2xl font-display font-semibold tracking-tight">Judge bias report</h2>
         <p class="text-sm text-muted-foreground">
           Competition bias analysis and consensus quality metrics
         </p>
@@ -145,7 +145,7 @@ onMounted(() => {
     <!-- Loading State -->
     <div v-if="loading && !report" class="flex items-center justify-center py-12">
       <div class="text-center space-y-2">
-        <BarChart3 class="h-8 w-8 animate-pulse mx-auto text-muted-foreground" />
+        <Loader2 class="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
         <p class="text-sm text-muted-foreground">Loading bias report...</p>
       </div>
     </div>
@@ -153,7 +153,7 @@ onMounted(() => {
     <!-- Report Content -->
     <div v-else-if="report" class="space-y-6">
       <!-- Overall Health Card -->
-      <Card>
+      <Card class="rounded-2xl">
         <CardHeader>
           <CardTitle>Competition Health Overview</CardTitle>
           <CardDescription>Overall judging quality metrics</CardDescription>
@@ -166,13 +166,13 @@ onMounted(() => {
                 <Users class="h-4 w-4" />
                 <span>Total Judges</span>
               </div>
-              <p class="text-3xl font-bold">{{ report.total_judges }}</p>
+              <p class="text-3xl font-display font-semibold">{{ report.total_judges }}</p>
             </div>
 
             <!-- Average Bias -->
             <div class="space-y-1">
               <p class="text-sm text-muted-foreground">Avg Bias Score</p>
-              <p class="text-3xl font-bold" :class="Math.abs(report.avg_bias_score) > 1.0 ? 'text-amber-600' : ''">
+              <p class="text-3xl font-display font-semibold" :class="Math.abs(report.avg_bias_score) > 1.0 ? 'text-warning' : ''">
                 {{ report.avg_bias_score.toFixed(2) }}
               </p>
               <p class="text-xs text-muted-foreground">
@@ -183,7 +183,7 @@ onMounted(() => {
             <!-- Average Consistency -->
             <div class="space-y-1">
               <p class="text-sm text-muted-foreground">Avg Consistency</p>
-              <p class="text-3xl font-bold">{{ (report.avg_consistency * 100).toFixed(0) }}%</p>
+              <p class="text-3xl font-display font-semibold">{{ (report.avg_consistency * 100).toFixed(0) }}%</p>
               <Badge :variant="consistencyLevel === 'excellent' || consistencyLevel === 'good' ? 'default' : 'secondary'">
                 {{ consistencyLevel }}
               </Badge>
@@ -195,7 +195,7 @@ onMounted(() => {
                 <AlertTriangle class="h-4 w-4" />
                 <span>Flagged</span>
               </div>
-              <p class="text-3xl font-bold" :class="report.flagged_submissions_count > 0 ? 'text-red-600' : ''">
+              <p class="text-3xl font-display font-semibold" :class="report.flagged_submissions_count > 0 ? 'text-destructive' : ''">
                 {{ report.flagged_submissions_count }}
               </p>
               <p class="text-xs text-muted-foreground">Submissions</p>
@@ -229,26 +229,26 @@ onMounted(() => {
       </Card>
 
       <!-- Bias Distribution -->
-      <Card>
+      <Card class="rounded-2xl">
         <CardHeader>
           <CardTitle>Bias Distribution</CardTitle>
           <CardDescription>Judge scoring tendencies</CardDescription>
         </CardHeader>
         <CardContent>
           <div class="grid grid-cols-3 gap-4">
-            <div class="flex flex-col items-center p-4 rounded-lg bg-red-500/10">
-              <TrendingDown class="h-6 w-6 text-red-600 dark:text-red-400 mb-2" />
-              <p class="text-2xl font-bold">{{ biasDistribution.harsh }}</p>
+            <div class="flex flex-col items-center p-4 rounded-xl bg-warning/10">
+              <TrendingDown class="h-6 w-6 text-warning mb-2" />
+              <p class="text-2xl font-display font-semibold">{{ biasDistribution.harsh }}</p>
               <p class="text-sm text-muted-foreground">Harsh</p>
             </div>
-            <div class="flex flex-col items-center p-4 rounded-lg bg-blue-500/10">
-              <CheckCircle class="h-6 w-6 text-blue-600 dark:text-blue-400 mb-2" />
-              <p class="text-2xl font-bold">{{ biasDistribution.neutral }}</p>
+            <div class="flex flex-col items-center p-4 rounded-xl bg-secondary">
+              <CheckCircle class="h-6 w-6 text-muted-foreground mb-2" />
+              <p class="text-2xl font-display font-semibold">{{ biasDistribution.neutral }}</p>
               <p class="text-sm text-muted-foreground">Neutral</p>
             </div>
-            <div class="flex flex-col items-center p-4 rounded-lg bg-green-500/10">
-              <TrendingUp class="h-6 w-6 text-green-600 dark:text-green-400 mb-2" />
-              <p class="text-2xl font-bold">{{ biasDistribution.lenient }}</p>
+            <div class="flex flex-col items-center p-4 rounded-xl bg-warning/10">
+              <TrendingUp class="h-6 w-6 text-warning mb-2" />
+              <p class="text-2xl font-display font-semibold">{{ biasDistribution.lenient }}</p>
               <p class="text-sm text-muted-foreground">Lenient</p>
             </div>
           </div>
@@ -256,7 +256,7 @@ onMounted(() => {
       </Card>
 
       <!-- Judge Profiles -->
-      <Card>
+      <Card class="rounded-2xl">
         <CardHeader>
           <CardTitle>Individual Judge Profiles</CardTitle>
           <CardDescription>Sorted by bias magnitude (most biased first)</CardDescription>
@@ -278,8 +278,7 @@ onMounted(() => {
                 <Badge
                   :variant="profile.bias_category === 'neutral' ? 'default' : 'secondary'"
                   :class="{
-                    'bg-red-500/10 text-red-600 dark:text-red-400': profile.bias_category === 'harsh',
-                    'bg-green-500/10 text-green-600 dark:text-green-400': profile.bias_category === 'lenient'
+                    'bg-warning/10 text-warning': profile.bias_category === 'harsh' || profile.bias_category === 'lenient'
                   }"
                 >
                   {{ profile.bias_category }}
@@ -293,7 +292,7 @@ onMounted(() => {
                 </div>
                 <div class="text-right">
                   <p class="text-muted-foreground">Bias</p>
-                  <p class="font-medium" :class="Math.abs(profile.bias_score) > 2.0 ? 'text-red-600' : ''">
+                  <p class="font-medium" :class="Math.abs(profile.bias_score) > 2.0 ? 'text-destructive' : ''">
                     {{ profile.bias_score > 0 ? '+' : '' }}{{ profile.bias_score.toFixed(2) }}
                   </p>
                 </div>
@@ -308,10 +307,10 @@ onMounted(() => {
       </Card>
 
       <!-- Flagged Submissions -->
-      <Card v-if="report.flagged_submissions.length > 0">
+      <Card v-if="report.flagged_submissions.length > 0" class="rounded-2xl">
         <CardHeader>
           <CardTitle class="flex items-center gap-2">
-            <AlertTriangle class="h-5 w-5 text-amber-600" />
+            <AlertTriangle class="h-5 w-5 text-warning" />
             Flagged Submissions ({{ report.flagged_submissions.length }})
           </CardTitle>
           <CardDescription>Submissions with poor judge consensus</CardDescription>
@@ -321,7 +320,7 @@ onMounted(() => {
             <div
               v-for="submission in report.flagged_submissions"
               :key="submission.submission_id"
-              class="flex items-center justify-between p-3 rounded-lg bg-amber-500/10 border border-amber-500/20"
+              class="flex items-center justify-between p-3 rounded-xl bg-warning/10 border border-warning/20"
             >
               <div>
                 <p class="font-semibold">Submission #{{ submission.submission_id }}</p>
@@ -331,7 +330,7 @@ onMounted(() => {
               </div>
               <div class="text-right">
                 <p class="text-sm text-muted-foreground">ICC</p>
-                <p class="text-lg font-bold text-red-600">{{ submission.icc_value.toFixed(2) }}</p>
+                <p class="text-lg font-display font-semibold text-destructive">{{ submission.icc_value.toFixed(2) }}</p>
                 <Badge variant="destructive" class="text-xs">{{ submission.consensus_verdict }}</Badge>
               </div>
             </div>

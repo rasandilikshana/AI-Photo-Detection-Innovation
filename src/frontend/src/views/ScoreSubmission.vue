@@ -356,23 +356,23 @@ const getPassFailStatus = (verdict: string | undefined) => {
 
 // Get status badge color class
 const getStatusColorClass = (isPass: boolean | null) => {
-  if (isPass === true) return 'bg-green-500/10 text-green-600 border-green-500/20'
-  if (isPass === false) return 'bg-red-500/10 text-red-600 border-red-500/20'
-  return 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20'
+  if (isPass === true) return 'bg-success/10 text-success border-success/30'
+  if (isPass === false) return 'bg-destructive/10 text-destructive border-destructive/30'
+  return 'bg-warning/10 text-warning border-warning/30'
 }
 
 // Get status icon color class
 const getStatusIconClass = (isPass: boolean | null) => {
-  if (isPass === true) return 'text-green-500'
-  if (isPass === false) return 'text-red-500'
-  return 'text-yellow-500'
+  if (isPass === true) return 'text-success'
+  if (isPass === false) return 'text-destructive'
+  return 'text-warning'
 }
 
 // Get score bar color based on value
 const getScoreBarColor = (score: number) => {
-  if (score >= 0.7) return 'bg-green-500'
-  if (score >= 0.4) return 'bg-yellow-500'
-  return 'bg-red-500'
+  if (score >= 0.7) return 'bg-success'
+  if (score >= 0.4) return 'bg-warning'
+  return 'bg-destructive'
 }
 
 // Format score as percentage
@@ -541,13 +541,13 @@ if (typeof window !== 'undefined') {
     <div class="mb-4 md:mb-6">
       <Button variant="ghost" size="sm" @click="router.push(backUrl)" class="group">
         <ArrowLeft class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-        Back to Dashboard
+        Back to dashboard
       </Button>
     </div>
 
     <!-- Loading state -->
     <div v-if="isLoading" class="text-center py-20">
-      <Loader2 class="w-12 h-12 text-primary animate-spin mx-auto mb-6" />
+      <Loader2 class="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-6" />
       <p class="text-muted-foreground text-lg">Loading submission...</p>
     </div>
 
@@ -558,9 +558,9 @@ if (typeof window !== 'undefined') {
 
     <template v-else-if="submission">
       <!-- Already scored banner -->
-      <Alert v-if="alreadyScored" class="mb-6 bg-green-50 border-green-200">
-        <CheckCircle class="w-4 h-4 text-green-600" />
-        <AlertDescription class="text-green-800">
+      <Alert v-if="alreadyScored" class="mb-6 bg-success/10 border-success/30">
+        <CheckCircle class="w-4 h-4 text-success" />
+        <AlertDescription class="text-success">
           You have already scored this submission. You can update your scores below.
         </AlertDescription>
       </Alert>
@@ -577,38 +577,38 @@ if (typeof window !== 'undefined') {
         </Alert>
 
         <!-- Needs Review Alert -->
-        <Alert v-else-if="submission.verification_verdict?.toLowerCase() === 'needs_review'" class="border-yellow-500 bg-yellow-500/10">
-          <ShieldQuestion class="w-4 h-4 text-yellow-500" />
-          <AlertDescription class="text-yellow-400">
+        <Alert v-else-if="submission.verification_verdict?.toLowerCase() === 'needs_review'" class="border-warning/40 bg-warning/10">
+          <ShieldQuestion class="w-4 h-4 text-warning" />
+          <AlertDescription class="text-warning">
             <strong>Manual Review Required:</strong> The AI verification flagged this submission for human review.
           </AlertDescription>
         </Alert>
 
         <!-- Pending Status Alert -->
-        <Alert v-else-if="submission.status?.toLowerCase() === 'pending'" class="border-blue-500 bg-blue-500/10">
-          <Info class="w-4 h-4 text-blue-500" />
-          <AlertDescription class="text-blue-400">
+        <Alert v-else-if="submission.status?.toLowerCase() === 'pending'" class="border-info/40 bg-info/10">
+          <Info class="w-4 h-4 text-info" />
+          <AlertDescription class="text-info">
             <strong>Pending Approval:</strong> This submission is awaiting manual review before it can be scored.
           </AlertDescription>
         </Alert>
 
         <!-- Approve/Reject Actions -->
-        <Card class="border-2 border-dashed border-primary/50 bg-primary/5">
+        <Card class="rounded-2xl border-2 border-dashed border-primary/50 bg-primary/5">
           <CardContent class="pt-6">
             <div class="text-center mb-4">
-              <h3 class="text-lg font-semibold mb-2">Judge Action Required</h3>
+              <h3 class="text-lg font-semibold mb-2">Judge action required</h3>
               <p class="text-sm text-muted-foreground">
                 Review the submission details and AI analysis above, then approve or reject this entry.
               </p>
             </div>
             <div class="flex gap-4 justify-center">
               <Button
-                variant="default"
-                class="bg-green-600 hover:bg-green-700 px-8"
+                variant="brand"
+                class="px-8"
                 @click="openReviewDialog('approve')"
               >
                 <ThumbsUp class="w-4 h-4 mr-2" />
-                Approve Submission
+                Approve submission
               </Button>
               <Button
                 variant="destructive"
@@ -616,7 +616,7 @@ if (typeof window !== 'undefined') {
                 @click="openReviewDialog('reject')"
               >
                 <ThumbsDown class="w-4 h-4 mr-2" />
-                Reject Submission
+                Reject submission
               </Button>
             </div>
           </CardContent>
@@ -632,14 +632,14 @@ if (typeof window !== 'undefined') {
       </Alert>
 
       <!-- Corrective Actions Card - Show when already approved or rejected (allows judges to change decision) -->
-      <Card v-if="isApproved || isRejected" class="mb-6 border-2 border-dashed border-orange-500/50 bg-orange-500/5">
+      <Card v-if="isApproved || isRejected" class="rounded-2xl mb-6 border-2 border-dashed border-warning/40 bg-warning/5">
         <CardContent class="pt-6">
           <div class="flex items-center justify-between flex-wrap gap-4">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg flex items-center justify-center"
-                   :class="isApproved ? 'bg-green-500/20' : 'bg-red-500/20'">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center"
+                   :class="isApproved ? 'bg-success/10' : 'bg-destructive/10'">
                 <component :is="isApproved ? CheckCircle : XCircle"
-                           :class="isApproved ? 'text-green-500' : 'text-red-500'"
+                           :class="isApproved ? 'text-success' : 'text-destructive'"
                            class="w-5 h-5" />
               </div>
               <div>
@@ -658,12 +658,11 @@ if (typeof window !== 'undefined') {
               <!-- Show Approve button if currently rejected -->
               <Button
                 v-if="isRejected"
-                variant="default"
-                class="bg-green-600 hover:bg-green-700"
+                variant="brand"
                 @click="openReviewDialog('approve')"
               >
                 <ThumbsUp class="w-4 h-4 mr-2" />
-                Change to Approved
+                Change to approved
               </Button>
               <!-- Show Reject button if currently approved -->
               <Button
@@ -672,7 +671,7 @@ if (typeof window !== 'undefined') {
                 @click="openReviewDialog('reject')"
               >
                 <ThumbsDown class="w-4 h-4 mr-2" />
-                Change to Rejected
+                Change to rejected
               </Button>
             </div>
           </div>
@@ -683,7 +682,7 @@ if (typeof window !== 'undefined') {
         <!-- Left Column: Submission Details (3 cols) -->
         <div class="lg:col-span-3 space-y-4 md:space-y-6">
           <!-- Image & Basic Info Card -->
-          <Card>
+          <Card class="rounded-2xl">
             <CardHeader>
               <div class="flex items-center justify-between">
                 <div>
@@ -722,7 +721,7 @@ if (typeof window !== 'undefined') {
                     @click="openImageLightbox"
                   >
                     <Maximize2 class="w-4 h-4 mr-2" />
-                    View Full Size
+                    View full size
                   </Button>
                 </div>
               </div>
@@ -734,11 +733,11 @@ if (typeof window !== 'undefined') {
           </Card>
 
           <!-- AI Verification Card -->
-          <Card class="overflow-hidden">
-            <CardHeader class="bg-gradient-to-r from-blue-500/5 to-purple-500/5 border-b">
+          <Card class="rounded-2xl overflow-hidden">
+            <CardHeader class="border-b">
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
-                  <ShieldCheck class="w-6 h-6 text-white" />
+                <div class="w-12 h-12 rounded-xl bg-ink text-ink-foreground flex items-center justify-center">
+                  <ShieldCheck class="w-6 h-6" />
                 </div>
                 <div>
                   <CardTitle class="text-xl">AI Verification Analysis</CardTitle>
@@ -753,9 +752,9 @@ if (typeof window !== 'undefined') {
               <div
                 class="relative p-6 rounded-2xl mb-6 overflow-hidden"
                 :class="{
-                  'bg-gradient-to-br from-green-500/10 to-emerald-500/5 border border-green-500/20': getPassFailStatus(submission.verification_verdict || '').isPass === true,
-                  'bg-gradient-to-br from-red-500/10 to-rose-500/5 border border-red-500/20': getPassFailStatus(submission.verification_verdict || '').isPass === false,
-                  'bg-gradient-to-br from-yellow-500/10 to-amber-500/5 border border-yellow-500/20': getPassFailStatus(submission.verification_verdict || '').isPass === null && submission.verification_verdict,
+                  'bg-success/10 border border-success/30': getPassFailStatus(submission.verification_verdict || '').isPass === true,
+                  'bg-destructive/10 border border-destructive/30': getPassFailStatus(submission.verification_verdict || '').isPass === false,
+                  'bg-warning/10 border border-warning/30': getPassFailStatus(submission.verification_verdict || '').isPass === null && submission.verification_verdict,
                   'bg-muted/50 border': !submission.verification_verdict
                 }"
               >
@@ -764,9 +763,9 @@ if (typeof window !== 'undefined') {
                     <div
                       class="w-16 h-16 rounded-2xl flex items-center justify-center"
                       :class="{
-                        'bg-green-500/20': getPassFailStatus(submission.verification_verdict || '').isPass === true,
-                        'bg-red-500/20': getPassFailStatus(submission.verification_verdict || '').isPass === false,
-                        'bg-yellow-500/20': getPassFailStatus(submission.verification_verdict || '').isPass === null && submission.verification_verdict,
+                        'bg-success/20': getPassFailStatus(submission.verification_verdict || '').isPass === true,
+                        'bg-destructive/20': getPassFailStatus(submission.verification_verdict || '').isPass === false,
+                        'bg-warning/20': getPassFailStatus(submission.verification_verdict || '').isPass === null && submission.verification_verdict,
                         'bg-muted': !submission.verification_verdict
                       }"
                     >
@@ -779,14 +778,14 @@ if (typeof window !== 'undefined') {
                       />
                     </div>
                     <div>
-                      <p class="text-2xl font-bold tracking-tight">
+                      <p class="text-2xl font-display font-semibold tracking-tight">
                         {{ submission.verification_verdict ? submission.verification_verdict.replace('_', ' ').toUpperCase() : 'PENDING ANALYSIS' }}
                       </p>
                       <p class="text-sm text-muted-foreground">Overall Verdict</p>
                     </div>
                   </div>
                   <div class="text-right">
-                    <p class="text-4xl font-bold" :class="getStatusIconClass(getPassFailStatus(submission.verification_verdict || '').isPass)">
+                    <p class="text-4xl font-display font-semibold" :class="getStatusIconClass(getPassFailStatus(submission.verification_verdict || '').isPass)">
                       {{ formatConfidence(submission.verification_confidence) }}
                     </p>
                     <p class="text-sm text-muted-foreground">Confidence</p>
@@ -804,15 +803,15 @@ if (typeof window !== 'undefined') {
 
                 <!-- Layer 1: Metadata Analysis -->
                 <div v-if="submission.verification_details.layer1_result"
-                     class="rounded-xl border-2 transition-all overflow-hidden"
+                     class="rounded-2xl border-2 transition-all overflow-hidden"
                      :class="getStatusColorClass(getPassFailStatus(submission.verification_details.layer1_result.verdict).isPass)">
                   <!-- Header (clickable) -->
                   <div class="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
                        @click="toggleLayer('layer1')">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-background flex items-center justify-center border">
-                          <FileImage class="w-5 h-5 text-blue-500" />
+                        <div class="w-10 h-10 rounded-xl bg-background flex items-center justify-center border">
+                          <FileImage class="w-5 h-5 text-foreground" />
                         </div>
                         <div>
                           <div class="flex items-center gap-2">
@@ -824,11 +823,11 @@ if (typeof window !== 'undefined') {
                       </div>
                       <div class="flex items-center gap-3">
                         <div
-                          class="px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2"
+                          class="px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2"
                           :class="{
-                            'bg-green-500 text-white': getPassFailStatus(submission.verification_details.layer1_result.verdict).isPass === true,
-                            'bg-red-500 text-white': getPassFailStatus(submission.verification_details.layer1_result.verdict).isPass === false,
-                            'bg-yellow-500 text-white': getPassFailStatus(submission.verification_details.layer1_result.verdict).isPass === null
+                            'bg-success text-success-foreground': getPassFailStatus(submission.verification_details.layer1_result.verdict).isPass === true,
+                            'bg-destructive text-destructive-foreground': getPassFailStatus(submission.verification_details.layer1_result.verdict).isPass === false,
+                            'bg-warning text-warning-foreground': getPassFailStatus(submission.verification_details.layer1_result.verdict).isPass === null
                           }"
                         >
                           <component
@@ -849,10 +848,10 @@ if (typeof window !== 'undefined') {
                     <div class="grid grid-cols-2 gap-4">
                       <div class="p-3 rounded-lg bg-muted/30">
                         <div class="flex items-center gap-2 mb-2">
-                          <Camera class="w-4 h-4 text-blue-500" />
+                          <Camera class="w-4 h-4 text-muted-foreground" />
                           <span class="text-sm font-medium">Camera Fields</span>
                         </div>
-                        <p class="text-2xl font-bold">{{ submission.verification_details.layer1_result.camera_fields_found ?? 0 }}/8</p>
+                        <p class="text-2xl font-display font-semibold">{{ submission.verification_details.layer1_result.camera_fields_found ?? 0 }}/8</p>
                         <div class="mt-2 h-2 bg-muted rounded-full overflow-hidden">
                           <div class="h-full transition-all duration-500"
                                :class="getScoreBarColor((submission.verification_details.layer1_result.camera_fields_found ?? 0) / 8)"
@@ -862,10 +861,10 @@ if (typeof window !== 'undefined') {
                       </div>
                       <div class="p-3 rounded-lg bg-muted/30">
                         <div class="flex items-center gap-2 mb-2">
-                          <Cpu class="w-4 h-4 text-red-500" />
+                          <Cpu class="w-4 h-4 text-muted-foreground" />
                           <span class="text-sm font-medium">AI Signatures</span>
                         </div>
-                        <p class="text-2xl font-bold" :class="(submission.verification_details.layer1_result.ai_signatures_found ?? 0) > 0 ? 'text-red-500' : 'text-green-500'">
+                        <p class="text-2xl font-display font-semibold" :class="(submission.verification_details.layer1_result.ai_signatures_found ?? 0) > 0 ? 'text-destructive' : 'text-success'">
                           {{ submission.verification_details.layer1_result.ai_signatures_found ?? 0 }}
                         </p>
                         <p class="text-xs text-muted-foreground mt-1">Midjourney, DALL-E, Stable Diffusion, etc.</p>
@@ -908,7 +907,7 @@ if (typeof window !== 'undefined') {
                       <ul class="space-y-1">
                         <li v-for="(flag, idx) in submission.verification_details.layer1_result.flags" :key="idx"
                             class="text-xs text-muted-foreground flex items-start gap-2 p-2 rounded bg-muted/30">
-                          <span class="text-blue-500 mt-0.5">•</span>
+                          <span class="text-info mt-0.5">•</span>
                           {{ flag }}
                         </li>
                       </ul>
@@ -918,15 +917,15 @@ if (typeof window !== 'undefined') {
 
                 <!-- Layer 2: Fingerprint Analysis -->
                 <div v-if="submission.verification_details.layer2_result"
-                     class="rounded-xl border-2 transition-all overflow-hidden"
+                     class="rounded-2xl border-2 transition-all overflow-hidden"
                      :class="getStatusColorClass(getPassFailStatus(submission.verification_details.layer2_result.verdict).isPass)">
                   <!-- Header (clickable) -->
                   <div class="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
                        @click="toggleLayer('layer2')">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-background flex items-center justify-center border">
-                          <Fingerprint class="w-5 h-5 text-purple-500" />
+                        <div class="w-10 h-10 rounded-xl bg-background flex items-center justify-center border">
+                          <Fingerprint class="w-5 h-5 text-foreground" />
                         </div>
                         <div>
                           <div class="flex items-center gap-2">
@@ -941,11 +940,11 @@ if (typeof window !== 'undefined') {
                           {{ formatConfidence(submission.verification_details.layer2_result.confidence) }}
                         </span>
                         <div
-                          class="px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2"
+                          class="px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2"
                           :class="{
-                            'bg-green-500 text-white': getPassFailStatus(submission.verification_details.layer2_result.verdict).isPass === true,
-                            'bg-red-500 text-white': getPassFailStatus(submission.verification_details.layer2_result.verdict).isPass === false,
-                            'bg-yellow-500 text-white': getPassFailStatus(submission.verification_details.layer2_result.verdict).isPass === null
+                            'bg-success text-success-foreground': getPassFailStatus(submission.verification_details.layer2_result.verdict).isPass === true,
+                            'bg-destructive text-destructive-foreground': getPassFailStatus(submission.verification_details.layer2_result.verdict).isPass === false,
+                            'bg-warning text-warning-foreground': getPassFailStatus(submission.verification_details.layer2_result.verdict).isPass === null
                           }"
                         >
                           <component
@@ -965,31 +964,31 @@ if (typeof window !== 'undefined') {
                     <!-- Three Analysis Methods -->
                     <div class="grid grid-cols-3 gap-3">
                       <div class="p-3 rounded-lg bg-muted/30 text-center">
-                        <div class="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
-                          <Waves class="w-5 h-5 text-purple-500" />
+                        <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mx-auto mb-2">
+                          <Waves class="w-5 h-5 text-foreground" />
                         </div>
                         <p class="text-xs font-bold uppercase text-muted-foreground mb-1">PRNU</p>
-                        <p class="text-xl font-bold" :class="getStatusIconClass((submission.verification_details.layer2_result.prnu_score ?? 0) >= 0.5)">
+                        <p class="text-xl font-display font-semibold" :class="getStatusIconClass((submission.verification_details.layer2_result.prnu_score ?? 0) >= 0.5)">
                           {{ formatScore(submission.verification_details.layer2_result.prnu_score) }}
                         </p>
                         <p class="text-xs text-muted-foreground mt-1">Sensor Noise Pattern</p>
                       </div>
                       <div class="p-3 rounded-lg bg-muted/30 text-center">
-                        <div class="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center mx-auto mb-2">
-                          <Grid3X3 class="w-5 h-5 text-cyan-500" />
+                        <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mx-auto mb-2">
+                          <Grid3X3 class="w-5 h-5 text-foreground" />
                         </div>
                         <p class="text-xs font-bold uppercase text-muted-foreground mb-1">ELA</p>
-                        <p class="text-xl font-bold" :class="getStatusIconClass((submission.verification_details.layer2_result.ela_score ?? 0) >= 0.5)">
+                        <p class="text-xl font-display font-semibold" :class="getStatusIconClass((submission.verification_details.layer2_result.ela_score ?? 0) >= 0.5)">
                           {{ formatScore(submission.verification_details.layer2_result.ela_score) }}
                         </p>
                         <p class="text-xs text-muted-foreground mt-1">Compression Artifacts</p>
                       </div>
                       <div class="p-3 rounded-lg bg-muted/30 text-center">
-                        <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
-                          <BarChart2 class="w-5 h-5 text-blue-500" />
+                        <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mx-auto mb-2">
+                          <BarChart2 class="w-5 h-5 text-foreground" />
                         </div>
                         <p class="text-xs font-bold uppercase text-muted-foreground mb-1">FFT</p>
-                        <p class="text-xl font-bold" :class="getStatusIconClass((submission.verification_details.layer2_result.fft_score ?? 0) >= 0.5)">
+                        <p class="text-xl font-display font-semibold" :class="getStatusIconClass((submission.verification_details.layer2_result.fft_score ?? 0) >= 0.5)">
                           {{ formatScore(submission.verification_details.layer2_result.fft_score) }}
                         </p>
                         <p class="text-xs text-muted-foreground mt-1">Frequency Analysis</p>
@@ -1014,8 +1013,8 @@ if (typeof window !== 'undefined') {
                       </div>
                     </div>
                     <!-- Weight Explanation -->
-                    <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
-                      <p class="text-xs text-blue-600 flex items-center gap-2">
+                    <div class="p-3 rounded-lg bg-info/10 border border-info/20">
+                      <p class="text-xs text-info flex items-center gap-2">
                         <Info class="w-4 h-4" />
                         <span><strong>Scoring:</strong> PRNU (50%) + ELA (25%) + FFT (25%) = Final Score</span>
                       </p>
@@ -1029,7 +1028,7 @@ if (typeof window !== 'undefined') {
                       <ul class="space-y-1">
                         <li v-for="(flag, idx) in submission.verification_details.layer2_result.flags" :key="idx"
                             class="text-xs text-muted-foreground flex items-start gap-2 p-2 rounded bg-muted/30">
-                          <span class="text-purple-500 mt-0.5">•</span>
+                          <span class="text-info mt-0.5">•</span>
                           {{ flag }}
                         </li>
                       </ul>
@@ -1039,15 +1038,15 @@ if (typeof window !== 'undefined') {
 
                 <!-- Layer 3: Third-Party API Verification -->
                 <div v-if="submission.verification_details.layer3_result"
-                     class="rounded-xl border-2 transition-all overflow-hidden"
+                     class="rounded-2xl border-2 transition-all overflow-hidden"
                      :class="getStatusColorClass(getPassFailStatus(submission.verification_details.layer3_result.verdict).isPass)">
                   <!-- Header (clickable) -->
                   <div class="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
                        @click="toggleLayer('layer3')">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-background flex items-center justify-center border">
-                          <Globe class="w-5 h-5 text-cyan-500" />
+                        <div class="w-10 h-10 rounded-xl bg-background flex items-center justify-center border">
+                          <Globe class="w-5 h-5 text-foreground" />
                         </div>
                         <div>
                           <div class="flex items-center gap-2">
@@ -1062,11 +1061,11 @@ if (typeof window !== 'undefined') {
                           {{ formatConfidence(submission.verification_details.layer3_result.confidence) }}
                         </span>
                         <div
-                          class="px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2"
+                          class="px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2"
                           :class="{
-                            'bg-green-500 text-white': getPassFailStatus(submission.verification_details.layer3_result.verdict).isPass === true,
-                            'bg-red-500 text-white': getPassFailStatus(submission.verification_details.layer3_result.verdict).isPass === false,
-                            'bg-yellow-500 text-white': getPassFailStatus(submission.verification_details.layer3_result.verdict).isPass === null
+                            'bg-success text-success-foreground': getPassFailStatus(submission.verification_details.layer3_result.verdict).isPass === true,
+                            'bg-destructive text-destructive-foreground': getPassFailStatus(submission.verification_details.layer3_result.verdict).isPass === false,
+                            'bg-warning text-warning-foreground': getPassFailStatus(submission.verification_details.layer3_result.verdict).isPass === null
                           }"
                         >
                           <component
@@ -1085,12 +1084,12 @@ if (typeof window !== 'undefined') {
                   <div v-if="expandedLayers.layer3" class="px-4 pb-4 pt-2 border-t bg-background/50 space-y-4">
                     <div class="p-4 rounded-lg bg-muted/20 text-center">
                       <p class="text-sm text-muted-foreground mb-2">External API Confidence</p>
-                      <p class="text-4xl font-bold" :class="getStatusIconClass(getPassFailStatus(submission.verification_details.layer3_result.verdict).isPass)">
+                      <p class="text-4xl font-display font-semibold" :class="getStatusIconClass(getPassFailStatus(submission.verification_details.layer3_result.verdict).isPass)">
                         {{ formatConfidence(submission.verification_details.layer3_result.confidence) }}
                       </p>
                     </div>
-                    <div class="p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
-                      <p class="text-xs text-cyan-600 flex items-center gap-2">
+                    <div class="p-3 rounded-lg bg-info/10 border border-info/20">
+                      <p class="text-xs text-info flex items-center gap-2">
                         <Info class="w-4 h-4" />
                         <span>Layer 3 runs only when Layer 2 returns SUSPICIOUS verdict</span>
                       </p>
@@ -1104,7 +1103,7 @@ if (typeof window !== 'undefined') {
                       <ul class="space-y-1">
                         <li v-for="(flag, idx) in submission.verification_details.layer3_result.flags" :key="idx"
                             class="text-xs text-muted-foreground flex items-start gap-2 p-2 rounded bg-muted/30">
-                          <span class="text-cyan-500 mt-0.5">•</span>
+                          <span class="text-info mt-0.5">•</span>
                           {{ flag }}
                         </li>
                       </ul>
@@ -1114,15 +1113,15 @@ if (typeof window !== 'undefined') {
 
                 <!-- RAW-JPG Linkage Analysis -->
                 <div v-if="submission.verification_details.raw_jpg_linkage"
-                     class="rounded-xl border-2 transition-all overflow-hidden"
+                     class="rounded-2xl border-2 transition-all overflow-hidden"
                      :class="getStatusColorClass(getPassFailStatus(submission.verification_details.raw_jpg_linkage.verdict).isPass)">
                   <!-- Header (clickable) -->
                   <div class="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
                        @click="toggleLayer('rawLinkage')">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-lg bg-background flex items-center justify-center border">
-                          <Link class="w-5 h-5 text-orange-500" />
+                        <div class="w-10 h-10 rounded-xl bg-background flex items-center justify-center border">
+                          <Link class="w-5 h-5 text-foreground" />
                         </div>
                         <div>
                           <div class="flex items-center gap-2">
@@ -1139,11 +1138,11 @@ if (typeof window !== 'undefined') {
                           {{ formatConfidence(submission.verification_details.raw_jpg_linkage.confidence) }}
                         </span>
                         <div
-                          class="px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2"
+                          class="px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-2"
                           :class="{
-                            'bg-green-500 text-white': getPassFailStatus(submission.verification_details.raw_jpg_linkage.verdict).isPass === true,
-                            'bg-red-500 text-white': getPassFailStatus(submission.verification_details.raw_jpg_linkage.verdict).isPass === false,
-                            'bg-yellow-500 text-white': getPassFailStatus(submission.verification_details.raw_jpg_linkage.verdict).isPass === null
+                            'bg-success text-success-foreground': getPassFailStatus(submission.verification_details.raw_jpg_linkage.verdict).isPass === true,
+                            'bg-destructive text-destructive-foreground': getPassFailStatus(submission.verification_details.raw_jpg_linkage.verdict).isPass === false,
+                            'bg-warning text-warning-foreground': getPassFailStatus(submission.verification_details.raw_jpg_linkage.verdict).isPass === null
                           }"
                         >
                           <component
@@ -1163,46 +1162,46 @@ if (typeof window !== 'undefined') {
                     <!-- Three Comparison Methods -->
                     <div class="grid grid-cols-3 gap-3">
                       <div class="p-3 rounded-lg bg-muted/30 text-center">
-                        <div class="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center mx-auto mb-2">
-                          <Hash class="w-5 h-5 text-orange-500" />
+                        <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mx-auto mb-2">
+                          <Hash class="w-5 h-5 text-foreground" />
                         </div>
                         <p class="text-xs font-bold uppercase text-muted-foreground mb-1">pHash</p>
-                        <p class="text-xl font-bold">{{ submission.verification_details.raw_jpg_linkage.phash_distance ?? 'N/A' }}</p>
+                        <p class="text-xl font-display font-semibold">{{ submission.verification_details.raw_jpg_linkage.phash_distance ?? 'N/A' }}</p>
                         <p class="text-xs text-muted-foreground mt-1">Hamming Distance</p>
-                        <p class="text-xs" :class="(submission.verification_details.raw_jpg_linkage.phash_distance ?? 999) <= 15 ? 'text-green-500' : 'text-red-500'">
+                        <p class="text-xs" :class="(submission.verification_details.raw_jpg_linkage.phash_distance ?? 999) <= 15 ? 'text-success' : 'text-destructive'">
                           {{ (submission.verification_details.raw_jpg_linkage.phash_distance ?? 999) <= 15 ? '≤15 PASS' : '>15 FAIL' }}
                         </p>
                       </div>
                       <div class="p-3 rounded-lg bg-muted/30 text-center">
-                        <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-2">
-                          <ImageIcon class="w-5 h-5 text-green-500" />
+                        <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mx-auto mb-2">
+                          <ImageIcon class="w-5 h-5 text-foreground" />
                         </div>
                         <p class="text-xs font-bold uppercase text-muted-foreground mb-1">SSIM</p>
-                        <p class="text-xl font-bold" :class="getStatusIconClass((submission.verification_details.raw_jpg_linkage.ssim_score ?? 0) >= 0.45)">
+                        <p class="text-xl font-display font-semibold" :class="getStatusIconClass((submission.verification_details.raw_jpg_linkage.ssim_score ?? 0) >= 0.45)">
                           {{ submission.verification_details.raw_jpg_linkage.ssim_score?.toFixed(2) ?? 'N/A' }}
                         </p>
                         <p class="text-xs text-muted-foreground mt-1">Structural Similarity</p>
-                        <p class="text-xs" :class="(submission.verification_details.raw_jpg_linkage.ssim_score ?? 0) >= 0.45 ? 'text-green-500' : 'text-red-500'">
+                        <p class="text-xs" :class="(submission.verification_details.raw_jpg_linkage.ssim_score ?? 0) >= 0.45 ? 'text-success' : 'text-destructive'">
                           {{ (submission.verification_details.raw_jpg_linkage.ssim_score ?? 0) >= 0.45 ? '≥0.45 PASS' : '<0.45 FAIL' }}
                         </p>
                       </div>
                       <div class="p-3 rounded-lg bg-muted/30 text-center">
-                        <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
-                          <BarChart2 class="w-5 h-5 text-blue-500" />
+                        <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mx-auto mb-2">
+                          <BarChart2 class="w-5 h-5 text-foreground" />
                         </div>
                         <p class="text-xs font-bold uppercase text-muted-foreground mb-1">Histogram</p>
-                        <p class="text-xl font-bold" :class="getStatusIconClass((submission.verification_details.raw_jpg_linkage.histogram_correlation ?? 0) >= 0.40)">
+                        <p class="text-xl font-display font-semibold" :class="getStatusIconClass((submission.verification_details.raw_jpg_linkage.histogram_correlation ?? 0) >= 0.40)">
                           {{ submission.verification_details.raw_jpg_linkage.histogram_correlation?.toFixed(2) ?? 'N/A' }}
                         </p>
                         <p class="text-xs text-muted-foreground mt-1">Color Correlation</p>
-                        <p class="text-xs" :class="(submission.verification_details.raw_jpg_linkage.histogram_correlation ?? 0) >= 0.40 ? 'text-green-500' : 'text-red-500'">
+                        <p class="text-xs" :class="(submission.verification_details.raw_jpg_linkage.histogram_correlation ?? 0) >= 0.40 ? 'text-success' : 'text-destructive'">
                           {{ (submission.verification_details.raw_jpg_linkage.histogram_correlation ?? 0) >= 0.40 ? '≥0.40 PASS' : '<0.40 FAIL' }}
                         </p>
                       </div>
                     </div>
                     <!-- Explanation -->
-                    <div class="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                      <p class="text-xs text-orange-600 flex items-center gap-2">
+                    <div class="p-3 rounded-lg bg-info/10 border border-info/20">
+                      <p class="text-xs text-info flex items-center gap-2">
                         <Info class="w-4 h-4" />
                         <span><strong>Verdict:</strong> 3 methods pass = Strong Link | 2 methods = Probable Link | 1 method = Suspicious | 0 methods = Reject</span>
                       </p>
@@ -1216,7 +1215,7 @@ if (typeof window !== 'undefined') {
                       <ul class="space-y-1">
                         <li v-for="(flag, idx) in submission.verification_details.raw_jpg_linkage.flags" :key="idx"
                             class="text-xs text-muted-foreground flex items-start gap-2 p-2 rounded bg-muted/30">
-                          <span class="text-orange-500 mt-0.5">•</span>
+                          <span class="text-info mt-0.5">•</span>
                           {{ flag }}
                         </li>
                       </ul>
@@ -1226,16 +1225,16 @@ if (typeof window !== 'undefined') {
 
                 <!-- Detection Flags -->
                 <div v-if="submission.verification_details.flags && submission.verification_details.flags.length > 0"
-                     class="mt-4 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                     class="mt-4 p-4 rounded-xl bg-warning/10 border border-warning/20">
                   <div class="flex items-center gap-2 mb-2">
-                    <AlertTriangle class="w-4 h-4 text-amber-500" />
-                    <span class="text-sm font-semibold text-amber-600">Detection Flags</span>
+                    <AlertTriangle class="w-4 h-4 text-warning" />
+                    <span class="text-sm font-semibold text-warning">Detection Flags</span>
                   </div>
                   <ul class="space-y-1">
                     <li v-for="(flag, idx) in submission.verification_details.flags"
                         :key="idx"
-                        class="text-sm text-amber-700 flex items-start gap-2">
-                      <span class="text-amber-500 mt-1">•</span>
+                        class="text-sm text-muted-foreground flex items-start gap-2">
+                      <span class="text-warning mt-1">•</span>
                       {{ flag }}
                     </li>
                   </ul>
@@ -1261,11 +1260,11 @@ if (typeof window !== 'undefined') {
           </Card>
 
           <!-- Camera Info Card -->
-          <Card>
+          <Card class="rounded-2xl">
             <CardHeader>
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Camera class="w-5 h-5 text-primary" />
+                <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                  <Camera class="w-5 h-5 text-foreground" />
                 </div>
                 <CardTitle class="text-lg">Camera & Settings</CardTitle>
               </div>
@@ -1323,14 +1322,14 @@ if (typeof window !== 'undefined') {
 
         <!-- Right Column: Scoring Form (2 cols) -->
         <div class="lg:col-span-2">
-          <Card class="lg:sticky lg:top-6">
+          <Card class="rounded-2xl lg:sticky lg:top-6">
             <CardHeader>
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Star class="w-5 h-5 text-primary" />
+                <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                  <Star class="w-5 h-5 text-foreground" />
                 </div>
                 <div>
-                  <CardTitle>{{ alreadyScored ? 'Update Score' : 'Score This Submission' }}</CardTitle>
+                  <CardTitle>{{ alreadyScored ? 'Update score' : 'Score this submission' }}</CardTitle>
                   <CardDescription>
                     {{ canBeScored ? 'Rate each category from 0 to 10' : 'Submission must be approved before scoring' }}
                   </CardDescription>
@@ -1358,7 +1357,7 @@ if (typeof window !== 'undefined') {
                   <AlertDescription>{{ error }}</AlertDescription>
                 </Alert>
 
-                <Alert v-if="success" class="mb-4 bg-green-50 text-green-800 border-green-200">
+                <Alert v-if="success" class="mb-4 bg-success/10 text-success border-success/30">
                   <AlertDescription>{{ success }}</AlertDescription>
                 </Alert>
 
@@ -1379,7 +1378,7 @@ if (typeof window !== 'undefined') {
                         <span class="text-xs text-muted-foreground ml-1">({{ category.weight }})</span>
                       </div>
                     </div>
-                    <span class="text-2xl font-bold text-primary">{{ category.model.value }}</span>
+                    <span class="text-2xl font-display font-semibold text-primary">{{ category.model.value }}</span>
                   </div>
                   <input
                     :id="category.id"
@@ -1397,9 +1396,9 @@ if (typeof window !== 'undefined') {
                 </div>
 
                 <!-- Overall Score Preview -->
-                <div class="p-5 rounded-xl bg-primary/5 border border-primary/20 text-center">
-                  <p class="text-sm text-muted-foreground mb-1">Overall Score</p>
-                  <p class="text-4xl font-bold text-primary">{{ overallScorePreview }}</p>
+                <div class="p-5 rounded-2xl bg-ink text-ink-foreground text-center">
+                  <p class="text-sm text-ink-muted mb-1">Overall Score</p>
+                  <p class="text-4xl font-display font-semibold text-brand">{{ overallScorePreview }}</p>
                 </div>
 
                 <!-- Judge Identifier (for shared credentials tracking) -->
@@ -1408,12 +1407,12 @@ if (typeof window !== 'undefined') {
                   <Input
                     id="judgeIdentifier"
                     v-model="judgeIdentifier"
-                    placeholder="Enter your name for tracking (if sharing credentials)"
+                    placeholder="Enter your display name"
                     :disabled="isSubmitting"
                     maxlength="100"
                   />
                   <p class="text-xs text-muted-foreground">
-                    Use this field to identify yourself when multiple judges share the same login
+                    Optional display name recorded with this score.
                   </p>
                 </div>
 
@@ -1442,7 +1441,7 @@ if (typeof window !== 'undefined') {
                   </Button>
                   <Button type="submit" class="flex-1" :disabled="isSubmitting">
                     <Loader2 v-if="isSubmitting" class="w-4 h-4 mr-2 animate-spin" />
-                    {{ isSubmitting ? 'Submitting...' : (alreadyScored ? 'Update Score' : 'Submit Score') }}
+                    {{ isSubmitting ? 'Submitting...' : (alreadyScored ? 'Update score' : 'Submit score') }}
                   </Button>
                 </div>
               </form>
@@ -1515,29 +1514,29 @@ if (typeof window !== 'undefined') {
           <div class="flex items-center justify-between p-4 bg-black/50">
             <div class="text-white">
               <h3 class="font-semibold">{{ submission.title }}</h3>
-              <p class="text-sm text-gray-400">{{ cameraDisplayName }}</p>
+              <p class="text-sm text-ink-muted">{{ cameraDisplayName }}</p>
             </div>
             <div class="flex items-center gap-2">
               <!-- Zoom Controls -->
               <div class="flex items-center gap-1 bg-white/10 rounded-lg p-1">
-                <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" @click="zoomOut">
+                <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" aria-label="Zoom out" @click="zoomOut">
                   <ZoomOut class="w-4 h-4" />
                 </Button>
                 <span class="text-white text-sm font-mono w-14 text-center">{{ (imageZoom * 100).toFixed(0) }}%</span>
-                <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" @click="zoomIn">
+                <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" aria-label="Zoom in" @click="zoomIn">
                   <ZoomIn class="w-4 h-4" />
                 </Button>
               </div>
               <!-- Reset Zoom -->
-              <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" @click="resetZoom" title="Reset zoom (0)">
+              <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" aria-label="Reset zoom" @click="resetZoom" title="Reset zoom (0)">
                 <Maximize2 class="w-4 h-4" />
               </Button>
               <!-- Rotate -->
-              <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" @click="rotateImage" title="Rotate (R)">
+              <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" aria-label="Rotate" @click="rotateImage" title="Rotate (R)">
                 <RotateCw class="w-4 h-4" />
               </Button>
               <!-- Close -->
-              <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" @click="closeImageLightbox">
+              <Button variant="ghost" size="icon" class="h-8 w-8 text-white hover:bg-white/20" aria-label="Close" @click="closeImageLightbox">
                 <X class="w-5 h-5" />
               </Button>
             </div>
@@ -1565,7 +1564,7 @@ if (typeof window !== 'undefined') {
 
           <!-- Lightbox Footer - Keyboard Shortcuts -->
           <div class="p-3 bg-black/50 text-center">
-            <p class="text-xs text-gray-400">
+            <p class="text-xs text-ink-muted">
               <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-white">+</kbd> / <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-white">-</kbd> Zoom
               <span class="mx-2">|</span>
               <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-white">0</kbd> Reset
@@ -1574,7 +1573,7 @@ if (typeof window !== 'undefined') {
               <span class="mx-2">|</span>
               <kbd class="px-1.5 py-0.5 bg-white/10 rounded text-white">Esc</kbd> Close
               <span class="mx-2">|</span>
-              <span class="text-gray-500">Scroll to zoom • Drag to pan when zoomed</span>
+              <span class="text-ink-muted">Scroll to zoom • Drag to pan when zoomed</span>
             </p>
           </div>
         </div>

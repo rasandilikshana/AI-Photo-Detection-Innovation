@@ -50,23 +50,23 @@ const energyQualityLabel = computed(() => {
 const energyColor = computed(() => {
   switch (energyQuality.value) {
     case 'excellent':
-      return 'text-green-600 dark:text-green-400'
+      return 'text-success'
     case 'good':
-      return 'text-blue-600 dark:text-blue-400'
+      return 'text-info'
     case 'fair':
-      return 'text-yellow-600 dark:text-yellow-400'
+      return 'text-warning'
     case 'low':
-      return 'text-orange-600 dark:text-orange-400'
+      return 'text-warning'
     default:
-      return 'text-gray-600 dark:text-gray-400'
+      return 'text-muted-foreground'
   }
 })
 
 const fraudRiskColor = computed(() => {
-  if (!props.fraudCheck) return 'text-gray-600'
-  if (props.fraudCheck.fraud_likelihood > 0.7) return 'text-red-600 dark:text-red-400'
-  if (props.fraudCheck.fraud_likelihood > 0.4) return 'text-yellow-600 dark:text-yellow-400'
-  return 'text-green-600 dark:text-green-400'
+  if (!props.fraudCheck) return 'text-muted-foreground'
+  if (props.fraudCheck.fraud_likelihood > 0.7) return 'text-destructive'
+  if (props.fraudCheck.fraud_likelihood > 0.4) return 'text-warning'
+  return 'text-success'
 })
 
 const fraudRiskLevel = computed(() => {
@@ -107,7 +107,7 @@ const trustBreakdown = computed(() => {
 </script>
 
 <template>
-  <Card>
+  <Card class="rounded-2xl">
     <CardHeader>
       <div class="flex items-center justify-between">
         <CardTitle class="flex items-center gap-2">
@@ -115,10 +115,12 @@ const trustBreakdown = computed(() => {
           Camera Reputation
         </CardTitle>
         <button
+          type="button"
+          :aria-expanded="showDetails"
           @click="showDetails = !showDetails"
-          class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          {{ showDetails ? 'Hide' : 'Show' }} Details
+          {{ showDetails ? 'Hide' : 'Show' }} details
         </button>
       </div>
       <CardDescription>
@@ -179,7 +181,7 @@ const trustBreakdown = computed(() => {
             <div class="space-y-1">
               <div class="flex justify-between text-muted-foreground">
                 <span>Pattern Similarity (50%)</span>
-                <span class="font-medium" :class="trustBreakdown.pattern >= 0.7 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'">
+                <span class="font-medium" :class="trustBreakdown.pattern >= 0.7 ? 'text-success' : 'text-warning'">
                   {{ (trustBreakdown.pattern * 100).toFixed(0) }}%
                 </span>
               </div>
@@ -188,7 +190,7 @@ const trustBreakdown = computed(() => {
             <div class="space-y-1">
               <div class="flex justify-between text-muted-foreground">
                 <span>Historical Data (30%)</span>
-                <span class="font-medium" :class="trustBreakdown.history >= 0.7 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'">
+                <span class="font-medium" :class="trustBreakdown.history >= 0.7 ? 'text-success' : 'text-warning'">
                   {{ (trustBreakdown.history * 100).toFixed(0) }}%
                 </span>
               </div>
@@ -197,7 +199,7 @@ const trustBreakdown = computed(() => {
             <div class="space-y-1">
               <div class="flex justify-between text-muted-foreground">
                 <span>Consistency (20%)</span>
-                <span class="font-medium" :class="trustBreakdown.consistency >= 0.7 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'">
+                <span class="font-medium" :class="trustBreakdown.consistency >= 0.7 ? 'text-success' : 'text-warning'">
                   {{ (trustBreakdown.consistency * 100).toFixed(0) }}%
                 </span>
               </div>

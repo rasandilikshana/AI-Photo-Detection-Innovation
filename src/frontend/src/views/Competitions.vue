@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Calendar, Trophy, Image, Search, X } from 'lucide-vue-next'
+import { Calendar, Trophy, Image, Search, X, Loader2 } from 'lucide-vue-next'
 
 const router = useRouter()
 const competitionsStore = useCompetitionsStore()
@@ -69,7 +69,11 @@ const formatDate = (dateString: string) => {
 <template>
   <div class="container mx-auto px-6 py-10">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-foreground mb-3">Photography Competitions</h1>
+      <span class="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground mb-4">
+        <span class="h-1.5 w-1.5 rounded-full bg-brand" />
+        Competitions
+      </span>
+      <h1 class="text-3xl md:text-4xl font-display font-semibold tracking-tight mb-3">Photography competitions</h1>
       <p class="text-lg text-muted-foreground">Browse competitions and submit your authentic photography</p>
     </div>
 
@@ -85,7 +89,8 @@ const formatDate = (dateString: string) => {
         <button
           v-if="searchQuery"
           @click="searchQuery = ''"
-          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          aria-label="Clear search"
+          class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <X class="w-4 h-4" />
         </button>
@@ -96,7 +101,7 @@ const formatDate = (dateString: string) => {
           :key="option.value"
           :variant="statusFilter === option.value ? 'default' : 'outline'"
           size="sm"
-          class="h-12 px-4 text-base"
+          :aria-pressed="statusFilter === option.value"
           @click="statusFilter = option.value"
         >
           {{ option.label }}
@@ -109,23 +114,23 @@ const formatDate = (dateString: string) => {
     </Alert>
 
     <div v-if="competitionsStore.isLoading" class="text-center py-20">
-      <div class="w-12 h-12 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" />
+      <Loader2 class="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-4" />
       <p class="text-muted-foreground text-lg">Loading competitions...</p>
     </div>
 
     <div v-else-if="competitionsStore.competitions.length === 0" class="text-center py-20">
-      <div class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-        <Image class="w-12 h-12 text-muted-foreground" />
+      <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
+        <Image class="w-8 h-8 text-muted-foreground" />
       </div>
-      <p class="text-xl text-muted-foreground">No competitions at the moment</p>
+      <h2 class="text-xl font-display font-semibold tracking-tight">No competitions at the moment</h2>
       <p class="text-muted-foreground mt-2">Check back soon for new competitions!</p>
     </div>
 
     <div v-else-if="filteredCompetitions.length === 0" class="text-center py-20">
-      <div class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-        <Search class="w-12 h-12 text-muted-foreground" />
+      <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
+        <Search class="w-8 h-8 text-muted-foreground" />
       </div>
-      <p class="text-xl text-muted-foreground">No matching competitions</p>
+      <h2 class="text-xl font-display font-semibold tracking-tight">No matching competitions</h2>
       <p class="text-muted-foreground mt-2">Try adjusting your search or filters</p>
     </div>
 
@@ -133,13 +138,13 @@ const formatDate = (dateString: string) => {
       <Card
         v-for="competition in filteredCompetitions"
         :key="competition.id"
-        class="flex flex-col cursor-pointer hover:shadow-lg transition-shadow"
+        class="flex flex-col rounded-2xl cursor-pointer hover:shadow-lg transition-shadow"
         @click="router.push(`/competitions/${competition.id}`)"
       >
         <CardHeader class="p-6 pb-4">
           <div class="flex items-start justify-between mb-3">
-            <Badge :variant="getStatusVariant(competition.status)" class="text-sm px-3 py-1">
-              {{ competition.status }}
+            <Badge :variant="getStatusVariant(competition.status)">
+              {{ competition.status.toUpperCase() }}
             </Badge>
           </div>
           <CardTitle class="text-xl font-semibold line-clamp-2 mb-2">
@@ -156,14 +161,14 @@ const formatDate = (dateString: string) => {
               <span>Deadline: {{ formatDate(competition.submission_end) }}</span>
             </div>
             <div v-if="competition.prize_amount" class="flex items-center gap-3">
-              <Trophy class="w-5 h-5 text-amber-500" />
+              <Trophy class="w-5 h-5 text-warning" />
               <span class="font-medium">${{ (competition.prize_amount / 100).toFixed(0) }} prize</span>
             </div>
           </div>
         </CardContent>
         <CardFooter class="p-6 pt-0">
-          <Button variant="outline" class="w-full text-base py-5" @click.stop="router.push(`/competitions/${competition.id}`)">
-            View Details
+          <Button variant="outline" class="w-full" @click.stop="router.push(`/competitions/${competition.id}`)">
+            View details
           </Button>
         </CardFooter>
       </Card>

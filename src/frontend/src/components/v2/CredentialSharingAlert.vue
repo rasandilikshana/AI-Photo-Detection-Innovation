@@ -38,28 +38,28 @@ const alertVariant = computed(() => {
 const riskColor = computed(() => {
   switch (props.riskLevel) {
     case 'high':
-      return 'text-red-600 dark:text-red-400'
+      return 'text-destructive'
     case 'medium':
-      return 'text-yellow-600 dark:text-yellow-400'
+      return 'text-warning'
     case 'low':
-      return 'text-green-600 dark:text-green-400'
+      return 'text-success'
     default:
-      return 'text-gray-600 dark:text-gray-400'
+      return 'text-muted-foreground'
   }
 })
 
 const statusColor = computed(() => {
   switch (props.investigationStatus) {
     case 'pending':
-      return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+      return 'bg-warning/10 text-warning'
     case 'reviewing':
-      return 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+      return 'bg-info/10 text-info'
     case 'resolved':
-      return 'bg-green-500/10 text-green-600 dark:text-green-400'
+      return 'bg-success/10 text-success'
     case 'no_action_needed':
-      return 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
+      return 'bg-secondary text-muted-foreground'
     default:
-      return 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
+      return 'bg-secondary text-muted-foreground'
   }
 })
 
@@ -124,7 +124,7 @@ const showAlert = computed(() => {
               <MapPin class="h-3 w-3" />
               <span>IP Addresses</span>
             </div>
-            <p class="text-lg font-bold">{{ uniqueIpCount }}</p>
+            <p class="text-lg font-display font-semibold">{{ uniqueIpCount }}</p>
             <p class="text-xs text-muted-foreground">
               {{ uniqueIpCount > 3 ? 'Suspicious' : 'Normal' }}
             </p>
@@ -135,7 +135,7 @@ const showAlert = computed(() => {
               <Shield class="h-3 w-3" />
               <span>Sessions</span>
             </div>
-            <p class="text-lg font-bold">{{ uniqueSessionCount }}</p>
+            <p class="text-lg font-display font-semibold">{{ uniqueSessionCount }}</p>
             <p class="text-xs text-muted-foreground">Active sessions</p>
           </div>
 
@@ -144,7 +144,7 @@ const showAlert = computed(() => {
               <Smartphone class="h-3 w-3" />
               <span>Devices</span>
             </div>
-            <p class="text-lg font-bold">{{ uniqueUserAgentCount }}</p>
+            <p class="text-lg font-display font-semibold">{{ uniqueUserAgentCount }}</p>
             <p class="text-xs text-muted-foreground">
               {{ uniqueUserAgentCount > 3 ? 'Multiple' : 'Few' }} devices
             </p>
