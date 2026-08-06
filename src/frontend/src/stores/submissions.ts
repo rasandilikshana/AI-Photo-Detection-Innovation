@@ -37,15 +37,19 @@ export const useSubmissionsStore = defineStore('submissions', () => {
     }
   }
 
-  async function createSubmission(data: SubmissionCreate) {
+  async function createSubmission(data: SubmissionCreate, onProgress?: (percent: number) => void) {
     isLoading.value = true
     error.value = null
     try {
-      const newSubmission = await submissionsApi.create(data)
+      const newSubmission = await submissionsApi.create(data, onProgress)
       submissions.value.unshift(newSubmission)
       return newSubmission
     } catch (err: any) {
-      error.value = err.response?.data?.detail || 'Failed to create submission'
+      if (err.code === 'ECONNABORTED') {
+        error.value = 'Upload timed out. Please check your internet connection and try again.'
+      } else {
+        error.value = err.response?.data?.detail || 'Failed to create submission'
+      }
       throw err
     } finally {
       isLoading.value = false

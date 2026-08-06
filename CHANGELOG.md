@@ -5,6 +5,12 @@ All notable changes to the A.V.A.R. (Aura Verification and Authentication for RA
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2026-08-06
+
+### Fixed
+- Photo submissions failed for users on slower connections: the global 30-second axios timeout aborted large JPG+RAW uploads mid-transfer (nginx logged 499, the backend never received the request). The submission upload now has its own 10-minute timeout
+- Added a real upload progress bar and percentage to the Submit page, with a clear "Upload timed out" message instead of a generic failure
+
 ## [2.2.1] - 2026-08-05
 
 ### Fixed

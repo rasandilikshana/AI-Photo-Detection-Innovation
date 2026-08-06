@@ -12,7 +12,7 @@ export const submissionsApi = {
     return response.data
   },
 
-  async create(data: SubmissionCreate): Promise<Submission> {
+  async create(data: SubmissionCreate, onProgress?: (percent: number) => void): Promise<Submission> {
     const formData = new FormData()
     formData.append('title', data.title)
     formData.append('competition_id', data.competition_id.toString())
@@ -27,6 +27,14 @@ export const submissionsApi = {
     const response = await client.post('/submissions', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+      },
+      // Large JPG+RAW uploads can take minutes on slow uplinks — the global
+      // 30s timeout kills them mid-transfer, so give uploads their own budget
+      timeout: 600000, // 10 minutes
+      onUploadProgress: (event) => {
+        if (onProgress && event.total) {
+          onProgress(Math.round((event.loaded / event.total) * 100))
+        }
       },
     })
     return response.data

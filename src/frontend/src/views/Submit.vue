@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Progress } from '@/components/ui/progress'
 import { ArrowLeft, Upload, Image, FileImage, Info, Loader2 } from 'lucide-vue-next'
 
 const route = useRoute()
@@ -23,6 +24,7 @@ const description = ref('')
 const jpgFile = ref<File | null>(null)
 const rawFile = ref<File | null>(null)
 const isSubmitting = ref(false)
+const uploadProgress = ref(0)
 const isLoading = ref(true)
 const loadError = ref('')
 
@@ -113,14 +115,20 @@ const handleSubmit = async () => {
   }
 
   isSubmitting.value = true
+  uploadProgress.value = 0
   try {
-    await submissionsStore.createSubmission({
-      title: title.value.trim(),
-      description: description.value.trim(),
-      competition_id: competitionId,
-      jpg_file: jpgFile.value,
-      raw_file: rawFile.value || undefined,
-    })
+    await submissionsStore.createSubmission(
+      {
+        title: title.value.trim(),
+        description: description.value.trim(),
+        competition_id: competitionId,
+        jpg_file: jpgFile.value,
+        raw_file: rawFile.value || undefined,
+      },
+      (percent) => {
+        uploadProgress.value = percent
+      }
+    )
     router.push('/my-submissions')
   } catch (error: unknown) {
     // Error is already set in the store by createSubmission
@@ -130,6 +138,7 @@ const handleSubmit = async () => {
     }
   } finally {
     isSubmitting.value = false
+    uploadProgress.value = 0
   }
 }
 </script>
@@ -235,12 +244,24 @@ const handleSubmit = async () => {
             </p>
           </div>
 
+          <div v-if="isSubmitting" class="space-y-2 pt-2">
+            <div class="flex justify-between text-sm text-muted-foreground">
+              <span>{{ uploadProgress < 100 ? 'Uploading files…' : 'Processing submission…' }}</span>
+              <span>{{ uploadProgress }}%</span>
+            </div>
+            <Progress :model-value="uploadProgress" label="Upload progress" />
+            <p class="text-xs text-muted-foreground">
+              Large files can take several minutes on slower connections — please keep this page open.
+            </p>
+          </div>
+
           <div class="flex gap-4 pt-4">
             <Button type="button" variant="outline" @click="router.back()" :disabled="isSubmitting">
               Cancel
             </Button>
             <Button type="submit" class="flex-1" :disabled="isSubmitting">
-              {{ isSubmitting ? 'Submitting...' : 'Submit entry' }}
+              <Loader2 v-if="isSubmitting" class="w-4 h-4 mr-2 animate-spin" />
+              {{ isSubmitting ? (uploadProgress < 100 ? `Uploading… ${uploadProgress}%` : 'Processing…') : 'Submit entry' }}
             </Button>
           </div>
         </form>
