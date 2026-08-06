@@ -60,19 +60,19 @@ const badgeVariant = computed(() => {
 const badgeColor = computed(() => {
   switch (trustLevel.value) {
     case 'high':
-      return 'text-green-600 dark:text-green-400'
+      return 'text-success'
     case 'medium':
-      return 'text-blue-600 dark:text-blue-400'
+      return 'text-info'
     case 'low':
-      return 'text-yellow-600 dark:text-yellow-400'
+      return 'text-warning'
     case 'initial':
-      return 'text-cyan-600 dark:text-cyan-400'
+      return 'text-info'
     case 'suspicious':
-      return 'text-red-600 dark:text-red-400'
+      return 'text-destructive'
     case 'pending':
-      return 'text-gray-500 dark:text-gray-400'
+      return 'text-muted-foreground'
     default:
-      return 'text-gray-600 dark:text-gray-400'
+      return 'text-muted-foreground'
   }
 })
 
@@ -100,10 +100,10 @@ const boostText = computed(() => {
 })
 
 const boostColor = computed(() => {
-  if (props.boost > 0.1) return 'text-green-600 dark:text-green-400'
-  if (props.boost > 0) return 'text-blue-600 dark:text-blue-400'
-  if (props.boost < 0) return 'text-red-600 dark:text-red-400'
-  return 'text-gray-600 dark:text-gray-400'
+  if (props.boost > 0.1) return 'text-success'
+  if (props.boost > 0) return 'text-info'
+  if (props.boost < 0) return 'text-destructive'
+  return 'text-muted-foreground'
 })
 
 const sizeClasses = computed(() => {
@@ -162,11 +162,11 @@ const cameraDisplayName = computed(() => {
     </div>
 
     <!-- Verified Indicator -->
-    <div v-if="verified === false && trustLevel !== 'pending'" class="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+    <div v-if="verified === false && trustLevel !== 'pending'" class="flex items-center gap-1 text-xs text-warning">
       <AlertTriangle class="h-3 w-3" />
       <span>PRNU verification pending</span>
     </div>
-    <div v-else-if="trustLevel === 'initial'" class="flex items-center gap-1 text-xs text-cyan-600 dark:text-cyan-400">
+    <div v-else-if="trustLevel === 'initial'" class="flex items-center gap-1 text-xs text-info">
       <Camera class="h-3 w-3" />
       <span>First submission from this camera - building trust profile</span>
     </div>

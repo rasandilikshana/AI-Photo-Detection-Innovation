@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Users, Trophy, Image, Activity, Settings, RefreshCw, Eye, Calendar, Search, X,
+  Users, Trophy, Image, Activity, RefreshCw, Eye, Calendar, Search, X,
   Gavel, Plus, Trash2, Loader2, UserPlus, History, Network, Monitor, User as UserIcon, BarChart3, Shield
 } from 'lucide-vue-next'
 import apiClient from '@/api/client'
@@ -342,8 +342,8 @@ const onCompetitionChange = async () => {
 
 const getActionTypeVariant = (actionType: string) => {
   const variants: Record<string, string> = {
-    create: 'default',
-    update: 'secondary',
+    create: 'success',
+    update: 'info',
     delete: 'destructive',
   }
   return variants[actionType] || 'outline'
@@ -381,10 +381,10 @@ const getRoleVariant = (role: string) => {
 
 const getStatusVariant = (status: string) => {
   const variants: Record<string, string> = {
-    open: 'default',
-    judging: 'secondary',
-    closed: 'destructive',
-    completed: 'outline',
+    open: 'success',
+    judging: 'info',
+    closed: 'warning',
+    completed: 'secondary',
     draft: 'outline',
   }
   return variants[status] || 'secondary'
@@ -409,17 +409,14 @@ const statCards = computed(() => [
 <template>
   <div class="container mx-auto px-4 md:px-6 py-6 md:py-10">
     <div class="mb-6 md:mb-8">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Settings class="w-5 h-5 md:w-6 md:h-6 text-primary" />
-        </div>
-        <div>
-          <h1 class="text-2xl md:text-3xl font-bold text-foreground">Admin Panel</h1>
-          <p class="text-sm md:text-lg text-muted-foreground">
-            Manage users, competitions, judges, and system settings
-          </p>
-        </div>
-      </div>
+      <span class="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground mb-3">
+        <span class="h-1.5 w-1.5 rounded-full bg-brand" />
+        Platform administration
+      </span>
+      <h1 class="text-3xl md:text-4xl font-display font-semibold tracking-tight">Admin panel</h1>
+      <p class="mt-2 text-muted-foreground">
+        Manage users, competitions, judges, and scoring integrity
+      </p>
     </div>
 
     <!-- Not admin warning -->
@@ -434,26 +431,26 @@ const statCards = computed(() => [
       <AlertDescription>{{ error }}</AlertDescription>
     </Alert>
 
-    <Alert v-if="success" class="mb-6 bg-green-50 text-green-800 border-green-200">
+    <Alert v-if="success" class="mb-6 bg-success/10 border-success/30 text-success">
       <AlertDescription>{{ success }}</AlertDescription>
     </Alert>
 
     <!-- Loading state -->
     <div v-if="isLoading" class="text-center py-20">
-      <Loader2 class="w-12 h-12 text-primary animate-spin mx-auto mb-6" />
+      <Loader2 class="w-8 h-8 text-muted-foreground animate-spin mx-auto mb-6" />
       <p class="text-muted-foreground text-lg">Loading admin data...</p>
     </div>
 
     <template v-else-if="isAdmin">
       <!-- Tab Navigation - Scrollable on mobile -->
       <div class="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 mb-6 md:mb-8">
-        <div class="flex gap-1 md:gap-2 border-b min-w-max">
+        <div class="inline-flex rounded-full border bg-card p-1 min-w-max">
           <Button
             variant="ghost"
             size="sm"
             :class="[
-              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
-              activeTab === 'stats' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+              'rounded-full transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'stats' ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
             ]"
             @click="handleTabChange('stats')"
           >
@@ -463,8 +460,8 @@ const statCards = computed(() => [
             variant="ghost"
             size="sm"
             :class="[
-              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
-              activeTab === 'users' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+              'rounded-full transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'users' ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
             ]"
             @click="handleTabChange('users')"
           >
@@ -474,8 +471,8 @@ const statCards = computed(() => [
             variant="ghost"
             size="sm"
             :class="[
-              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
-              activeTab === 'competitions' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+              'rounded-full transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'competitions' ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
             ]"
             @click="handleTabChange('competitions')"
           >
@@ -485,8 +482,8 @@ const statCards = computed(() => [
             variant="ghost"
             size="sm"
             :class="[
-              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
-              activeTab === 'judges' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+              'rounded-full transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'judges' ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
             ]"
             @click="handleTabChange('judges')"
           >
@@ -497,8 +494,8 @@ const statCards = computed(() => [
             variant="ghost"
             size="sm"
             :class="[
-              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
-              activeTab === 'scoring' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+              'rounded-full transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'scoring' ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
             ]"
             @click="handleTabChange('scoring')"
           >
@@ -509,13 +506,13 @@ const statCards = computed(() => [
             variant="ghost"
             size="sm"
             :class="[
-              'rounded-none border-b-2 transition-all text-sm md:text-base px-3 md:px-4',
-              activeTab === 'v2analytics' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+              'rounded-full transition-all text-sm md:text-base px-3 md:px-4',
+              activeTab === 'v2analytics' ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
             ]"
             @click="handleTabChange('v2analytics')"
           >
             <BarChart3 class="w-4 h-4 mr-1 md:mr-2" />
-            <span class="hidden sm:inline">V2</span> Analytics
+            Analytics
           </Button>
         </div>
       </div>
@@ -523,36 +520,36 @@ const statCards = computed(() => [
       <!-- Stats Tab -->
       <div v-if="activeTab === 'stats'" class="space-y-4 md:space-y-6">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-          <Card v-for="stat in statCards" :key="stat.label">
+          <Card v-for="stat in statCards" :key="stat.label" class="rounded-2xl">
             <CardHeader class="pb-2">
               <div class="flex items-center justify-between">
                 <CardDescription>{{ stat.label }}</CardDescription>
-                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <component :is="stat.icon" class="w-5 h-5 text-primary" />
+                <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                  <component :is="stat.icon" class="w-5 h-5 text-foreground" />
                 </div>
               </div>
-              <CardTitle class="text-4xl">{{ stat.value }}</CardTitle>
+              <CardTitle class="text-3xl md:text-4xl font-display font-semibold">{{ stat.value }}</CardTitle>
             </CardHeader>
           </Card>
         </div>
 
         <!-- Quick Actions -->
-        <Card>
+        <Card class="rounded-2xl">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle>Quick actions</CardTitle>
           </CardHeader>
           <CardContent class="flex gap-4 flex-wrap">
             <Button @click="router.push('/competitions')">
               <Eye class="w-4 h-4 mr-2" />
-              View Competitions
+              View competitions
             </Button>
             <Button variant="outline" @click="loadStats">
               <RefreshCw class="w-4 h-4 mr-2" />
-              Refresh Stats
+              Refresh stats
             </Button>
             <Button variant="secondary" @click="handleTabChange('judges')">
               <Gavel class="w-4 h-4 mr-2" />
-              Manage Judges
+              Manage judges
             </Button>
           </CardContent>
         </Card>
@@ -571,38 +568,39 @@ const statCards = computed(() => [
           <button
             v-if="searchQuery"
             @click="searchQuery = ''"
+            aria-label="Clear search"
             class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X class="w-4 h-4" />
           </button>
         </div>
 
-        <Card>
+        <Card class="rounded-2xl">
           <CardHeader>
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users class="w-5 h-5 text-primary" />
+              <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                <Users class="w-5 h-5 text-foreground" />
               </div>
               <div>
-                <CardTitle>User Management</CardTitle>
+                <CardTitle>User management</CardTitle>
                 <CardDescription>{{ filteredUsers.length }} users</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto rounded-2xl border">
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="border-b">
-                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">User</th>
-                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Role</th>
-                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
-                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Joined</th>
-                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Actions</th>
+                  <tr class="text-xs uppercase tracking-wide text-muted-foreground border-b">
+                    <th class="text-left py-3 px-4 font-medium">User</th>
+                    <th class="text-left py-3 px-4 font-medium">Role</th>
+                    <th class="text-left py-3 px-4 font-medium">Status</th>
+                    <th class="text-left py-3 px-4 font-medium">Joined</th>
+                    <th class="text-left py-3 px-4 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="user in filteredUsers" :key="user.id" class="border-b hover:bg-muted/50 transition-colors">
+                  <tr v-for="user in filteredUsers" :key="user.id" class="border-b last:border-0 hover:bg-muted/50 transition-colors">
                     <td class="py-3 px-4">
                       <div>
                         <p class="font-medium">{{ user.username }}</p>
@@ -615,7 +613,7 @@ const statCards = computed(() => [
                       </Badge>
                     </td>
                     <td class="py-3 px-4">
-                      <Badge :variant="user.is_active ? 'default' : 'destructive'">
+                      <Badge :variant="user.is_active ? 'success' : 'destructive'">
                         {{ user.is_active ? 'Active' : 'Inactive' }}
                       </Badge>
                     </td>
@@ -623,7 +621,8 @@ const statCards = computed(() => [
                     <td class="py-3 px-4">
                       <div class="flex gap-2">
                         <select
-                          class="text-sm border rounded-lg px-3 py-2 bg-background focus:ring-2 focus:ring-primary/20 transition-all"
+                          aria-label="Change role"
+                          class="h-10 rounded-xl border border-input bg-card px-3 py-2 text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           :value="user.role"
                           @change="updateUserRole(user.id, ($event.target as HTMLSelectElement).value)"
                         >
@@ -662,37 +661,38 @@ const statCards = computed(() => [
           <button
             v-if="searchQuery"
             @click="searchQuery = ''"
+            aria-label="Clear search"
             class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
             <X class="w-4 h-4" />
           </button>
         </div>
 
-        <Card>
+        <Card class="rounded-2xl">
           <CardHeader>
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Trophy class="w-5 h-5 text-primary" />
+              <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                <Trophy class="w-5 h-5 text-foreground" />
               </div>
               <div>
-                <CardTitle>Competition Management</CardTitle>
+                <CardTitle>Competition management</CardTitle>
                 <CardDescription>{{ filteredCompetitions.length }} competitions</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto rounded-2xl border">
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="border-b">
-                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Competition</th>
-                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
-                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Dates</th>
-                    <th class="text-left py-3 px-4 text-muted-foreground font-medium">Actions</th>
+                  <tr class="text-xs uppercase tracking-wide text-muted-foreground border-b">
+                    <th class="text-left py-3 px-4 font-medium">Competition</th>
+                    <th class="text-left py-3 px-4 font-medium">Status</th>
+                    <th class="text-left py-3 px-4 font-medium">Dates</th>
+                    <th class="text-left py-3 px-4 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="comp in filteredCompetitions" :key="comp.id" class="border-b hover:bg-muted/50 transition-colors">
+                  <tr v-for="comp in filteredCompetitions" :key="comp.id" class="border-b last:border-0 hover:bg-muted/50 transition-colors">
                     <td class="py-3 px-4">
                       <p class="font-medium">{{ comp.title }}</p>
                     </td>
@@ -729,20 +729,20 @@ const statCards = computed(() => [
       <div v-if="activeTab === 'judges'">
         <!-- Loading -->
         <div v-if="isLoadingJudges" class="text-center py-12">
-          <Loader2 class="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+          <Loader2 class="w-8 h-8 text-muted-foreground animate-spin mx-auto mb-4" />
           <p class="text-muted-foreground">Loading judge data...</p>
         </div>
 
         <template v-else>
           <!-- Assign Judge Card -->
-          <Card class="mb-6">
+          <Card class="mb-6 rounded-2xl">
             <CardHeader>
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                  <UserPlus class="w-5 h-5 text-green-500" />
+                <div class="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+                  <UserPlus class="w-5 h-5 text-success" />
                 </div>
                 <div>
-                  <CardTitle>Assign Judge to Competition</CardTitle>
+                  <CardTitle>Assign judge to competition</CardTitle>
                   <CardDescription>Select a judge and competition to create an assignment</CardDescription>
                 </div>
               </div>
@@ -750,10 +750,10 @@ const statCards = computed(() => [
             <CardContent>
               <div class="flex flex-wrap gap-4 items-end">
                 <div class="flex-1 min-w-[200px]">
-                  <Label class="mb-2 block">Select Judge</Label>
+                  <Label class="mb-2 block">Select judge</Label>
                   <select
                     v-model="selectedJudgeId"
-                    class="w-full border rounded-lg px-3 py-2.5 bg-background focus:ring-2 focus:ring-primary/20 transition-all"
+                    class="h-10 w-full rounded-xl border border-input bg-card px-3 py-2 text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <option :value="null">-- Choose a judge --</option>
                     <option v-for="judge in judges" :key="judge.id" :value="judge.id">
@@ -763,10 +763,10 @@ const statCards = computed(() => [
                 </div>
 
                 <div class="flex-1 min-w-[200px]">
-                  <Label class="mb-2 block">Select Competition</Label>
+                  <Label class="mb-2 block">Select competition</Label>
                   <select
                     v-model="selectedCompetitionId"
-                    class="w-full border rounded-lg px-3 py-2.5 bg-background focus:ring-2 focus:ring-primary/20 transition-all"
+                    class="h-10 w-full rounded-xl border border-input bg-card px-3 py-2 text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <option :value="null">-- Choose a competition --</option>
                     <option v-for="comp in competitions" :key="comp.id" :value="comp.id">
@@ -778,7 +778,7 @@ const statCards = computed(() => [
                 <Button @click="assignJudge" :disabled="isAssigning || !selectedJudgeId || !selectedCompetitionId">
                   <Loader2 v-if="isAssigning" class="w-4 h-4 mr-2 animate-spin" />
                   <Plus v-else class="w-4 h-4 mr-2" />
-                  Assign Judge
+                  Assign judge
                 </Button>
               </div>
 
@@ -789,14 +789,14 @@ const statCards = computed(() => [
           </Card>
 
           <!-- Current Assignments -->
-          <Card>
+          <Card class="rounded-2xl">
             <CardHeader>
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Gavel class="w-5 h-5 text-primary" />
+                <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                  <Gavel class="w-5 h-5 text-foreground" />
                 </div>
                 <div>
-                  <CardTitle>Current Judge Assignments</CardTitle>
+                  <CardTitle>Current judge assignments</CardTitle>
                   <CardDescription>
                     {{ judgeAssignments.length }} active assignments across {{ assignmentsByCompetition.length }} competitions
                   </CardDescription>
@@ -812,11 +812,11 @@ const statCards = computed(() => [
                 <div
                   v-for="group in assignmentsByCompetition"
                   :key="group.competition.id"
-                  class="p-4 rounded-xl border bg-muted/20"
+                  class="p-4 rounded-2xl border bg-muted/20"
                 >
                   <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-3">
-                      <Trophy class="w-5 h-5 text-primary" />
+                      <Trophy class="w-5 h-5 text-foreground" />
                       <div>
                         <h3 class="font-semibold">{{ group.competition.title }}</h3>
                         <Badge :variant="getStatusVariant(group.competition.status)" class="text-xs">
@@ -833,10 +833,10 @@ const statCards = computed(() => [
                     <div
                       v-for="assignment in group.assignments"
                       :key="assignment.id"
-                      class="flex items-center justify-between p-3 rounded-lg bg-background border"
+                      class="flex items-center justify-between p-3 rounded-2xl bg-card border"
                     >
                       <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-full bg-secondary text-foreground flex items-center justify-center">
                           <span class="text-sm font-medium">{{ assignment.judge_username.charAt(0).toUpperCase() }}</span>
                         </div>
                         <div>
@@ -847,6 +847,7 @@ const statCards = computed(() => [
                       <Button
                         size="sm"
                         variant="ghost"
+                        aria-label="Remove judge assignment"
                         class="text-destructive hover:text-destructive hover:bg-destructive/10"
                         @click="removeAssignment(assignment.id)"
                       >
@@ -864,14 +865,14 @@ const statCards = computed(() => [
       <!-- Score Audit Logs Tab -->
       <div v-if="activeTab === 'scoring'">
         <!-- Competition Selector -->
-        <Card class="mb-6">
+        <Card class="mb-6 rounded-2xl">
           <CardHeader>
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <History class="w-5 h-5 text-primary" />
+              <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                <History class="w-5 h-5 text-foreground" />
               </div>
               <div>
-                <CardTitle>Score Audit Logs</CardTitle>
+                <CardTitle>Score audit logs</CardTitle>
                 <CardDescription>View all scoring activity with judge details, IP addresses, and timestamps</CardDescription>
               </div>
             </div>
@@ -879,11 +880,11 @@ const statCards = computed(() => [
           <CardContent>
             <div class="flex flex-col sm:flex-row sm:items-end gap-3 md:gap-4">
               <div class="flex-1">
-                <Label class="mb-2 block text-sm">Select Competition</Label>
+                <Label class="mb-2 block text-sm">Select competition</Label>
                 <select
                   v-model="selectedAuditCompetitionId"
                   @change="onCompetitionChange"
-                  class="w-full border rounded-lg px-3 py-2.5 bg-background focus:ring-2 focus:ring-primary/20 transition-all text-sm md:text-base"
+                  class="h-10 w-full rounded-xl border border-input bg-card px-3 py-2 text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option :value="null">-- Choose a competition --</option>
                   <option v-for="comp in competitions" :key="comp.id" :value="comp.id">
@@ -901,25 +902,25 @@ const statCards = computed(() => [
 
         <!-- Audit Stats Summary -->
         <div v-if="auditLogStats && selectedAuditCompetitionId" class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6">
-          <Card>
+          <Card class="rounded-2xl">
             <CardContent class="pt-4 md:pt-6 text-center">
-              <p class="text-2xl md:text-3xl font-bold text-primary">{{ auditLogStats.total_count }}</p>
-              <p class="text-xs md:text-sm text-muted-foreground">Total Score Actions</p>
+              <p class="text-2xl md:text-3xl font-display font-semibold">{{ auditLogStats.total_count }}</p>
+              <p class="text-xs md:text-sm text-muted-foreground">Total score actions</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card class="rounded-2xl">
             <CardContent class="pt-4 md:pt-6 text-center">
-              <p class="text-2xl md:text-3xl font-bold text-orange-500">{{ auditLogStats.unique_ips }}</p>
+              <p class="text-2xl md:text-3xl font-display font-semibold">{{ auditLogStats.unique_ips }}</p>
               <p class="text-xs md:text-sm text-muted-foreground flex items-center justify-center gap-1">
-                <Network class="w-3 h-3" /> Unique IP Addresses
+                <Network class="w-3 h-3" /> Unique IP addresses
               </p>
             </CardContent>
           </Card>
-          <Card>
+          <Card class="rounded-2xl">
             <CardContent class="pt-4 md:pt-6 text-center">
-              <p class="text-2xl md:text-3xl font-bold text-blue-500">{{ auditLogStats.unique_sessions }}</p>
+              <p class="text-2xl md:text-3xl font-display font-semibold">{{ auditLogStats.unique_sessions }}</p>
               <p class="text-xs md:text-sm text-muted-foreground flex items-center justify-center gap-1">
-                <Monitor class="w-3 h-3" /> Unique Sessions
+                <Monitor class="w-3 h-3" /> Unique sessions
               </p>
             </CardContent>
           </Card>
@@ -927,32 +928,36 @@ const statCards = computed(() => [
 
         <!-- Loading State -->
         <div v-if="isLoadingAuditLogs" class="text-center py-12">
-          <Loader2 class="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+          <Loader2 class="w-8 h-8 text-muted-foreground animate-spin mx-auto mb-4" />
           <p class="text-muted-foreground">Loading scoring activity...</p>
         </div>
 
         <!-- No Competition Selected -->
         <div v-else-if="!selectedAuditCompetitionId" class="text-center py-12">
-          <History class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
+            <History class="w-8 h-8 text-muted-foreground" />
+          </div>
           <p class="text-lg text-muted-foreground">Select a competition to view scoring activity</p>
         </div>
 
         <!-- No Logs -->
         <div v-else-if="auditLogs.length === 0" class="text-center py-12">
-          <History class="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
+            <History class="w-8 h-8 text-muted-foreground" />
+          </div>
           <p class="text-lg text-muted-foreground">No scoring activity recorded for this competition yet.</p>
         </div>
 
         <!-- Audit Logs Table -->
-        <Card v-else>
+        <Card v-else class="rounded-2xl">
           <CardHeader>
-            <CardTitle>Scoring Activity ({{ auditLogs.length }} actions)</CardTitle>
+            <CardTitle>Scoring activity ({{ auditLogs.length }} actions)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto rounded-2xl border">
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="border-b bg-muted/50">
+                  <tr class="text-xs uppercase tracking-wide text-muted-foreground border-b">
                     <th class="text-left py-3 px-4 font-medium">Action</th>
                     <th class="text-left py-3 px-4 font-medium">Submission</th>
                     <th class="text-left py-3 px-4 font-medium">Scores</th>
@@ -962,7 +967,7 @@ const statCards = computed(() => [
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="log in auditLogs" :key="log.id" class="border-b hover:bg-muted/30 transition-colors">
+                  <tr v-for="log in auditLogs" :key="log.id" class="border-b last:border-0 hover:bg-muted/50 transition-colors">
                     <td class="py-3 px-4">
                       <Badge :variant="getActionTypeVariant(log.action_type)">
                         {{ log.action_type.toUpperCase() }}
@@ -1020,13 +1025,13 @@ const statCards = computed(() => [
 
       <!-- V2 Analytics Tab -->
       <div v-if="activeTab === 'v2analytics'" class="space-y-4 md:space-y-6">
-        <Card>
+        <Card class="rounded-2xl">
           <CardHeader>
             <div class="flex items-center justify-between">
               <div>
                 <CardTitle class="flex items-center gap-2">
                   <BarChart3 class="w-5 h-5" />
-                  V2.0 Advanced Analytics
+                  Advanced analytics
                 </CardTitle>
                 <CardDescription>
                   Camera reputation, judge bias analysis, and credential sharing detection
@@ -1037,11 +1042,11 @@ const statCards = computed(() => [
         </Card>
 
         <!-- Camera Reputation Statistics -->
-        <Card>
+        <Card class="rounded-2xl">
           <CardHeader>
             <CardTitle class="flex items-center gap-2">
               <Shield class="w-5 h-5" />
-              Camera Reputation System
+              Camera reputation system
             </CardTitle>
             <CardDescription>PRNU fingerprinting and trust scoring</CardDescription>
           </CardHeader>
@@ -1055,22 +1060,22 @@ const statCards = computed(() => [
               </Alert>
 
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card>
+                <Card class="rounded-2xl">
                   <CardContent class="pt-6 text-center">
-                    <p class="text-3xl font-bold text-blue-500">Coming Soon</p>
-                    <p class="text-sm text-muted-foreground mt-2">Camera Profiles</p>
+                    <p class="text-3xl font-display font-semibold text-muted-foreground">Coming soon</p>
+                    <p class="text-sm text-muted-foreground mt-2">Camera profiles</p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card class="rounded-2xl">
                   <CardContent class="pt-6 text-center">
-                    <p class="text-3xl font-bold text-green-500">Active</p>
-                    <p class="text-sm text-muted-foreground mt-2">PRNU Extraction</p>
+                    <p class="text-3xl font-display font-semibold text-muted-foreground">Active</p>
+                    <p class="text-sm text-muted-foreground mt-2">PRNU extraction</p>
                   </CardContent>
                 </Card>
-                <Card>
+                <Card class="rounded-2xl">
                   <CardContent class="pt-6 text-center">
-                    <p class="text-3xl font-bold text-purple-500">Ready</p>
-                    <p class="text-sm text-muted-foreground mt-2">Fraud Detection</p>
+                    <p class="text-3xl font-display font-semibold text-muted-foreground">Ready</p>
+                    <p class="text-sm text-muted-foreground mt-2">Fraud detection</p>
                   </CardContent>
                 </Card>
               </div>
@@ -1085,11 +1090,11 @@ const statCards = computed(() => [
         />
 
         <!-- Credential Sharing Alerts -->
-        <Card>
+        <Card class="rounded-2xl">
           <CardHeader>
             <CardTitle class="flex items-center gap-2">
               <Shield class="w-5 h-5" />
-              Credential Sharing Detection
+              Credential sharing detection
             </CardTitle>
             <CardDescription>Monitor for suspicious judge account activity</CardDescription>
           </CardHeader>
@@ -1103,7 +1108,7 @@ const statCards = computed(() => [
             </Alert>
 
             <div v-if="v2Analytics.isLoading" class="text-center py-8">
-              <Loader2 class="w-8 h-8 animate-spin mx-auto text-primary" />
+              <Loader2 class="w-8 h-8 animate-spin mx-auto text-muted-foreground" />
               <p class="text-sm text-muted-foreground mt-2">Checking for alerts...</p>
             </div>
 

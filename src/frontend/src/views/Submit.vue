@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ArrowLeft, Upload, Image, FileImage, Info } from 'lucide-vue-next'
+import { ArrowLeft, Upload, Image, FileImage, Info, Loader2 } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -145,7 +145,7 @@ const handleSubmit = async () => {
 
     <!-- Loading State -->
     <div v-if="isLoading" class="flex flex-col justify-center items-center py-12">
-      <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gradient-start to-gradient-end mx-auto mb-4 animate-glow-pulse" />
+      <Loader2 class="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-4" />
       <div class="text-muted-foreground">Loading competition details...</div>
     </div>
 
@@ -157,12 +157,12 @@ const handleSubmit = async () => {
       </Button>
     </Alert>
 
-    <Card v-else class="animate-fade-in-up">
+    <Card v-else class="rounded-2xl animate-fade-in-up">
       <CardHeader class="text-center">
-        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-gradient-start to-gradient-end flex items-center justify-center mx-auto mb-4 shadow-glow">
-          <Upload class="w-8 h-8 text-white" />
+        <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
+          <Upload class="w-8 h-8 text-foreground" />
         </div>
-        <CardTitle class="text-2xl gradient-text">Submit Your Entry</CardTitle>
+        <CardTitle class="text-2xl md:text-3xl font-display font-semibold tracking-tight">Submit your entry</CardTitle>
         <CardDescription v-if="competitionsStore.currentCompetition">
           Submitting to: <span class="font-medium text-foreground">{{ competitionsStore.currentCompetition.title }}</span>
         </CardDescription>
@@ -181,7 +181,6 @@ const handleSubmit = async () => {
               placeholder="Enter your photo title"
               required
               :disabled="isSubmitting"
-              class="bg-white/5 border-white/10 focus:border-gradient-mid transition-all duration-300"
             />
           </div>
 
@@ -193,14 +192,13 @@ const handleSubmit = async () => {
               placeholder="Describe your photo (optional)"
               rows="4"
               :disabled="isSubmitting"
-              class="bg-white/5 border-white/10 focus:border-gradient-mid transition-all duration-300"
             />
           </div>
 
           <div class="space-y-2">
             <Label for="jpgFile" class="flex items-center gap-2">
-              <Image class="w-4 h-4 text-gradient-mid" />
-              JPG File*
+              <Image class="w-4 h-4 text-muted-foreground" />
+              JPG file*
             </Label>
             <Input
               id="jpgFile"
@@ -209,7 +207,7 @@ const handleSubmit = async () => {
               @change="handleJpgFileChange"
               required
               :disabled="isSubmitting"
-              class="bg-white/5 border-white/10 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gradient-to-r file:from-gradient-start file:to-gradient-mid file:text-white file:text-sm file:font-semibold hover:file:opacity-90 cursor-pointer"
+              class="h-auto file:bg-secondary file:text-foreground file:border-0 file:rounded-full file:px-4 file:py-2 file:mr-4 file:font-medium hover:file:bg-accent cursor-pointer"
             />
             <p class="text-sm text-muted-foreground flex items-center gap-1">
               <Info class="w-3 h-3" />
@@ -219,8 +217,8 @@ const handleSubmit = async () => {
 
           <div class="space-y-2">
             <Label for="rawFile" class="flex items-center gap-2">
-              <FileImage class="w-4 h-4 text-gradient-end" />
-              RAW File{{ competitionsStore.currentCompetition?.require_raw_files ? '*' : '' }}
+              <FileImage class="w-4 h-4 text-muted-foreground" />
+              RAW file{{ competitionsStore.currentCompetition?.require_raw_files ? '*' : '' }}
             </Label>
             <Input
               id="rawFile"
@@ -229,7 +227,7 @@ const handleSubmit = async () => {
               @change="handleRawFileChange"
               :required="competitionsStore.currentCompetition?.require_raw_files"
               :disabled="isSubmitting"
-              class="bg-white/5 border-white/10 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-gradient-to-r file:from-gradient-mid file:to-gradient-end file:text-white file:text-sm file:font-semibold hover:file:opacity-90 cursor-pointer"
+              class="h-auto file:bg-secondary file:text-foreground file:border-0 file:rounded-full file:px-4 file:py-2 file:mr-4 file:font-medium hover:file:bg-accent cursor-pointer"
             />
             <p class="text-sm text-muted-foreground flex items-center gap-1">
               <Info class="w-3 h-3" />
@@ -242,7 +240,7 @@ const handleSubmit = async () => {
               Cancel
             </Button>
             <Button type="submit" class="flex-1" :disabled="isSubmitting">
-              {{ isSubmitting ? 'Submitting...' : 'Submit Entry' }}
+              {{ isSubmitting ? 'Submitting...' : 'Submit entry' }}
             </Button>
           </div>
         </form>

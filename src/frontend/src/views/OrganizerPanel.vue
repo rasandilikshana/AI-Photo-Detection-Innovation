@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Trophy, Plus, Calendar, Eye, Pencil } from 'lucide-vue-next'
+import { Trophy, Plus, Calendar, Eye, Pencil, Loader2 } from 'lucide-vue-next'
 import apiClient from '@/api/client'
 import type { Competition } from '@/types'
 
@@ -237,11 +237,12 @@ const handleEditSubmit = async () => {
 
 const getStatusVariant = (status: string) => {
   const variants: Record<string, string> = {
-    open: 'default',
+    open: 'success',
     draft: 'outline',
-    closed: 'secondary',
-    judging: 'secondary',
-    completed: 'outline',
+    closed: 'warning',
+    judging: 'info',
+    completed: 'secondary',
+    cancelled: 'destructive',
   }
   return variants[status] || 'secondary'
 }
@@ -258,17 +259,14 @@ const formatDate = (dateStr: string) => {
 <template>
   <div class="container mx-auto px-6 py-10">
     <div class="mb-8">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Trophy class="w-6 h-6 text-primary" />
-        </div>
-        <div>
-          <h1 class="text-3xl font-bold text-foreground">Organizer Panel</h1>
-          <p class="text-lg text-muted-foreground">
-            Create and manage photography competitions
-          </p>
-        </div>
-      </div>
+      <span class="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground mb-3">
+        <span class="h-1.5 w-1.5 rounded-full bg-brand" />
+        Competition management
+      </span>
+      <h1 class="text-3xl md:text-4xl font-display font-semibold tracking-tight">Organizer panel</h1>
+      <p class="mt-2 text-muted-foreground">
+        Create and manage photography competitions
+      </p>
     </div>
 
     <!-- Not organizer warning -->
@@ -280,36 +278,36 @@ const formatDate = (dateStr: string) => {
 
     <template v-else>
       <!-- Tab Navigation -->
-      <div class="flex gap-2 mb-8 border-b">
+      <div class="inline-flex rounded-full border bg-card p-1 mb-8">
         <Button
           variant="ghost"
           :class="[
-            'rounded-none border-b-2 transition-all',
-            activeTab === 'create' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+            'rounded-full transition-all',
+            activeTab === 'create' ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
           ]"
           @click="activeTab = 'create'"
         >
           <Plus class="w-4 h-4 mr-2" />
-          Create Competition
+          Create competition
         </Button>
         <Button
           variant="ghost"
           :class="[
-            'rounded-none border-b-2 transition-all',
-            activeTab === 'my-competitions' ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground'
+            'rounded-full transition-all',
+            activeTab === 'my-competitions' ? 'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
           ]"
           @click="activeTab = 'my-competitions'"
         >
           <Trophy class="w-4 h-4 mr-2" />
-          My Competitions
+          My competitions
         </Button>
       </div>
 
       <!-- Create Competition Tab -->
       <div v-if="activeTab === 'create'">
-        <Card class="max-w-2xl">
+        <Card class="max-w-2xl rounded-2xl">
           <CardHeader>
-            <CardTitle>Create New Competition</CardTitle>
+            <CardTitle>Create new competition</CardTitle>
             <CardDescription>
               Fill in the details to create a new photography competition
             </CardDescription>
@@ -319,7 +317,7 @@ const formatDate = (dateStr: string) => {
               <AlertDescription>{{ error }}</AlertDescription>
             </Alert>
 
-            <Alert v-if="success" class="mb-6 bg-green-50 text-green-800 border-green-200">
+            <Alert v-if="success" class="mb-6 bg-success/10 border-success/30 text-success">
               <AlertDescription>{{ success }}</AlertDescription>
             </Alert>
 
@@ -329,7 +327,7 @@ const formatDate = (dateStr: string) => {
                 <Input
                   id="title"
                   v-model="formData.title"
-                  placeholder="Nature Photography Contest 2024"
+                  placeholder="Wildlife Photography Competition 2026"
                   required
                   :disabled="isSubmitting"
                 />
@@ -358,9 +356,9 @@ const formatDate = (dateStr: string) => {
                 />
               </div>
 
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-2">
-                  <Label for="submission_start">Submission Start *</Label>
+                  <Label for="submission_start">Submission start *</Label>
                   <Input
                     id="submission_start"
                     type="datetime-local"
@@ -370,7 +368,7 @@ const formatDate = (dateStr: string) => {
                   />
                 </div>
                 <div class="space-y-2">
-                  <Label for="submission_end">Submission End *</Label>
+                  <Label for="submission_end">Submission end *</Label>
                   <Input
                     id="submission_end"
                     type="datetime-local"
@@ -381,9 +379,9 @@ const formatDate = (dateStr: string) => {
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-2">
-                  <Label for="max_submissions">Max Submissions per User</Label>
+                  <Label for="max_submissions">Max submissions per user</Label>
                   <Input
                     id="max_submissions"
                     type="number"
@@ -394,7 +392,7 @@ const formatDate = (dateStr: string) => {
                   />
                 </div>
                 <div class="space-y-2">
-                  <Label for="prize_amount">Prize Amount ($)</Label>
+                  <Label for="prize_amount">Prize amount ($)</Label>
                   <Input
                     id="prize_amount"
                     type="number"
@@ -406,7 +404,7 @@ const formatDate = (dateStr: string) => {
               </div>
 
               <div class="space-y-2">
-                <Label for="prize_description">Prize Description</Label>
+                <Label for="prize_description">Prize description</Label>
                 <Input
                   id="prize_description"
                   v-model="formData.prize_description"
@@ -415,12 +413,12 @@ const formatDate = (dateStr: string) => {
                 />
               </div>
 
-              <div class="flex items-center gap-6">
+              <div class="flex flex-wrap items-center gap-6">
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     v-model="formData.require_raw_files"
-                    class="w-4 h-4 rounded border-gray-300"
+                    class="w-4 h-4 rounded border-input accent-primary"
                     :disabled="isSubmitting"
                   />
                   <span class="text-sm">Require RAW files</span>
@@ -429,7 +427,7 @@ const formatDate = (dateStr: string) => {
                   <input
                     type="checkbox"
                     v-model="formData.allow_ai_generated"
-                    class="w-4 h-4 rounded border-gray-300"
+                    class="w-4 h-4 rounded border-input accent-primary"
                     :disabled="isSubmitting"
                   />
                   <span class="text-sm">Allow AI-generated images</span>
@@ -437,7 +435,7 @@ const formatDate = (dateStr: string) => {
               </div>
 
               <Button type="submit" class="w-full" :disabled="isSubmitting">
-                {{ isSubmitting ? 'Creating...' : 'Create Competition' }}
+                {{ isSubmitting ? 'Creating...' : 'Create competition' }}
               </Button>
             </form>
           </CardContent>
@@ -446,24 +444,24 @@ const formatDate = (dateStr: string) => {
 
       <!-- My Competitions Tab -->
       <div v-if="activeTab === 'my-competitions'">
-        <Alert v-if="editSuccess" class="mb-6 bg-green-50 text-green-800 border-green-200">
+        <Alert v-if="editSuccess" class="mb-6 bg-success/10 border-success/30 text-success">
           <AlertDescription>{{ editSuccess }}</AlertDescription>
         </Alert>
 
         <div v-if="isLoading" class="text-center py-12">
-          <div class="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <Loader2 class="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-4" />
           <p class="text-muted-foreground">Loading competitions...</p>
         </div>
 
         <div v-else-if="myCompetitions.length === 0" class="text-center py-12">
-          <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-            <Trophy class="w-10 h-10 text-muted-foreground" />
+          <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
+            <Trophy class="w-8 h-8 text-muted-foreground" />
           </div>
           <p class="text-lg text-muted-foreground">No competitions yet</p>
           <p class="text-muted-foreground mt-1">Create your first competition to get started!</p>
           <Button class="mt-4" @click="activeTab = 'create'">
             <Plus class="w-4 h-4 mr-2" />
-            Create Competition
+            Create competition
           </Button>
         </div>
 
@@ -471,7 +469,7 @@ const formatDate = (dateStr: string) => {
           <Card
             v-for="competition in myCompetitions"
             :key="competition.id"
-            class="hover:shadow-lg transition-shadow"
+            class="rounded-2xl transition-shadow hover:shadow-lg"
           >
             <CardHeader>
               <div class="flex justify-between items-start mb-2">
@@ -494,7 +492,7 @@ const formatDate = (dateStr: string) => {
                   @click="router.push(`/competitions/${competition.id}`)"
                 >
                   <Eye class="w-4 h-4 mr-2" />
-                  View Details
+                  View details
                 </Button>
                 <Button
                   variant="outline"
@@ -513,7 +511,7 @@ const formatDate = (dateStr: string) => {
         <Dialog :open="showEditDialog" @update:open="(open: boolean) => { if (!open) closeEditDialog() }">
           <DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Competition</DialogTitle>
+              <DialogTitle>Edit competition</DialogTitle>
               <DialogDescription>
                 Update the details of "{{ editingCompetition?.title }}"
               </DialogDescription>
@@ -561,7 +559,7 @@ const formatDate = (dateStr: string) => {
                   id="edit_status"
                   v-model="editFormData.status"
                   :disabled="isSaving"
-                  class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="h-10 w-full rounded-xl border border-input bg-card px-3 py-2 text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option v-for="option in statusOptions" :key="option" :value="option">
                     {{ option.charAt(0).toUpperCase() + option.slice(1) }}
@@ -569,9 +567,9 @@ const formatDate = (dateStr: string) => {
                 </select>
               </div>
 
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-2">
-                  <Label for="edit_submission_start">Submission Start *</Label>
+                  <Label for="edit_submission_start">Submission start *</Label>
                   <Input
                     id="edit_submission_start"
                     type="datetime-local"
@@ -581,7 +579,7 @@ const formatDate = (dateStr: string) => {
                   />
                 </div>
                 <div class="space-y-2">
-                  <Label for="edit_submission_end">Submission End (Deadline) *</Label>
+                  <Label for="edit_submission_end">Submission end (deadline) *</Label>
                   <Input
                     id="edit_submission_end"
                     type="datetime-local"
@@ -592,9 +590,9 @@ const formatDate = (dateStr: string) => {
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-2">
-                  <Label for="edit_max_submissions">Max Submissions per User</Label>
+                  <Label for="edit_max_submissions">Max submissions per user</Label>
                   <Input
                     id="edit_max_submissions"
                     type="number"
@@ -605,7 +603,7 @@ const formatDate = (dateStr: string) => {
                   />
                 </div>
                 <div class="space-y-2">
-                  <Label for="edit_prize_amount">Prize Amount ($)</Label>
+                  <Label for="edit_prize_amount">Prize amount ($)</Label>
                   <Input
                     id="edit_prize_amount"
                     type="number"
@@ -617,7 +615,7 @@ const formatDate = (dateStr: string) => {
               </div>
 
               <div class="space-y-2">
-                <Label for="edit_prize_description">Prize Description</Label>
+                <Label for="edit_prize_description">Prize description</Label>
                 <Input
                   id="edit_prize_description"
                   v-model="editFormData.prize_description"
@@ -625,12 +623,12 @@ const formatDate = (dateStr: string) => {
                 />
               </div>
 
-              <div class="flex items-center gap-6">
+              <div class="flex flex-wrap items-center gap-6">
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     v-model="editFormData.require_raw_files"
-                    class="w-4 h-4 rounded border-gray-300"
+                    class="w-4 h-4 rounded border-input accent-primary"
                     :disabled="isSaving"
                   />
                   <span class="text-sm">Require RAW files</span>
@@ -639,7 +637,7 @@ const formatDate = (dateStr: string) => {
                   <input
                     type="checkbox"
                     v-model="editFormData.allow_ai_generated"
-                    class="w-4 h-4 rounded border-gray-300"
+                    class="w-4 h-4 rounded border-input accent-primary"
                     :disabled="isSaving"
                   />
                   <span class="text-sm">Allow AI-generated images</span>
@@ -656,7 +654,7 @@ const formatDate = (dateStr: string) => {
                   Cancel
                 </Button>
                 <Button type="submit" :disabled="isSaving">
-                  {{ isSaving ? 'Saving...' : 'Save Changes' }}
+                  {{ isSaving ? 'Saving...' : 'Save changes' }}
                 </Button>
               </DialogFooter>
             </form>

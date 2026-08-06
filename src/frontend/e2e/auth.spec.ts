@@ -7,13 +7,13 @@ test.describe('Authentication', () => {
 
   test('should load the home page', async ({ page }) => {
     await expect(page).toHaveTitle(/A.V.A.R./)
-    await expect(page.getByText('Authenticity Verification')).toBeVisible()
+    await expect(page.getByText('Authenticity Verification').first()).toBeVisible()
   })
 
   test('should navigate to registration page', async ({ page }) => {
     await page.getByRole('link', { name: /sign up|get started/i }).first().click()
     await expect(page).toHaveURL(/\/register/)
-    await expect(page.getByRole('heading', { name: /create account/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /create your account/i })).toBeVisible()
   })
 
   test('should show validation errors for empty registration form', async ({ page }) => {
@@ -66,7 +66,7 @@ test.describe('Authentication', () => {
   test('should navigate to login page', async ({ page }) => {
     await page.getByRole('link', { name: /sign in/i }).first().click()
     await expect(page).toHaveURL(/\/login/)
-    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible()
   })
 
   test('should show login form', async ({ page }) => {
@@ -80,7 +80,7 @@ test.describe('Authentication', () => {
   test('should have link to registration from login', async ({ page }) => {
     await page.goto('/login')
 
-    await expect(page.getByRole('link', { name: /sign up/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /create account/i })).toBeVisible()
   })
 
   test('should have link to login from registration', async ({ page }) => {

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, Calendar, Image, FileImage, Trophy } from 'lucide-vue-next'
+import { ArrowLeft, Calendar, Image, FileImage, Trophy, Loader2 } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -80,7 +80,7 @@ const handleSubmit = () => {
 <template>
   <div class="container mx-auto px-4 py-12">
     <div v-if="competitionsStore.isLoading" class="text-center py-12">
-      <div class="w-12 h-12 rounded-full bg-gradient-to-br from-gradient-start to-gradient-end mx-auto mb-4 animate-glow-pulse" />
+      <Loader2 class="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-4" />
       <p class="text-muted-foreground">Loading competition...</p>
     </div>
 
@@ -88,66 +88,70 @@ const handleSubmit = () => {
       <div class="mb-6">
         <Button variant="ghost" @click="router.push('/competitions')" class="group">
           <ArrowLeft class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Competitions
+          Back to competitions
         </Button>
       </div>
 
-      <Card>
+      <Card class="rounded-2xl">
         <CardHeader>
+          <span class="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground w-fit mb-4">
+            <span class="h-1.5 w-1.5 rounded-full bg-brand" />
+            Competition
+          </span>
           <div class="flex items-center justify-between mb-4">
             <Badge :variant="getStatusVariant(competitionsStore.currentCompetition.status)">
               {{ competitionsStore.currentCompetition.status.toUpperCase() }}
             </Badge>
             <div v-if="competitionsStore.currentCompetition.prize_amount" class="flex items-center gap-2">
-              <Trophy class="w-5 h-5 text-gradient-start" />
-              <span class="gradient-text font-bold text-xl">
+              <Trophy class="w-5 h-5 text-warning" />
+              <span class="font-display font-semibold text-xl text-foreground">
                 ${{ (competitionsStore.currentCompetition.prize_amount / 100).toFixed(2) }}
               </span>
             </div>
           </div>
-          <CardTitle class="text-3xl gradient-text">{{ competitionsStore.currentCompetition.title }}</CardTitle>
+          <CardTitle class="text-3xl md:text-4xl font-display font-semibold tracking-tight text-balance">{{ competitionsStore.currentCompetition.title }}</CardTitle>
           <CardDescription class="text-base mt-4">
             {{ competitionsStore.currentCompetition.description }}
           </CardDescription>
         </CardHeader>
         <CardContent class="space-y-6">
-          <Separator class="bg-white/10" />
+          <Separator />
 
           <div>
-            <h3 class="font-semibold text-lg mb-4 gradient-text">Competition Details</h3>
+            <h3 class="font-display font-semibold text-lg mb-4">Competition details</h3>
             <div class="grid md:grid-cols-2 gap-4">
-              <div class="p-4 rounded-lg bg-white/5 border border-white/10 space-y-3">
+              <div class="rounded-2xl border bg-card p-5">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-gradient-start to-gradient-mid flex items-center justify-center">
-                    <Calendar class="w-5 h-5 text-white" />
+                  <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                    <Calendar class="w-5 h-5 text-foreground" />
                   </div>
                   <div>
-                    <p class="text-sm text-muted-foreground">Submission Period</p>
+                    <p class="text-sm text-muted-foreground">Submission period</p>
                     <p class="font-medium">{{ formatDate(competitionsStore.currentCompetition.submission_start) }}</p>
                     <p class="text-sm text-muted-foreground">to {{ formatDate(competitionsStore.currentCompetition.submission_end) }}</p>
                   </div>
                 </div>
               </div>
 
-              <div class="p-4 rounded-lg bg-white/5 border border-white/10 space-y-3">
+              <div class="rounded-2xl border bg-card p-5">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-gradient-mid to-gradient-end flex items-center justify-center">
-                    <Image class="w-5 h-5 text-white" />
+                  <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                    <Image class="w-5 h-5 text-foreground" />
                   </div>
                   <div>
-                    <p class="text-sm text-muted-foreground">Max Submissions</p>
+                    <p class="text-sm text-muted-foreground">Max submissions</p>
                     <p class="font-medium">{{ competitionsStore.currentCompetition.max_submissions_per_user }} entries per user</p>
                   </div>
                 </div>
               </div>
 
-              <div class="p-4 rounded-lg bg-white/5 border border-white/10 space-y-3">
+              <div class="rounded-2xl border bg-card p-5">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-gradient-end to-gradient-start flex items-center justify-center">
-                    <FileImage class="w-5 h-5 text-white" />
+                  <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                    <FileImage class="w-5 h-5 text-foreground" />
                   </div>
                   <div>
-                    <p class="text-sm text-muted-foreground">RAW Files</p>
+                    <p class="text-sm text-muted-foreground">RAW files</p>
                     <p class="font-medium">{{ competitionsStore.currentCompetition.require_raw_files ? 'Required' : 'Optional' }}</p>
                   </div>
                 </div>
@@ -155,7 +159,7 @@ const handleSubmit = () => {
             </div>
           </div>
 
-          <Separator class="bg-white/10" />
+          <Separator />
 
           <div class="flex justify-center">
             <Button
@@ -169,6 +173,20 @@ const handleSubmit = () => {
           </div>
         </CardContent>
       </Card>
+    </div>
+
+    <div v-else class="max-w-4xl mx-auto text-center py-20">
+      <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
+        <Image class="w-8 h-8 text-muted-foreground" />
+      </div>
+      <h2 class="text-2xl font-display font-semibold tracking-tight mb-2">Competition not found</h2>
+      <p class="text-muted-foreground mb-6">This competition may have been removed or the link is incorrect.</p>
+      <a
+        href="/competitions"
+        class="inline-flex items-center justify-center rounded-full border border-input bg-card px-5 h-10 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        Browse competitions
+      </a>
     </div>
   </div>
 </template>

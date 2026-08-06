@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { Camera, Clock, ImageIcon, Trophy, Search, X, AlertCircle, XCircle, Info, CheckCircle, UserCheck, Gavel } from 'lucide-vue-next'
+import { Camera, Clock, ImageIcon, Trophy, Search, X, AlertCircle, XCircle, Info, CheckCircle, Gavel, Loader2 } from 'lucide-vue-next'
 import type { Submission } from '@/types'
 
 const authStore = useAuthStore()
@@ -163,7 +163,11 @@ const getImageUrl = (url: string) => {
 <template>
   <div class="container mx-auto px-6 py-10">
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-foreground mb-3">My Submissions</h1>
+      <span class="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground mb-4">
+        <span class="h-1.5 w-1.5 rounded-full bg-brand" />
+        Submissions
+      </span>
+      <h1 class="text-3xl md:text-4xl font-display font-semibold tracking-tight mb-3">My submissions</h1>
       <p class="text-lg text-muted-foreground">View and manage your competition entries</p>
     </div>
 
@@ -179,7 +183,8 @@ const getImageUrl = (url: string) => {
         <button
           v-if="searchQuery"
           @click="searchQuery = ''"
-          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          aria-label="Clear search"
+          class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <X class="w-4 h-4" />
         </button>
@@ -190,7 +195,7 @@ const getImageUrl = (url: string) => {
           :key="option.value"
           :variant="statusFilter === option.value ? 'default' : 'outline'"
           size="sm"
-          class="h-12 px-4 text-base"
+          :aria-pressed="statusFilter === option.value"
           @click="statusFilter = option.value"
         >
           {{ option.label }}
@@ -206,23 +211,23 @@ const getImageUrl = (url: string) => {
     </Alert>
 
     <div v-if="submissionsStore.isLoading" class="text-center py-20">
-      <div class="w-12 h-12 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-6" />
+      <Loader2 class="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-4" />
       <p class="text-muted-foreground text-lg">Loading submissions...</p>
     </div>
 
     <div v-else-if="submissionsStore.submissions.length === 0" class="text-center py-20">
-      <div class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-        <Camera class="w-12 h-12 text-muted-foreground" />
+      <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
+        <Camera class="w-8 h-8 text-muted-foreground" />
       </div>
-      <p class="text-xl text-muted-foreground">No submissions yet</p>
+      <h2 class="text-xl font-display font-semibold tracking-tight">No submissions yet</h2>
       <p class="text-muted-foreground mt-2">Submit your first photo to a competition!</p>
     </div>
 
     <div v-else-if="filteredSubmissions.length === 0" class="text-center py-20">
-      <div class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-        <Search class="w-12 h-12 text-muted-foreground" />
+      <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
+        <Search class="w-8 h-8 text-muted-foreground" />
       </div>
-      <p class="text-xl text-muted-foreground">No matching submissions</p>
+      <h2 class="text-xl font-display font-semibold tracking-tight">No matching submissions</h2>
       <p class="text-muted-foreground mt-2">Try adjusting your search or filters</p>
     </div>
 
@@ -231,7 +236,7 @@ const getImageUrl = (url: string) => {
       <Card
         v-for="submission in filteredSubmissions"
         :key="submission.id"
-        class="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+        class="overflow-hidden rounded-2xl cursor-pointer hover:shadow-lg transition-shadow"
         @click="openModal(submission)"
       >
         <!-- Thumbnail -->
@@ -248,9 +253,9 @@ const getImageUrl = (url: string) => {
           </div>
           <Badge
             :variant="getStatusVariant(submission.status)"
-            class="absolute top-3 left-3 text-sm px-3 py-1"
+            class="absolute top-3 left-3"
           >
-            {{ submission.status }}
+            {{ submission.status.toUpperCase() }}
           </Badge>
         </div>
 
@@ -271,19 +276,19 @@ const getImageUrl = (url: string) => {
             </div>
           </div>
           <!-- Manually approved indicator -->
-          <div v-else-if="wasManuallyReviewed(submission) && submission.status === 'approved'" class="flex items-start gap-2 text-green-500 text-sm mb-3 p-2 bg-green-500/10 rounded-md">
+          <div v-else-if="wasManuallyReviewed(submission) && submission.status === 'approved'" class="flex items-start gap-2 text-success text-sm mb-3 p-2 bg-success/10 rounded-md">
             <CheckCircle class="w-4 h-4 shrink-0 mt-0.5" />
             <div>
-              <span>Approved by Judge</span>
+              <span>Approved by judge</span>
               <p v-if="submission.reviewed_at" class="text-xs opacity-70 mt-0.5">
                 {{ formatDate(submission.reviewed_at) }}
               </p>
             </div>
           </div>
           <!-- Analysis error preview -->
-          <div v-else-if="submission.analysis_error" class="flex items-start gap-2 text-orange-500 text-sm mb-3 p-2 bg-orange-500/10 rounded-md">
+          <div v-else-if="submission.analysis_error" class="flex items-start gap-2 text-warning text-sm mb-3 p-2 bg-warning/10 rounded-md">
             <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
-            <span class="line-clamp-2">Analysis failed - pending review</span>
+            <span class="line-clamp-2">Analysis failed — a judge will review this entry</span>
           </div>
           <div class="flex items-center justify-between text-sm text-muted-foreground">
             <div class="flex items-center">
@@ -308,9 +313,8 @@ const getImageUrl = (url: string) => {
             <Badge
               v-if="selectedSubmission"
               :variant="getStatusVariant(selectedSubmission.status)"
-              class="text-sm px-3 py-1"
             >
-              {{ selectedSubmission.status }}
+              {{ selectedSubmission.status.toUpperCase() }}
             </Badge>
           </div>
           <DialogTitle class="text-2xl">{{ selectedSubmission?.title }}</DialogTitle>
@@ -323,19 +327,19 @@ const getImageUrl = (url: string) => {
         <div v-if="selectedSubmission" class="space-y-6 mt-4">
           <!-- Judge Review Card - Shows for both approved and rejected manual reviews -->
           <div v-if="wasManuallyReviewed(selectedSubmission)"
-               class="rounded-xl border-2 p-4"
+               class="rounded-xl border p-4"
                :class="selectedSubmission.status === 'approved'
-                 ? 'border-green-500/50 bg-green-500/10'
-                 : 'border-red-500/50 bg-red-500/10'">
+                 ? 'border-success/30 bg-success/10'
+                 : 'border-destructive/30 bg-destructive/10'">
             <div class="flex items-start gap-3">
               <div class="w-10 h-10 rounded-full flex items-center justify-center"
-                   :class="selectedSubmission.status === 'approved' ? 'bg-green-500/20' : 'bg-red-500/20'">
-                <Gavel class="w-5 h-5" :class="selectedSubmission.status === 'approved' ? 'text-green-500' : 'text-red-500'" />
+                   :class="selectedSubmission.status === 'approved' ? 'bg-success/20' : 'bg-destructive/20'">
+                <Gavel class="w-5 h-5" :class="selectedSubmission.status === 'approved' ? 'text-success' : 'text-destructive'" />
               </div>
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="font-semibold" :class="selectedSubmission.status === 'approved' ? 'text-green-400' : 'text-red-400'">
-                    {{ selectedSubmission.status === 'approved' ? 'Approved by Judge' : 'Rejected by Judge' }}
+                  <span class="font-semibold" :class="selectedSubmission.status === 'approved' ? 'text-success' : 'text-destructive'">
+                    {{ selectedSubmission.status === 'approved' ? 'Approved by judge' : 'Rejected by judge' }}
                   </span>
                 </div>
                 <p v-if="selectedSubmission.reviewed_at" class="text-sm text-muted-foreground mb-2">
@@ -362,17 +366,17 @@ const getImageUrl = (url: string) => {
           </Alert>
 
           <!-- Analyzing Status Info -->
-          <Alert v-if="selectedSubmission.status === 'analyzing'" class="border-blue-500 bg-blue-500/10">
-            <Info class="w-4 h-4 text-blue-500" />
-            <AlertDescription class="text-blue-400">
+          <Alert v-if="selectedSubmission.status === 'analyzing'" class="border-info/30 bg-info/10">
+            <Info class="w-4 h-4 text-info" />
+            <AlertDescription class="text-info">
               Your submission is being analyzed by our AI verification system. This usually takes a few minutes.
             </AlertDescription>
           </Alert>
 
           <!-- Pending Review Info (when pending and not analyzing) -->
-          <Alert v-if="selectedSubmission.status === 'pending' && !selectedSubmission.analysis_error" class="border-yellow-500 bg-yellow-500/10">
-            <Clock class="w-4 h-4 text-yellow-500" />
-            <AlertDescription class="text-yellow-400">
+          <Alert v-if="selectedSubmission.status === 'pending' && !selectedSubmission.analysis_error" class="border-warning/30 bg-warning/10">
+            <Clock class="w-4 h-4 text-warning" />
+            <AlertDescription class="text-warning">
               Your submission is pending review. A judge will evaluate it shortly.
             </AlertDescription>
           </Alert>
@@ -397,7 +401,7 @@ const getImageUrl = (url: string) => {
           </div>
 
           <!-- Details Grid -->
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="p-4 bg-muted/30 rounded-xl">
               <p class="text-sm text-muted-foreground mb-1">Submitted</p>
               <p class="text-base font-medium">{{ formatDate(selectedSubmission.created_at) }}</p>

@@ -5,8 +5,8 @@ test.describe('Navigation', () => {
     await page.goto('/')
 
     // Check for main navigation items
-    await expect(page.getByRole('link', { name: /^a\.v\.a\.r\.$/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /^competitions$/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /a\.v\.a\.r\. home/i })).toBeVisible()
+    await expect(page.locator('header').getByRole('link', { name: /^competitions$/i })).toBeVisible()
 
     // Check for auth buttons
     await expect(page.getByRole('link', { name: /sign in/i })).toBeVisible()
@@ -16,7 +16,7 @@ test.describe('Navigation', () => {
   test('should navigate to home from logo', async ({ page }) => {
     await page.goto('/competitions')
 
-    await page.getByRole('link', { name: /^a\.v\.a\.r\.$/i }).click()
+    await page.getByRole('link', { name: /a\.v\.a\.r\. home/i }).click()
     await expect(page).toHaveURL('/')
   })
 
@@ -25,20 +25,20 @@ test.describe('Navigation', () => {
 
     // Check footer exists
     await expect(page.locator('footer')).toBeVisible()
-    await expect(page.getByText(/© 2024 A\.V\.A\.R\./i)).toBeVisible()
+    await expect(page.getByText(/© \d{4} A\.V\.A\.R\./i)).toBeVisible()
   })
 
   test('should navigate between all main pages', async ({ page }) => {
     // Start at home
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: /a\.v\.a\.r\./i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /authentic photography/i })).toBeVisible()
 
     // Go to competitions
-    await page.getByRole('link', { name: /browse competitions/i }).first().click()
+    await page.getByRole('button', { name: /browse competitions/i }).first().click()
     await expect(page).toHaveURL(/\/competitions/)
 
     // Go back to home
-    await page.getByRole('link', { name: /^a\.v\.a\.r\.$/i }).click()
+    await page.getByRole('link', { name: /a\.v\.a\.r\. home/i }).click()
     await expect(page).toHaveURL('/')
 
     // Go to login
@@ -46,7 +46,7 @@ test.describe('Navigation', () => {
     await expect(page).toHaveURL(/\/login/)
 
     // Go to register
-    await page.getByRole('link', { name: /sign up/i }).click()
+    await page.getByRole('link', { name: /create account/i }).click()
     await expect(page).toHaveURL(/\/register/)
   })
 

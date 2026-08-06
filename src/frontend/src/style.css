@@ -4,27 +4,52 @@
 
 @layer base {
   :root {
-    /* Clean light theme - shadcn style */
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* A.V.A.R. editorial light theme — paper canvas, ink type, verified-green brand accent */
+    --background: 0 0% 99%;
+    --foreground: 240 10% 8%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 10% 8%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 201 96% 32%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 201 96% 32%;
-    --radius: 0.75rem;
+    --popover-foreground: 240 10% 8%;
+    /* Primary actions are ink-black pills */
+    --primary: 240 10% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 9%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 40%;
+    --accent: 240 5% 94%;
+    --accent-foreground: 240 10% 9%;
+    --destructive: 0 72% 46%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 89%;
+    --input: 240 6% 87%;
+    --ring: 240 10% 9%;
+    --radius: 1rem;
+
+    /* Brand accent — vivid "verified" green, used for authenticity/positive moments */
+    --brand: 84 89% 50%;
+    --brand-foreground: 240 10% 8%;
+
+    /* Semantic status colors (AA on white) */
+    --success: 152 60% 32%;
+    --success-foreground: 0 0% 98%;
+    --warning: 33 92% 38%;
+    --warning-foreground: 0 0% 98%;
+    --info: 217 85% 42%;
+    --info-foreground: 0 0% 98%;
+
+    /* Dark editorial section surface */
+    --ink: 240 10% 8%;
+    --ink-foreground: 0 0% 98%;
+    --ink-muted: 240 5% 64%;
+
+    /* Decorative gradient + glow (previously referenced but undefined) */
+    --gradient-start: 84 89% 50%;
+    --gradient-mid: 160 84% 39%;
+    --gradient-end: 199 89% 48%;
+    --glow-primary: 84 89% 50% / 0.35;
+    --glow-accent: 160 84% 39% / 0.25;
   }
 }
 
@@ -34,14 +59,28 @@
   }
   html {
     color-scheme: light;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04";
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+  ::selection {
+    background: hsl(var(--brand));
+    color: hsl(var(--brand-foreground));
   }
 }
 
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   *,
   *::before,
   *::after {

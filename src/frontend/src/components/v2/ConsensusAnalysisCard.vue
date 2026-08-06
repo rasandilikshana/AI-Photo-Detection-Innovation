@@ -47,15 +47,15 @@ const consensusQuality = computed(() => {
 const consensusColor = computed(() => {
   switch (props.consensusVerdict) {
     case 'strong_consensus':
-      return 'text-green-600 dark:text-green-400'
+      return 'text-success'
     case 'moderate_consensus':
-      return 'text-blue-600 dark:text-blue-400'
+      return 'text-info'
     case 'weak_consensus':
-      return 'text-yellow-600 dark:text-yellow-400'
+      return 'text-warning'
     case 'poor_consensus':
-      return 'text-red-600 dark:text-red-400'
+      return 'text-destructive'
     default:
-      return 'text-gray-600 dark:text-gray-400'
+      return 'text-muted-foreground'
   }
 })
 
@@ -70,7 +70,7 @@ const scoreRange = computed(() => {
 </script>
 
 <template>
-  <Card>
+  <Card class="rounded-2xl">
     <CardHeader>
       <div class="flex items-center justify-between">
         <CardTitle class="flex items-center gap-2">
@@ -78,10 +78,12 @@ const scoreRange = computed(() => {
           Judge Consensus Analysis
         </CardTitle>
         <button
+          type="button"
+          :aria-expanded="showDetails"
           @click="showDetails = !showDetails"
-          class="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          class="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          {{ showDetails ? 'Hide' : 'Show' }} Details
+          {{ showDetails ? 'Hide' : 'Show' }} details
         </button>
       </div>
       <CardDescription>
@@ -140,11 +142,11 @@ const scoreRange = computed(() => {
         <div v-if="scoreMean !== undefined" class="grid grid-cols-2 gap-4">
           <div class="space-y-1">
             <p class="text-xs text-muted-foreground">Mean Score</p>
-            <p class="text-2xl font-bold">{{ scoreMean.toFixed(1) }}</p>
+            <p class="text-2xl font-display font-semibold">{{ scoreMean.toFixed(1) }}</p>
           </div>
           <div class="space-y-1">
             <p class="text-xs text-muted-foreground">Std Deviation</p>
-            <p class="text-2xl font-bold">{{ scoreStd?.toFixed(2) || 'N/A' }}</p>
+            <p class="text-2xl font-display font-semibold">{{ scoreStd?.toFixed(2) || 'N/A' }}</p>
           </div>
         </div>
 
@@ -158,7 +160,7 @@ const scoreRange = computed(() => {
           </div>
           <p class="text-xs text-muted-foreground">
             Range: {{ (scoreRange.max - scoreRange.min).toFixed(1) }} points
-            <span v-if="(scoreRange.max - scoreRange.min) > 3" class="text-amber-600 dark:text-amber-400">
+            <span v-if="(scoreRange.max - scoreRange.min) > 3" class="text-warning">
               (High variance)
             </span>
           </p>
@@ -187,7 +189,7 @@ const scoreRange = computed(() => {
         <!-- Outlier Explanation -->
         <div v-if="outlierJudges && outlierJudges.length > 0" class="space-y-1">
           <p class="text-sm font-medium flex items-center gap-2">
-            <AlertTriangle class="h-4 w-4 text-red-600 dark:text-red-400" />
+            <AlertTriangle class="h-4 w-4 text-destructive" />
             Outlier Detection
           </p>
           <p class="text-xs text-muted-foreground">

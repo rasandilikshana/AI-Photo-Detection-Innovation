@@ -480,17 +480,14 @@ const getImageUrl = (url: string) => {
   <div class="container mx-auto px-4 md:px-6 py-6 md:py-10">
     <!-- Header -->
     <div class="mb-6 md:mb-8">
-      <div class="flex items-center gap-3 mb-2">
-        <div class="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Gavel class="w-5 h-5 md:w-6 md:h-6 text-primary" />
-        </div>
-        <div>
-          <h1 class="text-2xl md:text-3xl font-bold text-foreground">Judge Dashboard</h1>
-          <p class="text-sm md:text-lg text-muted-foreground">
-            Review and score submissions for your assigned competitions
-          </p>
-        </div>
-      </div>
+      <span class="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+        <span class="h-1.5 w-1.5 rounded-full bg-brand"></span>
+        Judge panel
+      </span>
+      <h1 class="mt-3 text-3xl md:text-4xl font-display font-semibold tracking-tight">Judge dashboard</h1>
+      <p class="mt-2 text-muted-foreground">
+        Review and score submissions for your assigned competitions.
+      </p>
     </div>
 
     <!-- Not a judge warning -->
@@ -507,15 +504,15 @@ const getImageUrl = (url: string) => {
 
     <!-- Loading state -->
     <div v-if="isLoading" class="text-center py-20">
-      <Loader2 class="w-12 h-12 text-primary animate-spin mx-auto mb-6" />
+      <Loader2 class="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-6" />
       <p class="text-muted-foreground text-lg">Loading your assignments...</p>
     </div>
 
     <template v-else-if="isJudge && !selectedCompetition">
       <!-- No assignments -->
       <div v-if="assignments.length === 0" class="text-center py-20">
-        <div class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-          <Gavel class="w-12 h-12 text-muted-foreground" />
+        <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
+          <Gavel class="w-8 h-8 text-muted-foreground" />
         </div>
         <p class="text-xl text-muted-foreground">You are not assigned to any competitions yet.</p>
         <p class="text-muted-foreground mt-2">Contact an administrator to be assigned as a judge.</p>
@@ -523,12 +520,12 @@ const getImageUrl = (url: string) => {
 
       <!-- Assignments grid -->
       <div v-else>
-        <h2 class="text-xl font-semibold mb-4">Your Assigned Competitions</h2>
+        <h2 class="text-xl font-display font-semibold tracking-tight mb-4">Your assigned competitions</h2>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card
             v-for="assignment in assignments"
             :key="assignment.assignment_id"
-            class="cursor-pointer hover:shadow-lg transition-all hover:border-primary/50"
+            class="rounded-2xl cursor-pointer transition-shadow hover:shadow-lg"
             @click="loadCompetitionData(assignment.competition_id)"
           >
             <CardHeader>
@@ -548,7 +545,7 @@ const getImageUrl = (url: string) => {
             <CardContent>
               <Button variant="outline" class="w-full">
                 <Eye class="w-4 h-4 mr-2" />
-                View Submissions
+                View submissions
               </Button>
             </CardContent>
           </Card>
@@ -562,13 +559,13 @@ const getImageUrl = (url: string) => {
       <div class="mb-6">
         <Button variant="ghost" @click="goBackToAssignments" class="group">
           <ArrowLeft class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Competitions
+          Back to competitions
         </Button>
       </div>
 
       <!-- Stats Loading -->
       <div v-if="isLoadingStats" class="text-center py-12">
-        <Loader2 class="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+        <Loader2 class="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-4" />
         <p class="text-muted-foreground">Loading competition statistics...</p>
       </div>
 
@@ -576,7 +573,7 @@ const getImageUrl = (url: string) => {
       <div v-else-if="competitionStats" class="mb-8">
         <div class="flex items-center justify-between mb-4">
           <div>
-            <h2 class="text-2xl font-bold">{{ competitionStats.competition_title }}</h2>
+            <h2 class="text-2xl font-display font-semibold tracking-tight">{{ competitionStats.competition_title }}</h2>
             <!-- V2.0: Judge Profile Badge -->
             <JudgeProfileBadge
               v-if="authStore.user?.id && selectedCompetition"
@@ -591,87 +588,79 @@ const getImageUrl = (url: string) => {
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent class="pt-6">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <BarChart3 class="w-5 h-5 text-blue-500" />
-                </div>
-                <div>
-                  <p class="text-2xl font-bold">{{ competitionStats.total_submissions }}</p>
-                  <p class="text-sm text-muted-foreground">Total Submissions</p>
-                </div>
+          <div class="rounded-2xl border bg-card p-5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                <BarChart3 class="w-5 h-5 text-foreground" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p class="text-3xl font-display font-semibold">{{ competitionStats.total_submissions }}</p>
+                <p class="text-sm text-muted-foreground">Total submissions</p>
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardContent class="pt-6">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                  <FileCheck class="w-5 h-5 text-green-500" />
-                </div>
-                <div>
-                  <p class="text-2xl font-bold">{{ competitionStats.approved_submissions }}</p>
-                  <p class="text-sm text-muted-foreground">Approved</p>
-                </div>
+          <div class="rounded-2xl border bg-card p-5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+                <FileCheck class="w-5 h-5 text-success" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p class="text-3xl font-display font-semibold">{{ competitionStats.approved_submissions }}</p>
+                <p class="text-sm text-muted-foreground">Approved</p>
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardContent class="pt-6">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Star class="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p class="text-2xl font-bold">{{ competitionStats.scored_by_me }}</p>
-                  <p class="text-sm text-muted-foreground">Scored by You</p>
-                </div>
+          <div class="rounded-2xl border bg-card p-5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+                <Star class="w-5 h-5 text-foreground" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p class="text-3xl font-display font-semibold">{{ competitionStats.scored_by_me }}</p>
+                <p class="text-sm text-muted-foreground">Scored by you</p>
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardContent class="pt-6">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                  <Clock class="w-5 h-5 text-orange-500" />
-                </div>
-                <div>
-                  <p class="text-2xl font-bold">{{ competitionStats.pending_to_score }}</p>
-                  <p class="text-sm text-muted-foreground">Pending to Score</p>
-                </div>
+          <div class="rounded-2xl border bg-card p-5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
+                <Clock class="w-5 h-5 text-warning" />
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <p class="text-3xl font-display font-semibold">{{ competitionStats.pending_to_score }}</p>
+                <p class="text-sm text-muted-foreground">Awaiting your score</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- AI Verdict Breakdown -->
-        <Card class="mb-6">
+        <Card class="rounded-2xl mb-6">
           <CardHeader class="pb-3">
             <CardTitle class="text-lg">AI Verification Summary</CardTitle>
           </CardHeader>
           <CardContent>
             <div class="flex flex-wrap gap-4">
               <div v-if="competitionStats.verdict_breakdown.authentic" class="flex items-center gap-2">
-                <ShieldCheck class="w-5 h-5 text-green-500" />
+                <ShieldCheck class="w-5 h-5 text-success" />
                 <span class="font-medium">{{ competitionStats.verdict_breakdown.authentic }}</span>
                 <span class="text-muted-foreground">Authentic</span>
               </div>
               <div v-if="competitionStats.verdict_breakdown.suspicious" class="flex items-center gap-2">
-                <ShieldAlert class="w-5 h-5 text-yellow-500" />
+                <ShieldAlert class="w-5 h-5 text-warning" />
                 <span class="font-medium">{{ competitionStats.verdict_breakdown.suspicious }}</span>
                 <span class="text-muted-foreground">Suspicious</span>
               </div>
               <div v-if="competitionStats.verdict_breakdown.ai_generated" class="flex items-center gap-2">
-                <AlertTriangle class="w-5 h-5 text-red-500" />
+                <AlertTriangle class="w-5 h-5 text-destructive" />
                 <span class="font-medium">{{ competitionStats.verdict_breakdown.ai_generated }}</span>
                 <span class="text-muted-foreground">AI Generated</span>
               </div>
               <div v-if="competitionStats.verdict_breakdown.needs_review" class="flex items-center gap-2">
-                <ShieldQuestion class="w-5 h-5 text-blue-500" />
+                <ShieldQuestion class="w-5 h-5 text-info" />
                 <span class="font-medium">{{ competitionStats.verdict_breakdown.needs_review }}</span>
                 <span class="text-muted-foreground">Needs Review</span>
               </div>
@@ -754,12 +743,12 @@ const getImageUrl = (url: string) => {
           >
             <History v-if="!isLoadingAuditLogs" class="w-4 h-4 mr-2" />
             <Loader2 v-else class="w-4 h-4 mr-2 animate-spin" />
-            {{ showAuditLogs ? 'Hide Scoring Activity' : 'View Scoring Activity' }}
+            {{ showAuditLogs ? 'Hide scoring activity' : 'View scoring activity' }}
           </Button>
         </div>
 
         <!-- Scoring Activity Logs Panel -->
-        <Card v-if="showAuditLogs" class="mb-6">
+        <Card v-if="showAuditLogs" class="rounded-2xl mb-6">
           <CardHeader>
             <div class="flex items-center justify-between">
               <div>
@@ -768,10 +757,10 @@ const getImageUrl = (url: string) => {
                   Scoring Activity Log
                 </CardTitle>
                 <CardDescription>
-                  Track all scoring actions with client details for shared credentials testing
+                  Every scoring action with time, device, and network details.
                 </CardDescription>
               </div>
-              <Button variant="ghost" size="sm" @click="loadAuditLogs" :disabled="isLoadingAuditLogs">
+              <Button variant="ghost" size="sm" aria-label="Refresh activity log" @click="loadAuditLogs" :disabled="isLoadingAuditLogs">
                 <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': isLoadingAuditLogs }" />
               </Button>
             </div>
@@ -779,18 +768,18 @@ const getImageUrl = (url: string) => {
           <CardContent>
             <!-- Audit Stats Summary -->
             <div v-if="auditLogStats" class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6">
-              <div class="p-3 md:p-4 bg-muted rounded-lg text-center">
-                <p class="text-xl md:text-2xl font-bold">{{ auditLogStats.total_count }}</p>
+              <div class="p-3 md:p-4 bg-muted rounded-xl text-center">
+                <p class="text-xl md:text-2xl font-display font-semibold">{{ auditLogStats.total_count }}</p>
                 <p class="text-xs md:text-sm text-muted-foreground">Total Actions</p>
               </div>
-              <div class="p-3 md:p-4 bg-muted rounded-lg text-center">
-                <p class="text-xl md:text-2xl font-bold">{{ auditLogStats.unique_ips }}</p>
+              <div class="p-3 md:p-4 bg-muted rounded-xl text-center">
+                <p class="text-xl md:text-2xl font-display font-semibold">{{ auditLogStats.unique_ips }}</p>
                 <p class="text-xs md:text-sm text-muted-foreground flex items-center justify-center gap-1">
                   <Network class="w-3 h-3" /> Unique IPs
                 </p>
               </div>
-              <div class="p-3 md:p-4 bg-muted rounded-lg text-center">
-                <p class="text-xl md:text-2xl font-bold">{{ auditLogStats.unique_sessions }}</p>
+              <div class="p-3 md:p-4 bg-muted rounded-xl text-center">
+                <p class="text-xl md:text-2xl font-display font-semibold">{{ auditLogStats.unique_sessions }}</p>
                 <p class="text-xs md:text-sm text-muted-foreground flex items-center justify-center gap-1">
                   <Monitor class="w-3 h-3" /> Unique Sessions
                 </p>
@@ -799,7 +788,7 @@ const getImageUrl = (url: string) => {
 
             <!-- Loading State -->
             <div v-if="isLoadingAuditLogs" class="text-center py-8">
-              <Loader2 class="w-8 h-8 text-primary animate-spin mx-auto mb-2" />
+              <Loader2 class="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-2" />
               <p class="text-muted-foreground">Loading activity logs...</p>
             </div>
 
@@ -883,17 +872,20 @@ const getImageUrl = (url: string) => {
 
       <!-- Submissions Loading -->
       <div v-if="isLoadingSubmissions" class="text-center py-12">
-        <Loader2 class="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+        <Loader2 class="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-4" />
         <p class="text-muted-foreground">Loading submissions...</p>
       </div>
 
       <!-- No Submissions -->
       <div v-else-if="filteredSubmissions.length === 0" class="text-center py-12">
-        <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-          <Image class="w-10 h-10 text-muted-foreground" />
+        <div class="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
+          <Image class="w-8 h-8 text-muted-foreground" />
         </div>
         <p class="text-lg text-muted-foreground">
           No submissions match your filters.
+        </p>
+        <p class="text-muted-foreground mt-1">
+          Clear filters to see every submission.
         </p>
       </div>
 
@@ -902,8 +894,8 @@ const getImageUrl = (url: string) => {
         <Card
           v-for="submission in paginatedSubmissions"
           :key="submission.id"
-          class="overflow-hidden hover:shadow-lg transition-all cursor-pointer hover:border-primary/50"
-          :class="{ 'border-green-500/50 bg-green-500/5': submission.is_scored_by_me }"
+          class="overflow-hidden rounded-2xl cursor-pointer transition-shadow hover:shadow-lg"
+          :class="{ 'border-brand/50 bg-brand/5': submission.is_scored_by_me }"
           @click="router.push(`/judge/score/${submission.id}?competition=${selectedCompetition}`)"
         >
           <!-- Thumbnail -->
@@ -928,7 +920,7 @@ const getImageUrl = (url: string) => {
 
             <!-- Scored indicator -->
             <div v-if="submission.is_scored_by_me" class="absolute top-2 right-2">
-              <Badge variant="default" class="bg-green-500 text-xs">
+              <Badge variant="brand" class="text-xs">
                 <CheckCircle class="w-3 h-3 mr-1" />
                 Scored
               </Badge>
@@ -946,11 +938,11 @@ const getImageUrl = (url: string) => {
                 <component :is="getVerdictIcon(submission.verification_verdict)" class="w-3 h-3" />
                 {{ submission.verification_verdict ? submission.verification_verdict.replace('_', ' ').toUpperCase() : 'PENDING' }}
               </Badge>
-              <span v-if="submission.verification_confidence" class="text-lg font-bold"
+              <span v-if="submission.verification_confidence" class="text-lg font-display font-semibold"
                     :class="{
-                      'text-green-500': getLayerStatus(submission.verification_verdict).isPass === true,
-                      'text-red-500': getLayerStatus(submission.verification_verdict).isPass === false,
-                      'text-yellow-500': getLayerStatus(submission.verification_verdict).isPass === null
+                      'text-success': getLayerStatus(submission.verification_verdict).isPass === true,
+                      'text-destructive': getLayerStatus(submission.verification_verdict).isPass === false,
+                      'text-warning': getLayerStatus(submission.verification_verdict).isPass === null
                     }">
                 {{ formatConfidence(submission.verification_confidence) }}
               </span>
@@ -961,14 +953,14 @@ const getImageUrl = (url: string) => {
               <!-- Layer 1 -->
               <div v-if="submission.ai_summary.layer1_verdict" class="flex items-center justify-between text-xs">
                 <div class="flex items-center gap-1.5">
-                  <FileImage class="w-3 h-3 text-blue-500" />
+                  <FileImage class="w-3 h-3 text-muted-foreground" />
                   <span class="text-muted-foreground">L1 Metadata</span>
                 </div>
                 <span class="font-semibold"
                       :class="{
-                        'text-green-500': getLayerStatus(submission.ai_summary.layer1_verdict).isPass === true,
-                        'text-red-500': getLayerStatus(submission.ai_summary.layer1_verdict).isPass === false,
-                        'text-yellow-500': getLayerStatus(submission.ai_summary.layer1_verdict).isPass === null
+                        'text-success': getLayerStatus(submission.ai_summary.layer1_verdict).isPass === true,
+                        'text-destructive': getLayerStatus(submission.ai_summary.layer1_verdict).isPass === false,
+                        'text-warning': getLayerStatus(submission.ai_summary.layer1_verdict).isPass === null
                       }">
                   {{ getLayerStatus(submission.ai_summary.layer1_verdict).status }}
                 </span>
@@ -976,7 +968,7 @@ const getImageUrl = (url: string) => {
               <!-- Layer 2 -->
               <div v-if="submission.ai_summary.layer2_verdict" class="flex items-center justify-between text-xs">
                 <div class="flex items-center gap-1.5">
-                  <Fingerprint class="w-3 h-3 text-purple-500" />
+                  <Fingerprint class="w-3 h-3 text-muted-foreground" />
                   <span class="text-muted-foreground">L2 Fingerprint</span>
                 </div>
                 <div class="flex items-center gap-1">
@@ -985,9 +977,9 @@ const getImageUrl = (url: string) => {
                   </span>
                   <span class="font-semibold"
                         :class="{
-                          'text-green-500': getLayerStatus(submission.ai_summary.layer2_verdict).isPass === true,
-                          'text-red-500': getLayerStatus(submission.ai_summary.layer2_verdict).isPass === false,
-                          'text-yellow-500': getLayerStatus(submission.ai_summary.layer2_verdict).isPass === null
+                          'text-success': getLayerStatus(submission.ai_summary.layer2_verdict).isPass === true,
+                          'text-destructive': getLayerStatus(submission.ai_summary.layer2_verdict).isPass === false,
+                          'text-warning': getLayerStatus(submission.ai_summary.layer2_verdict).isPass === null
                         }">
                     {{ getLayerStatus(submission.ai_summary.layer2_verdict).status }}
                   </span>
@@ -996,7 +988,7 @@ const getImageUrl = (url: string) => {
               <!-- Layer 3 -->
               <div v-if="submission.ai_summary.layer3_verdict" class="flex items-center justify-between text-xs">
                 <div class="flex items-center gap-1.5">
-                  <Globe class="w-3 h-3 text-cyan-500" />
+                  <Globe class="w-3 h-3 text-muted-foreground" />
                   <span class="text-muted-foreground">L3 API Check</span>
                 </div>
                 <div class="flex items-center gap-1">
@@ -1005,9 +997,9 @@ const getImageUrl = (url: string) => {
                   </span>
                   <span class="font-semibold"
                         :class="{
-                          'text-green-500': getLayerStatus(submission.ai_summary.layer3_verdict).isPass === true,
-                          'text-red-500': getLayerStatus(submission.ai_summary.layer3_verdict).isPass === false,
-                          'text-yellow-500': getLayerStatus(submission.ai_summary.layer3_verdict).isPass === null
+                          'text-success': getLayerStatus(submission.ai_summary.layer3_verdict).isPass === true,
+                          'text-destructive': getLayerStatus(submission.ai_summary.layer3_verdict).isPass === false,
+                          'text-warning': getLayerStatus(submission.ai_summary.layer3_verdict).isPass === null
                         }">
                     {{ getLayerStatus(submission.ai_summary.layer3_verdict).status }}
                   </span>
@@ -1059,7 +1051,7 @@ const getImageUrl = (url: string) => {
               @click.stop="router.push(`/judge/score/${submission.id}?competition=${selectedCompetition}`)"
             >
               <Star class="w-4 h-4 mr-2" />
-              Score This Entry
+              Score this entry
             </Button>
 
             <!-- View details for scored submissions -->
@@ -1070,15 +1062,15 @@ const getImageUrl = (url: string) => {
               @click.stop="router.push(`/judge/score/${submission.id}?competition=${selectedCompetition}`)"
             >
               <Eye class="w-4 h-4 mr-2" />
-              View Details
+              View details
             </Button>
 
             <!-- Manual review buttons for pending/needs_review/analysis_error submissions -->
             <div v-else-if="submission.status?.toLowerCase() === 'pending' || submission.verification_verdict?.toLowerCase() === 'needs_review' || submission.analysis_error" class="space-y-2">
               <div class="flex gap-2">
                 <Button
-                  variant="default"
-                  class="flex-1 bg-green-600 hover:bg-green-700"
+                  variant="brand"
+                  class="flex-1"
                   @click.stop="openReviewDialog(submission.id, 'approve')"
                 >
                   <ThumbsUp class="w-4 h-4 mr-1" />
@@ -1099,7 +1091,7 @@ const getImageUrl = (url: string) => {
                 @click.stop="router.push(`/judge/score/${submission.id}?competition=${selectedCompetition}`)"
               >
                 <Eye class="w-4 h-4 mr-2" />
-                View Full Details
+                View full details
               </Button>
             </div>
 
@@ -1128,6 +1120,7 @@ const getImageUrl = (url: string) => {
             variant="outline"
             size="icon"
             class="h-8 w-8"
+            aria-label="First page"
             :disabled="currentPage === 1"
             @click="currentPage = 1"
           >
@@ -1138,6 +1131,7 @@ const getImageUrl = (url: string) => {
             variant="outline"
             size="icon"
             class="h-8 w-8"
+            aria-label="Previous page"
             :disabled="currentPage === 1"
             @click="currentPage--"
           >
@@ -1168,6 +1162,7 @@ const getImageUrl = (url: string) => {
             variant="outline"
             size="icon"
             class="h-8 w-8"
+            aria-label="Next page"
             :disabled="currentPage === totalPages"
             @click="currentPage++"
           >
@@ -1178,6 +1173,7 @@ const getImageUrl = (url: string) => {
             variant="outline"
             size="icon"
             class="h-8 w-8"
+            aria-label="Last page"
             :disabled="currentPage === totalPages"
             @click="currentPage = totalPages"
           >
