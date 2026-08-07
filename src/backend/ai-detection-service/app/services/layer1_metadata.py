@@ -88,6 +88,17 @@ class MetadataAnalyzer:
     # Critical fields that should exist together
     CONSISTENCY_GROUPS = [["Make", "Model"], ["ExposureTime", "FNumber", "ISO"], ["FocalLength", "LensModel"]]
 
+    # Fields identifying *which capture* a metadata block describes. These must agree
+    # between a JPEG and the RAW it was submitted with; exposure settings are excluded
+    # because editors legitimately rewrite them (and exiftool/PIL round them
+    # differently), which _check_raw_jpg_correlation already scores more leniently.
+    CAPTURE_IDENTITY_FIELDS = {
+        "Make": "camera manufacturer",
+        "Model": "camera model",
+        "SerialNumber": "camera serial number",
+        "DateTimeOriginal": "capture time",
+    }
+
     def __init__(self):
         self.exiftool_available = self._check_exiftool()
 
@@ -130,9 +141,18 @@ class MetadataAnalyzer:
             confidence_score = 1.0
             verdict = "AUTHENTIC"
 
-            # Check 1: AI Signature Detection
-            ai_detected, ai_flags = self._detect_ai_signatures(jpg_metadata)
-            if ai_detected:
+            # Check 1: AI Signature Detection — every file supplied is scanned. The
+            # RAW is the authoritative metadata source below, so it has to be scanned
+            # too; otherwise a synthetic RAW advertising its generator would be
+            # trusted on the strength of the very tags that give it away.
+            ai_flags: List[str] = []
+            _, jpg_ai_flags = self._detect_ai_signatures(jpg_metadata)
+            ai_flags.extend(jpg_ai_flags)
+            if raw_metadata:
+                _, raw_ai_flags = self._detect_ai_signatures(raw_metadata)
+                ai_flags.extend(f"RAW: {flag}" for flag in raw_ai_flags)
+
+            if ai_flags:
                 flags.extend(ai_flags)
                 verdict = "REJECT"
                 confidence_score = 1.0  # 100% confidence in AI detection
@@ -148,12 +168,35 @@ class MetadataAnalyzer:
                     "analysis": "AI generation signatures detected in metadata",
                 }
 
+            # Camera identity and capture settings are read from the RAW whenever one
+            # is supplied. The RAW is the camera's own record: unlike the submitted
+            # JPEG it cannot be emptied by an export dialog (Photoshop's "Export As"
+            # strips EXIF wholesale), so absent JPEG EXIF says nothing about
+            # authenticity while the RAW is present. The JPEG's own EXIF is not
+            # discarded — it is cross-checked against the RAW below.
+            jpg_camera_fields = self._count_camera_fields(jpg_metadata)
+            raw_camera_fields = self._count_camera_fields(raw_metadata)
+
+            if raw_camera_fields and raw_camera_fields >= jpg_camera_fields:
+                authoritative_metadata = raw_metadata
+                metadata_source = "RAW"
+            else:
+                authoritative_metadata = jpg_metadata
+                metadata_source = "JPG"
+
+            if metadata_source == "RAW" and jpg_camera_fields == 0:
+                flags.append(
+                    "INFO: JPEG carries no EXIF (normal for an edit exported from "
+                    "Photoshop or Lightroom) — camera metadata sourced from the RAW "
+                    f"({authoritative_metadata.get('Model') or 'unknown model'})"
+                )
+
             # Check 2: Camera Signature Validation
-            camera_score, camera_flags = self._validate_camera_signatures(jpg_metadata)
+            camera_score, camera_flags = self._validate_camera_signatures(authoritative_metadata)
             flags.extend(camera_flags)
 
             # Check 3: Metadata Consistency
-            consistency_score, consistency_flags = self._check_metadata_consistency(jpg_metadata)
+            consistency_score, consistency_flags = self._check_metadata_consistency(authoritative_metadata)
             flags.extend(consistency_flags)
 
             # Check 3b: Forensic integrity (metadata transplant detection)
@@ -168,16 +211,27 @@ class MetadataAnalyzer:
                 except Exception as e:
                     logger.warning(f"Forensic integrity checks failed: {str(e)}")
 
-            # Check 4: RAW-JPG Metadata Correlation (if RAW provided)
-            if raw_metadata:
+            # Check 3c: Cross-check the JPEG's own claims against the RAW. Two
+            # independent records of the same capture disagreeing is far stronger
+            # evidence of a transplant than anything inferable from the JPEG alone.
+            if raw_metadata and jpg_camera_fields:
+                cross_strong, cross_flags = self._cross_check_jpg_against_raw(jpg_metadata, raw_metadata)
+                forensic_strong += cross_strong
+                flags.extend(cross_flags)
+
+            # Check 4: RAW-JPG Metadata Correlation. Only meaningful when the JPEG
+            # carries camera metadata of its own; a stripped export has nothing to
+            # correlate and must not be penalised for it.
+            correlation_applicable = bool(raw_metadata) and jpg_camera_fields > 0
+            if correlation_applicable:
                 correlation_score, correlation_flags = self._check_raw_jpg_correlation(jpg_metadata, raw_metadata)
                 flags.extend(correlation_flags)
             else:
-                correlation_score = 0.5  # Neutral if no RAW provided
+                correlation_score = 0.5  # Neutral: nothing to correlate
 
             # Calculate overall confidence
             # Weight: Camera signatures (40%), Consistency (30%), Correlation (30%)
-            if raw_metadata:
+            if correlation_applicable:
                 confidence_score = camera_score * 0.4 + consistency_score * 0.3 + correlation_score * 0.3
             else:
                 confidence_score = camera_score * 0.6 + consistency_score * 0.4
@@ -197,18 +251,18 @@ class MetadataAnalyzer:
                 verdict = "SUSPICIOUS"
                 confidence_score = min(confidence_score, 0.4)
 
-            camera_fields_found = sum(1 for field in self.CAMERA_FIELDS if field in jpg_metadata)
+            camera_fields_found = self._count_camera_fields(authoritative_metadata)
 
             # Extract key metadata values for V2 camera reputation system
             extracted_metadata = {
-                "Make": jpg_metadata.get("Make", ""),
-                "Model": jpg_metadata.get("Model", ""),
-                "LensModel": jpg_metadata.get("LensModel", ""),
-                "ExposureTime": jpg_metadata.get("ExposureTime", ""),
-                "FNumber": jpg_metadata.get("FNumber", ""),
-                "ISO": jpg_metadata.get("ISO") or jpg_metadata.get("ISOSpeedRatings", ""),
-                "FocalLength": jpg_metadata.get("FocalLength", ""),
-                "DateTimeOriginal": jpg_metadata.get("DateTimeOriginal", ""),
+                "Make": authoritative_metadata.get("Make", ""),
+                "Model": authoritative_metadata.get("Model", ""),
+                "LensModel": authoritative_metadata.get("LensModel", ""),
+                "ExposureTime": authoritative_metadata.get("ExposureTime", ""),
+                "FNumber": authoritative_metadata.get("FNumber", ""),
+                "ISO": authoritative_metadata.get("ISO") or authoritative_metadata.get("ISOSpeedRatings", ""),
+                "FocalLength": authoritative_metadata.get("FocalLength", ""),
+                "DateTimeOriginal": authoritative_metadata.get("DateTimeOriginal", ""),
             }
 
             return {
@@ -217,6 +271,7 @@ class MetadataAnalyzer:
                 "flags": flags,
                 "metadata_present": bool(jpg_metadata),
                 "metadata": extracted_metadata,  # Include actual metadata for V2 features
+                "metadata_source": metadata_source,  # Which file the camera fields came from
                 "camera_fields_found": camera_fields_found,
                 "ai_signatures_found": 0,
                 "camera_score": camera_score,
@@ -442,6 +497,41 @@ class MetadataAnalyzer:
             score = 0.5  # Neutral if no consistency checks possible
 
         return score, flags
+
+    def _count_camera_fields(self, metadata: Optional[Dict]) -> int:
+        """Count populated CAMERA_FIELDS. Used to decide which file's metadata is
+        authoritative — the richer record wins, with ties going to the RAW."""
+        if not metadata:
+            return 0
+        return sum(1 for field in self.CAMERA_FIELDS if metadata.get(field))
+
+    def _cross_check_jpg_against_raw(self, jpg_metadata: Dict, raw_metadata: Dict) -> tuple[int, List[str]]:
+        """Compare what the JPEG claims about its origin against the submitted RAW.
+
+        A JPEG whose EXIF names a different body — or a different frame — than the RAW
+        it ships with did not come out of that RAW. This is the transplant signal that
+        matters: it compares two independent records of the same capture, rather than
+        inferring intent from how the JPEG's metadata block was written.
+
+        Returns:
+            (strong_indicator_count, flags)
+        """
+        flags = []
+        strong = 0
+
+        for field, label in self.CAPTURE_IDENTITY_FIELDS.items():
+            jpg_value, raw_value = jpg_metadata.get(field), raw_metadata.get(field)
+            if not jpg_value or not raw_value:
+                continue
+            if str(jpg_value).strip() != str(raw_value).strip():
+                strong += 1
+                flags.append(
+                    f"FORENSIC: JPEG declares {label} '{jpg_value}' but the submitted RAW "
+                    f"records '{raw_value}' ({field}) — the JPEG's metadata did not come "
+                    "from this RAW"
+                )
+
+        return strong, flags
 
     def _check_raw_jpg_correlation(self, jpg_metadata: Dict, raw_metadata: Dict) -> tuple[float, List[str]]:
         """
