@@ -223,6 +223,28 @@ def test_a_decisive_critical_failure_cannot_be_outvoted_by_averaging(scorer):
     assert everything_else_perfect["verdict"] == "REJECT"
 
 
+def test_a_layer_reject_caps_the_score_so_the_panel_cannot_contradict_itself(scorer):
+    """Production submission 27. Hive AI rejected it above 90% AI-generated confidence,
+    but third_party carries only 5 of 100 points, so the score stayed at 84 - inside the
+    approve band - while the status read REJECTED. A judge saw both."""
+    result = scorer.score(
+        _l1(), _l2(), {"verdict": "REJECT", "ai_score": 0.95}, _linkage(),
+        layer_reject_reason="third-party detector identified generated content",
+    )
+
+    assert result["score"] <= 24, result
+    assert result["verdict"] == "REJECT"
+    assert "third-party detector" in result["action"]
+
+
+def test_no_reject_reason_leaves_the_score_alone(scorer):
+    with_reason = scorer.score(_l1(), _l2(), None, _linkage(), layer_reject_reason="x")
+    without = scorer.score(_l1(), _l2(), None, _linkage())
+
+    assert with_reason["score"] <= 24
+    assert without["score"] >= 90
+
+
 def test_the_cap_does_not_fire_on_an_inconclusive_signal(scorer):
     """Only a decisive zero caps. Inconclusive (0.35) must stay reviewable, or every
     hard-to-match legitimate edit becomes an auto-rejection."""

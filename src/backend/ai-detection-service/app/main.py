@@ -301,10 +301,25 @@ async def analyze_submission(
         # AUTHENTIC when RAW linkage was suspicious: an unconfirmed critical signal is
         # capped into the judge-review band by CONFIRMED_FLOOR, so there is now one
         # source of truth instead of a score and a separate guard that could disagree.
-        authenticity = scorer.score(layer1_result, layer2_result, layer3_result, raw_jpg_linkage)
+        # An explicit REJECT from a layer stands -- a layer that positively identified
+        # fraud is not outvoted by an average -- and the score is capped to match, so the
+        # judge panel cannot show "84/100, approve" beside a status of REJECTED. That
+        # happened on submission 27: Hive AI rejected it above 90% confidence, but
+        # third_party carries only 5 of 100 points.
+        layer_reject_reason = None
+        if verdict == "REJECT":
+            if (layer3_result or {}).get("verdict") == "REJECT":
+                layer_reject_reason = "third-party detector identified generated content"
+            elif (layer2_result or {}).get("verdict") == "REJECT":
+                layer_reject_reason = "pixel forensics failed"
+            else:
+                layer_reject_reason = "a verification layer positively identified fraud"
 
-        # An explicit REJECT from a layer stands: a layer that positively identified
-        # fraud is not outvoted by an average.
+        authenticity = scorer.score(
+            layer1_result, layer2_result, layer3_result, raw_jpg_linkage,
+            layer_reject_reason=layer_reject_reason,
+        )
+
         if verdict != "REJECT":
             verdict = authenticity["verdict"]
         confidence_score = authenticity["score"] / 100.0
