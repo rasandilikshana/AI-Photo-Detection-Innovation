@@ -9,23 +9,29 @@ submissions.
 WEIGHTS come from measured discriminative power on this platform's own data, not from
 a generic reference table:
 
-  raw_provenance     30  container / writer-software / sensor-geometry checks. Caught
+  raw_provenance     35  container / writer-software / sensor-geometry checks. Caught
                          the only successful forgery against this platform
                          (submission 45), on four independent indicators.
-  geometric_linkage  25  the only signal with a measured two-orders-of-magnitude
+  geometric_linkage  30  the only signal with a measured two-orders-of-magnitude
                          separation: 463-883 RANSAC inliers on genuine pairs versus
                          4-5 on substituted ones.
   metadata           15  camera-field completeness and transplant forensics. Caught
                          the earlier metadata-transplant attack.
-  prnu               10  sensor-reference correlation. Weighted on the assumption
-                         Task 6 makes it functional; until then it contributes a
-                         constant and does not affect ranking.
-  compression        10  double-JPEG history (Task 7). Absent until then, so the
-                         signal is excluded and the others renormalise.
+  prnu               10  sensor-reference correlation by PCE. Reports "not evaluable"
+                         until a per-body reference exists, and is excluded then.
   frequency           5  a crude global FFT energy ratio whose thresholds were tuned
                          empirically, not calibrated. Deliberately low.
   third_party         5  Hive AI. Strong, but external, not always consulted, and
                          its verdict already gates escalation elsewhere.
+
+Double-JPEG compression history was implemented, measured, and DELIBERATELY EXCLUDED.
+It does not discriminate on this data: the synthetic submission scored a DQ strength of
+0.048, inside the genuine range of 0.013-0.119, with two genuine Photoshop exports
+scoring LOWER than the fake. It was inverted on controlled fixtures too (single 0.454
+versus double 0.172). The cause is that the double-quantisation signature lives in a
+JPEG's STORED coefficients, and computing the DCT from decoded pixels loses it. The
+module is retained as a documented negative result but is not wired into scoring; its
+10 points went to the two measured-strongest signals. See compression_history.py.
 
 THE LOAD-BEARING RULE: a signal that could not be EVALUATED is excluded and the
 remaining weights renormalise. It is never scored zero. Scoring an unavailable signal
@@ -44,11 +50,10 @@ class AuthenticityScorer:
     """Aggregates layer results into a single 0-100 score with a review band."""
 
     WEIGHTS = {
-        "raw_provenance": 30,
-        "geometric_linkage": 25,
+        "raw_provenance": 35,
+        "geometric_linkage": 30,
         "metadata": 15,
         "prnu": 10,
-        "compression": 10,
         "frequency": 5,
         "third_party": 5,
     }
@@ -103,7 +108,6 @@ class AuthenticityScorer:
             ("geometric_linkage", lambda: self._linkage(linkage)),
             ("metadata", lambda: self._metadata(layer1)),
             ("prnu", lambda: self._layer2_signal(layer2, "prnu_score", "Sensor noise (PRNU)")),
-            ("compression", lambda: self._compression(layer2)),
             ("frequency", lambda: self._layer2_signal(layer2, "fft_score", "Frequency distribution")),
             ("third_party", lambda: self._third_party(layer3)),
         )
@@ -240,14 +244,6 @@ class AuthenticityScorer:
             return None
         value = float(layer2[key])
         return value, f"{label} score {value:.2f}"
-
-    def _compression(self, layer2: Optional[Dict]) -> Optional[Tuple[float, str]]:
-        """Populated by Task 7. Until then this signal is excluded and the remaining
-        weights renormalise, so no behaviour depends on it landing."""
-        if not layer2 or layer2.get("compression_score") is None:
-            return None
-        value = float(layer2["compression_score"])
-        return value, layer2.get("compression_evidence") or f"Compression history score {value:.2f}"
 
     def _third_party(self, layer3: Optional[Dict]) -> Optional[Tuple[float, str]]:
         if not layer3 or layer3.get("ai_score") is None:
