@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
+from app.services.authenticity_score import AuthenticityScorer
 from app.services.layer1_metadata import MetadataAnalyzer
 from app.services.layer2_fingerprint import DigitalFingerprintAnalyzer
 from app.services.layer3_api import ThirdPartyAPIVerifier
@@ -66,6 +67,11 @@ class AnalysisResult(BaseModel):
     layer2_result: Optional[dict]
     layer3_result: Optional[dict]
     raw_jpg_linkage: Optional[dict]
+    # Weighted 0-100 aggregation of every signal, with the review band and the
+    # per-signal breakdown a judge reads. Replaces confidence_score as the number
+    # that actually decides the verdict; confidence_score is kept as score/100 so
+    # existing consumers keep working.
+    authenticity: Optional[dict]
     flags: List[str]
     processing_time_ms: float
 
@@ -81,6 +87,7 @@ metadata_analyzer = MetadataAnalyzer()
 fingerprint_analyzer = DigitalFingerprintAnalyzer()
 api_verifier = ThirdPartyAPIVerifier()
 linkage_analyzer = RAWJPGLinkageAnalyzer()
+scorer = AuthenticityScorer()
 file_handler = FileHandler()
 
 
@@ -180,6 +187,11 @@ async def analyze_submission(
             if background_tasks:
                 background_tasks.add_task(file_handler.cleanup_files, jpg_path, raw_path)
 
+            # Score even on the early return so the judge panel always has a number
+            # to show. With only Layer 1 available the scorer reports which signals
+            # were not evaluable, so the display stays honest about what was checked.
+            authenticity = scorer.score(layer1_result, None, None, None)
+
             return AnalysisResult(
                 submission_id=submission_id,
                 timestamp=datetime.utcnow(),
@@ -189,6 +201,7 @@ async def analyze_submission(
                 layer2_result=None,
                 layer3_result=None,
                 raw_jpg_linkage=None,
+                authenticity=authenticity,
                 flags=flags,
                 processing_time_ms=processing_time,
             )
@@ -278,11 +291,33 @@ async def analyze_submission(
                     verdict = "AUTHENTIC"
                     confidence_score = layer3_result["confidence"]
 
-        # FINAL SECURITY CHECK: Ensure suspicious RAW linkage prevents AUTHENTIC verdict
-        if raw_linkage_suspicious and verdict == "AUTHENTIC":
-            verdict = "QUARANTINE"
-            confidence_score = min(confidence_score, 0.5)
-            flags.append("Final verdict downgraded due to RAW-JPG linkage concerns")
+        # === AUTHENTICITY SCORE ===
+        # Single weighted aggregation over every signal, replacing the per-layer
+        # confidence_score overrides above. Those overrides made the final number
+        # reflect whichever layer spoke last rather than the weight of evidence, and
+        # made scores incomparable between submissions.
+        #
+        # The scorer also subsumes the old "final security check" that downgraded
+        # AUTHENTIC when RAW linkage was suspicious: an unconfirmed critical signal is
+        # capped into the judge-review band by CONFIRMED_FLOOR, so there is now one
+        # source of truth instead of a score and a separate guard that could disagree.
+        authenticity = scorer.score(layer1_result, layer2_result, layer3_result, raw_jpg_linkage)
+
+        # An explicit REJECT from a layer stands: a layer that positively identified
+        # fraud is not outvoted by an average.
+        if verdict != "REJECT":
+            verdict = authenticity["verdict"]
+        confidence_score = authenticity["score"] / 100.0
+
+        flags.append(
+            f"Authenticity score {authenticity['score']}/100 "
+            f"(band {authenticity['band']}) - {authenticity['action']}"
+        )
+        if authenticity["missing"]:
+            flags.append(
+                "Signals not evaluable for this submission (excluded from the score rather "
+                f"than counted against it): {', '.join(authenticity['missing'])}"
+            )
 
         # Calculate processing time
         processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
@@ -302,6 +337,7 @@ async def analyze_submission(
             layer2_result=layer2_result,
             layer3_result=layer3_result,
             raw_jpg_linkage=raw_jpg_linkage,
+            authenticity=authenticity,
             flags=flags,
             processing_time_ms=processing_time,
         )
