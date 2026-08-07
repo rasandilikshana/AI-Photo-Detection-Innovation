@@ -198,6 +198,42 @@ async def test_sends_key_header_and_two_downscaled_jpegs():
 
 
 @pytest.mark.asyncio
+async def test_generation_config_uses_camelcase_so_google_honours_it():
+    """The Gemini REST API expects camelCase inside generationConfig. snake_case keys are
+    accepted by the endpoint but silently ignored, so the model would answer in prose and
+    every reply would fail to parse — a failure only reproducible against the live API."""
+    captured = {}
+
+    def handler(request):
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(200, json=_gemini_reply(True, "ok"))
+
+    await _arbiter(handler).arbitrate(_image(1), _image(2), _geometry(low_texture=True))
+
+    config = captured["body"]["generationConfig"]
+    assert "responseMimeType" in config, f"snake_case would be ignored by Google: {list(config)}"
+    assert config["responseMimeType"] == "application/json"
+    assert "response_mime_type" not in config
+
+
+@pytest.mark.asyncio
+async def test_response_schema_constrains_the_reply_shape():
+    """Asking for JSON in the prompt is a request; a responseSchema is a constraint."""
+    captured = {}
+
+    def handler(request):
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(200, json=_gemini_reply(True, "ok"))
+
+    await _arbiter(handler).arbitrate(_image(1), _image(2), _geometry(low_texture=True))
+
+    schema = captured["body"]["generationConfig"]["responseSchema"]
+    assert schema["type"] == "OBJECT"
+    assert set(schema["required"]) == {"same_scene", "confidence", "reasoning"}
+    assert schema["properties"]["same_scene"]["type"] == "BOOLEAN"
+
+
+@pytest.mark.asyncio
 async def test_prompt_asks_about_scene_correspondence_not_ai_generation():
     """Whether the image is AI-generated is Layer 3's question. Conflating the two here
     would double-count one signal and invite the arbiter to condemn."""
