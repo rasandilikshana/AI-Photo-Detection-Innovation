@@ -46,6 +46,18 @@ PROMPT = (
     "Set confidence below 0.6 if you are unsure."
 )
 
+# Gemini's Schema proto: type names are the uppercase enum values, not JSON Schema's
+# lowercase ones.
+RESPONSE_SCHEMA = {
+    "type": "OBJECT",
+    "properties": {
+        "same_scene": {"type": "BOOLEAN"},
+        "confidence": {"type": "NUMBER"},
+        "reasoning": {"type": "STRING"},
+    },
+    "required": ["same_scene", "confidence", "reasoning"],
+}
+
 
 class VisionArbiter:
     """Breaks linkage ties that keypoint geometry cannot resolve."""
@@ -141,7 +153,14 @@ class VisionArbiter:
                         {"inline_data": {"mime_type": "image/jpeg", "data": self._encode(jpg_image)}},
                     ]
                 }],
-                "generationConfig": {"temperature": 0.0, "response_mime_type": "application/json"},
+                # camelCase is required: the endpoint accepts snake_case keys here but
+                # silently ignores them, so the model would reply in prose instead of
+                # JSON. The schema makes the shape a constraint rather than a request.
+                "generationConfig": {
+                    "temperature": 0.0,
+                    "responseMimeType": "application/json",
+                    "responseSchema": RESPONSE_SCHEMA,
+                },
             }
 
             async with httpx.AsyncClient(timeout=self.timeout, transport=self._transport) as client:
