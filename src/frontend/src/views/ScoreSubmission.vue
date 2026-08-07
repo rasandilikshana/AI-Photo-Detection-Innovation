@@ -82,7 +82,39 @@ interface SubmissionDetail {
       histogram_correlation?: number
       analysis?: string
       flags?: string[]
+      // Normalised to the RAW frame [x, y, w, h] so it can be drawn at any preview
+      // size. null when no crop was confirmed.
+      crop_rect_norm?: [number, number, number, number] | null
+      crop_fraction?: number
+      geometry?: {
+        inliers: number
+        inlier_ratio: number
+        crop_like: boolean
+        low_texture: boolean
+        keypoints_raw: number
+        keypoints_jpg: number
+        reproj_error_px: number
+        reason: string
+      } | null
+      arbitration?: { verdict: string; reasoning: string } | null
     }
+    // Weighted 0-100 aggregation. This is the number that decides the verdict; the
+    // per-signal breakdown is what a judge reads to understand why.
+    authenticity?: {
+      score: number
+      band: string
+      verdict: string
+      action: string
+      weight_evaluated: number
+      signals: Array<{
+        name: string
+        weight: number
+        score: number
+        contribution: number
+        evidence: string
+      }>
+      missing: string[]
+    } | null
     flags?: string[]
   } | null
   verification_timestamp: string | null
@@ -385,6 +417,44 @@ const getScoreBarColor = (score: number) => {
 }
 
 // Format score as percentage
+// Authenticity Score bands mirror AuthenticityScorer.BANDS in the backend. Kept in the
+// same order so the colour always matches the action the backend reported.
+const scoreBandClass = (score: number) => {
+  if (score >= 75) return 'border-success bg-success/5'
+  if (score >= 50) return 'border-warning bg-warning/5'
+  if (score >= 25) return 'border-warning bg-warning/10'
+  return 'border-destructive bg-destructive/5'
+}
+
+const SIGNAL_LABELS: Record<string, string> = {
+  raw_provenance: 'RAW provenance',
+  geometric_linkage: 'RAW↔JPG geometric linkage',
+  metadata: 'Metadata integrity',
+  prnu: 'Sensor fingerprint (PRNU)',
+  frequency: 'Frequency distribution',
+  third_party: 'Third-party AI detection',
+  compression: 'Compression history',
+}
+
+const signalLabel = (name: string) => SIGNAL_LABELS[name] ?? name
+
+// The crop rectangle is normalised to the RAW frame, so it can be drawn as
+// percentages over the preview at whatever size the preview renders.
+const cropRect = computed(() => {
+  const rect = submission.value?.verification_details?.raw_jpg_linkage?.crop_rect_norm
+  if (!rect || rect.length !== 4) return null
+  const [x, y, w, h] = rect
+  // A full-frame rectangle means the JPG is the whole RAW; drawing a box around the
+  // entire image tells the judge nothing.
+  if (w >= 0.995 && h >= 0.995) return null
+  return {
+    left: `${x * 100}%`,
+    top: `${y * 100}%`,
+    width: `${w * 100}%`,
+    height: `${h * 100}%`,
+  }
+})
+
 const formatScore = (score: number | undefined | null) => {
   if (score === undefined || score === null) return 'N/A'
   return `${(score * 100).toFixed(0)}%`
@@ -774,6 +844,13 @@ if (typeof window !== 'undefined') {
                       class="h-16 w-24 object-cover transition-transform group-hover/raw:scale-105"
                       @error="rawPreviewStatus = 'unavailable'"
                     />
+                    <!-- Where in the RAW the submitted JPG came from, recovered from the
+                         geometric homography. Normalised, so percentages work at any size. -->
+                    <span
+                      v-if="cropRect"
+                      class="absolute border-2 border-success shadow-[0_0_0_9999px_rgba(0,0,0,0.45)] pointer-events-none"
+                      :style="cropRect"
+                    ></span>
                     <span class="absolute inset-0 bg-black/0 group-hover/raw:bg-black/25 transition-colors flex items-center justify-center">
                       <Maximize2 class="w-4 h-4 text-white opacity-0 group-hover/raw:opacity-100 transition-opacity" />
                     </span>
@@ -861,6 +938,119 @@ if (typeof window !== 'undefined') {
                       {{ formatConfidence(submission.verification_confidence) }}
                     </p>
                     <p class="text-sm text-muted-foreground">Confidence</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Authenticity Score: the weighted aggregate that decides the verdict -->
+              <div v-if="submission.verification_details?.authenticity" class="mb-6">
+                <div class="rounded-2xl border-2 overflow-hidden" :class="scoreBandClass(submission.verification_details.authenticity.score)">
+                  <div class="p-5">
+                    <div class="flex items-start justify-between gap-4 flex-wrap">
+                      <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-muted-foreground">Authenticity Score</p>
+                        <p class="text-sm font-medium mt-1">{{ submission.verification_details.authenticity.action }}</p>
+                        <p class="text-xs text-muted-foreground mt-1">
+                          Weighted across {{ submission.verification_details.authenticity.signals.length }} signals
+                          ({{ submission.verification_details.authenticity.weight_evaluated }} of 100 points evaluable)
+                        </p>
+                      </div>
+                      <div class="text-right shrink-0">
+                        <p class="text-5xl font-display font-semibold leading-none">
+                          {{ submission.verification_details.authenticity.score }}<span class="text-2xl text-muted-foreground">/100</span>
+                        </p>
+                        <p class="text-xs text-muted-foreground mt-1">band {{ submission.verification_details.authenticity.band }}</p>
+                      </div>
+                    </div>
+
+                    <!-- Band scale -->
+                    <div class="mt-4">
+                      <div class="h-3 w-full rounded-full bg-muted overflow-hidden flex">
+                        <div class="h-full bg-destructive/70" style="width:25%"></div>
+                        <div class="h-full bg-warning/70" style="width:25%"></div>
+                        <div class="h-full bg-warning/40" style="width:25%"></div>
+                        <div class="h-full bg-success/70" style="width:25%"></div>
+                      </div>
+                      <div class="relative h-4">
+                        <div class="absolute -top-1 w-1 h-4 bg-foreground rounded-full"
+                             :style="{ left: `calc(${submission.verification_details.authenticity.score}% - 2px)` }"></div>
+                      </div>
+                      <div class="flex justify-between text-[10px] text-muted-foreground">
+                        <span>0 reject</span><span>25</span><span>50 review</span><span>75</span><span>100 approve</span>
+                      </div>
+                    </div>
+
+                    <!-- Signal breakdown -->
+                    <div class="mt-5 space-y-2">
+                      <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Evidence by signal</p>
+                      <div v-for="signal in submission.verification_details.authenticity.signals" :key="signal.name"
+                           class="rounded-xl bg-background/60 border p-3">
+                        <div class="flex items-center justify-between gap-3">
+                          <span class="text-sm font-medium">{{ signalLabel(signal.name) }}</span>
+                          <span class="text-xs text-muted-foreground shrink-0">
+                            {{ signal.contribution.toFixed(1) }} / {{ signal.weight }} pts
+                          </span>
+                        </div>
+                        <div class="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                          <div class="h-full rounded-full transition-all"
+                               :class="signal.score >= 0.75 ? 'bg-success' : signal.score > 0 ? 'bg-warning' : 'bg-destructive'"
+                               :style="{ width: `${signal.score * 100}%` }"></div>
+                        </div>
+                        <p class="text-xs text-muted-foreground mt-2">{{ signal.evidence }}</p>
+                      </div>
+
+                      <!-- Signals that could not be measured are excluded, not counted against -->
+                      <div v-if="submission.verification_details.authenticity.missing.length"
+                           class="rounded-xl bg-muted/40 border border-dashed p-3">
+                        <p class="text-xs font-medium">Not evaluable for this submission</p>
+                        <p class="text-xs text-muted-foreground mt-1">
+                          {{ submission.verification_details.authenticity.missing.map(signalLabel).join(', ') }} —
+                          excluded from the score and the remaining weights renormalised, rather than
+                          counted against the photographer.
+                        </p>
+                      </div>
+                    </div>
+
+                    <!-- Geometric measurements behind the linkage signal -->
+                    <div v-if="submission.verification_details.raw_jpg_linkage?.geometry"
+                         class="mt-5 rounded-xl bg-background/60 border p-3">
+                      <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                        Geometric measurements
+                      </p>
+                      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                        <div>
+                          <p class="text-lg font-display font-semibold">{{ submission.verification_details.raw_jpg_linkage.geometry.inliers }}</p>
+                          <p class="text-[10px] text-muted-foreground leading-tight">matching sensor features</p>
+                        </div>
+                        <div>
+                          <p class="text-lg font-display font-semibold">{{ (submission.verification_details.raw_jpg_linkage.geometry.inlier_ratio * 100).toFixed(0) }}%</p>
+                          <p class="text-[10px] text-muted-foreground leading-tight">of candidate matches</p>
+                        </div>
+                        <div>
+                          <p class="text-lg font-display font-semibold">{{ ((submission.verification_details.raw_jpg_linkage.crop_fraction ?? 1) * 100).toFixed(0) }}%</p>
+                          <p class="text-[10px] text-muted-foreground leading-tight">of the RAW frame used</p>
+                        </div>
+                        <div>
+                          <p class="text-lg font-display font-semibold">{{ submission.verification_details.raw_jpg_linkage.geometry.reproj_error_px.toFixed(2) }}px</p>
+                          <p class="text-[10px] text-muted-foreground leading-tight">alignment error</p>
+                        </div>
+                      </div>
+                      <p class="text-xs text-muted-foreground mt-3">
+                        {{ submission.verification_details.raw_jpg_linkage.geometry.reason }}
+                        <span v-if="cropRect"> The highlighted region on the RAW thumbnail above is where this photograph came from.</span>
+                      </p>
+                    </div>
+
+                    <!-- Vision arbiter, only present on submissions geometry could not decide -->
+                    <div v-if="submission.verification_details.raw_jpg_linkage?.arbitration"
+                         class="mt-3 rounded-xl bg-background/60 border p-3">
+                      <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                        Vision arbiter (consulted only when geometry could not decide)
+                      </p>
+                      <p class="text-xs text-muted-foreground">
+                        {{ submission.verification_details.raw_jpg_linkage.arbitration.reasoning }}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
