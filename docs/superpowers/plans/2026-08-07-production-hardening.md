@@ -1,5 +1,30 @@
 # AVAR Production Hardening Implementation Plan
 
+## STATUS: COMPLETE — all 8 tasks executed and deployed, plus 2 unplanned fixes
+
+| Task | Outcome | Commit |
+|---|---|---|
+| 1 Memory containment | `MemoryHigh=1400M` / `MemoryMax=1650M`, single worker. Peak 1358→1174 MB, swap 156→0 MB, available ~700→1195 MB | server-only |
+| 2 Mandatory RAW | `raw_file` required; verified in the live OpenAPI schema | `e17ac9d` |
+| 3 Generator list | Fooocus, InvokeAI, AUTOMATIC1111, A1111, sd-webui + a guard test for legitimate tools | `e17ac9d` |
+| 4 Hive retune | reject 0.7→0.90, review band 0.4→0.50 | `e17ac9d` |
+| 5 Authenticity Score | 0–100, six weighted signals, five bands, critical-signal capping | `76a6b89` |
+| 6 PRNU by PCE | correct statistic, threshold 60, "not evaluable" when no reference. Reference pipeline deferred with evidence | `62e01f7` |
+| 7 Compression history | **kill switch fired** — measured non-discriminating, excluded, 10 points reassigned | `691cc13` |
+| 8 Backfill | 39 records re-analysed; 0 stale; 0 score/verdict contradictions | `8e1ad7f` + script |
+| 9 Judge evidence UI *(added)* | score, bands, per-signal evidence, geometry, crop overlay on the RAW | `8e1ad7f` |
+
+**Two defects found during execution, both by verification rather than by review:**
+
+- The backfill **dry run** caught that submissions 33 and 36 — legitimate Photoshop edits with re-attached EXIF — would be written as `REJECTED/AI_GENERATED`. Metadata hygiene was being conflated with decisive provenance. Fixed in `3d39382`; they now score 89–90 AUTHENTIC. This also closed deferred item 4.
+- Auditing the backfilled rows caught submission 27 storing `REJECTED` beside a score of **84/100 (approve band)**, because a Hive REJECT only costs 5 points. Fixed in `b1efcf1` by capping the score on any layer REJECT.
+
+Both are the same class: **a verdict decided outside the score creates two sources of truth that can disagree on the judge's screen.** Three instances were closed in total (the linkage guard, the hygiene counts, the layer-REJECT path).
+
+**Final production state:** 172 tests locally / 169 + 3 skipped on the server. 39 submissions scored, bimodal with no overlap — 26 APPROVED at 89–100, 13 REJECTED at 0–24.
+
+---
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make every verification claim the platform makes true, measured, and defensible — and stop a single submission from being able to OOM the production box.
