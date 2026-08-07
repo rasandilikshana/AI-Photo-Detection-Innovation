@@ -281,7 +281,7 @@ async def create_submission(
     competition_id: int = Form(...),
     description: Optional[str] = Form(None),
     jpg_file: UploadFile = File(...),
-    raw_file: Optional[UploadFile] = File(None),
+    raw_file: UploadFile = File(..., description="RAW image file (required)"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -292,7 +292,7 @@ async def create_submission(
     - **competition_id**: ID of the competition
     - **description**: Optional description
     - **jpg_file**: JPG/JPEG image file (required)
-    - **raw_file**: RAW image file (required if competition requires it)
+    - **raw_file**: RAW image file (required — verification proves the JPG derives from it)
     """
     # Get competition
     result = await db.execute(
@@ -335,21 +335,18 @@ async def create_submission(
             detail="Invalid JPG file format",
         )
 
-    # Check if RAW file is required
-    if competition.require_raw_files and not raw_file:
+    # RAW is mandatory for every submission. Verification is built on proving the
+    # JPG is derived from the RAW: without one, provenance, geometric linkage and
+    # PRNU correlation all score neutral and the entry is judged on metadata alone,
+    # which is the weak position this architecture exists to avoid. The
+    # Competition.require_raw_files column is retained for historical rows but is
+    # no longer consulted.
+    ALLOWED_RAW_EXTENSIONS = ['cr2', 'cr3', 'nef', 'arw', 'dng', 'raf', 'orf', 'rw2', 'pef', 'srw', 'raw']
+    if not validate_file_extension(raw_file.filename, ALLOWED_RAW_EXTENSIONS):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="RAW file is required for this competition",
+            detail=f"Invalid RAW file format. Supported formats: {', '.join([ext.upper() for ext in ALLOWED_RAW_EXTENSIONS])}",
         )
-
-    # Validate RAW file extension if provided
-    ALLOWED_RAW_EXTENSIONS = ['cr2', 'cr3', 'nef', 'arw', 'dng', 'raf', 'orf', 'rw2', 'pef', 'srw', 'raw']
-    if raw_file:
-        if not validate_file_extension(raw_file.filename, ALLOWED_RAW_EXTENSIONS):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid RAW file format. Supported formats: {', '.join([ext.upper() for ext in ALLOWED_RAW_EXTENSIONS])}",
-            )
 
     # Validate file sizes before saving
     jpg_file.file.seek(0, 2)
@@ -362,18 +359,16 @@ async def create_submission(
             detail=f"JPG file too large. Maximum size is {settings.MAX_UPLOAD_SIZE_MB}MB",
         )
 
-    raw_file_size = 0
-    if raw_file:
-        raw_file.file.seek(0, 2)
-        raw_file_size = raw_file.file.tell()
-        raw_file.file.seek(0)
+    raw_file.file.seek(0, 2)
+    raw_file_size = raw_file.file.tell()
+    raw_file.file.seek(0)
 
-        # Allow larger RAW files (4x JPG limit)
-        if raw_file_size > settings.MAX_UPLOAD_SIZE_BYTES * 4:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"RAW file too large. Maximum size is {settings.MAX_UPLOAD_SIZE_MB * 4}MB",
-            )
+    # Allow larger RAW files (4x JPG limit)
+    if raw_file_size > settings.MAX_UPLOAD_SIZE_BYTES * 4:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"RAW file too large. Maximum size is {settings.MAX_UPLOAD_SIZE_MB * 4}MB",
+        )
 
     # Save JPG file with error handling
     jpg_filename = sanitize_filename(jpg_file.filename)
@@ -390,28 +385,25 @@ async def create_submission(
             detail="Failed to save JPG file",
         )
 
-    # Save RAW file if provided
-    raw_path = None
+    # Save RAW file
+    raw_filename = sanitize_filename(raw_file.filename)
+    raw_path = Path(settings.UPLOAD_DIR) / f"{current_user.id}_{competition_id}_{raw_filename}"
 
-    if raw_file:
-        raw_filename = sanitize_filename(raw_file.filename)
-        raw_path = Path(settings.UPLOAD_DIR) / f"{current_user.id}_{competition_id}_{raw_filename}"
-
+    try:
+        async with aiofiles.open(raw_path, 'wb') as f:
+            content = await raw_file.read()
+            await f.write(content)
+    except IOError as e:
+        # Clean up JPG file if RAW save fails
         try:
-            async with aiofiles.open(raw_path, 'wb') as f:
-                content = await raw_file.read()
-                await f.write(content)
-        except IOError as e:
-            # Clean up JPG file if RAW save fails
-            try:
-                os.remove(jpg_path)
-            except OSError:
-                pass
-            logger.error(f"Failed to save RAW file: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to save RAW file",
-            )
+            os.remove(jpg_path)
+        except OSError:
+            pass
+        logger.error(f"Failed to save RAW file: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save RAW file",
+        )
 
     # Create submission
     new_submission = Submission(

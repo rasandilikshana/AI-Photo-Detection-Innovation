@@ -26,6 +26,23 @@ class ThirdPartyAPIVerifier:
     This layer is only invoked for QUARANTINE cases from Layer 2
     """
 
+    # Auto-rejection demands high precision: a false rejection costs a photographer
+    # their competition entry, while a false pass still has to survive the metadata,
+    # provenance and linkage layers. Hive's own guidance for high-volume moderation
+    # is a 0.9 positive-class threshold. Everything from 0.5 to 0.9 is genuinely
+    # uncertain and goes to a judge rather than being decided here.
+    # Was 0.7 / 0.4 before 2026-08-07.
+    HIVE_REJECT_AT = 0.90
+    HIVE_QUARANTINE_AT = 0.50
+
+    def classify_hive_score(self, ai_generated_score: float) -> tuple[str, float]:
+        """Map Hive's ai_generated probability to a verdict and a confidence."""
+        if ai_generated_score >= self.HIVE_REJECT_AT:
+            return "REJECT", ai_generated_score
+        if ai_generated_score >= self.HIVE_QUARANTINE_AT:
+            return "QUARANTINE", ai_generated_score
+        return "AUTHENTIC", 1.0 - ai_generated_score
+
     def __init__(self):
         self.hive_api_key = os.getenv("HIVE_AI_API_KEY", "")
         self.optic_api_key = os.getenv("OPTIC_API_KEY", "")
@@ -140,20 +157,13 @@ class ThirdPartyAPIVerifier:
                                 elif cls.get("class") == "deepfake":
                                     deepfake_score = cls.get("value", 0.0)
 
-                # Determine verdict
-                flags = []
-                if ai_generated_score > 0.7:
-                    verdict = "REJECT"
-                    confidence = ai_generated_score
-                    flags.append(f"Hive AI detected AI-generated content (score={ai_generated_score:.2f})")
-                elif ai_generated_score > 0.4:
-                    verdict = "QUARANTINE"
-                    confidence = ai_generated_score
-                    flags.append(f"Hive AI uncertain (score={ai_generated_score:.2f}) - manual review required")
+                verdict, confidence = self.classify_hive_score(ai_generated_score)
+                if verdict == "REJECT":
+                    flags = [f"Hive AI detected AI-generated content (score={ai_generated_score:.2f})"]
+                elif verdict == "QUARANTINE":
+                    flags = [f"Hive AI uncertain (score={ai_generated_score:.2f}) - manual review required"]
                 else:
-                    verdict = "AUTHENTIC"
-                    confidence = 1.0 - ai_generated_score
-                    flags.append(f"Hive AI verified authentic (AI score={ai_generated_score:.2f})")
+                    flags = [f"Hive AI verified authentic (AI score={ai_generated_score:.2f})"]
 
                 return {
                     "verdict": verdict,

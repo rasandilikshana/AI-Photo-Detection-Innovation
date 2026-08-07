@@ -132,6 +132,23 @@ def test_ai_signatures_detect_gemini_and_google(analyzer):
         assert detected is True, f"should detect: {value}"
 
 
+def test_ai_signatures_detect_local_generation_tooling(analyzer):
+    """Locally-run generators write their own tool names into metadata. The list
+    covered cloud services but missed the self-hosted stack entirely."""
+    for value in ["Fooocus", "InvokeAI v4.2", "AUTOMATIC1111 webui", "A1111",
+                  "stable-diffusion-webui", "SD WebUI Forge"]:
+        detected, flags = analyzer._detect_ai_signatures({"Software": value})
+        assert detected is True, f"should detect: {value}"
+
+
+def test_ai_signatures_do_not_fire_on_legitimate_photo_tools(analyzer):
+    """Guard against the list growing so broad it rejects real photographers."""
+    for value in ["Adobe Photoshop 26.1", "Adobe Lightroom Classic 13.2", "Capture One 23",
+                  "darktable 4.6", "RawTherapee 5.10", "GIMP 2.10", "Canon Digital Photo Professional"]:
+        detected, flags = analyzer._detect_ai_signatures({"Software": value})
+        assert detected is False, f"must not flag legitimate tool: {value} -> {flags}"
+
+
 # ---------------------------------------------------------------------------
 # RAW-JPG linkage: catastrophic pHash cannot be outvoted
 # ---------------------------------------------------------------------------

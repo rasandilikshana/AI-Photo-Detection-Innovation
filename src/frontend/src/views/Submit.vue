@@ -109,8 +109,10 @@ const handleSubmit = async () => {
     return
   }
 
-  if (competitionsStore.currentCompetition?.require_raw_files && !rawFile.value) {
-    submissionsStore.error = 'RAW file is required for this competition'
+  // RAW is mandatory for every submission: verification proves the JPG is derived
+  // from it. Without one, provenance, geometric linkage and PRNU all score neutral.
+  if (!rawFile.value) {
+    submissionsStore.error = 'A RAW file is required. Verification proves your JPG came from your camera.'
     return
   }
 
@@ -227,19 +229,20 @@ const handleSubmit = async () => {
           <div class="space-y-2">
             <Label for="rawFile" class="flex items-center gap-2">
               <FileImage class="w-4 h-4 text-muted-foreground" />
-              RAW file{{ competitionsStore.currentCompetition?.require_raw_files ? '*' : '' }}
+              RAW file*
             </Label>
             <Input
               id="rawFile"
               type="file"
               accept=".cr2,.cr3,.nef,.arw,.dng,.raf,.orf,.rw2,.pef,.srw,.raw"
               @change="handleRawFileChange"
-              :required="competitionsStore.currentCompetition?.require_raw_files"
+              required
               :disabled="isSubmitting"
               class="h-auto file:bg-secondary file:text-foreground file:border-0 file:rounded-full file:px-4 file:py-2 file:mr-4 file:font-medium hover:file:bg-accent cursor-pointer"
             />
             <p class="text-sm text-muted-foreground flex items-center gap-1">
               <Info class="w-3 h-3" />
+              Required — we verify your JPG was captured by the camera that wrote this RAW.
               Supported: CR2, CR3, NEF, ARW, DNG, RAF, ORF, RW2, PEF, SRW (max {{ MAX_RAW_SIZE_MB }}MB)
             </p>
           </div>

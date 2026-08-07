@@ -57,6 +57,15 @@ class MetadataAnalyzer:
         "ideogram",
         "recraft",
         "grok",
+        # Locally-run generation tooling. These write their own names into the
+        # Software tag and were missing while cloud generators were covered.
+        "fooocus",
+        "invokeai",
+        "invoke ai",
+        "automatic1111",
+        "a1111",
+        "sd webui",
+        "stable-diffusion-webui",
     ]
 
     # Tags describing undemosaiced sensor state. Canon (and other) cameras do write
