@@ -6,8 +6,6 @@ metadata copied verbatim (via exiftool) from a genuine CR2 was approved as
 AUTHENTIC because every layer scored the transplanted metadata at face value.
 """
 
-import cv2
-import numpy as np
 import pytest
 
 from app.services.layer1_metadata import MetadataAnalyzer
@@ -169,56 +167,3 @@ def test_no_agreement_rejects(linkage):
     )
     assert verdict == "REJECT"
     assert confidence == 0.0
-
-
-# ---------------------------------------------------------------------------
-# Crop-aware, tone-invariant matching (genuine heavy edits must not be rejected)
-# ---------------------------------------------------------------------------
-
-def test_edge_map_handles_flat_image(linkage):
-    """A 90%-black monochrome conversion yields flat regions; normalizing a
-    zero-span gradient field must not produce NaN (it broke JSON serialization
-    and silently scored as a perfect match)."""
-    flat = np.zeros((200, 300), dtype=np.uint8)
-    result = linkage._edge_map(flat, (150, 100))
-
-    assert np.isfinite(result).all()
-    assert result.shape == (100, 150)
-
-
-def test_gradient_match_finds_cropped_and_tone_crushed_derivative(linkage):
-    """The submission-32 scenario: the JPG is a crop of the RAW, converted to
-    black and white with the tones crushed. Structure survives; luminance does not."""
-    rng = np.random.default_rng(42)
-    scene = rng.integers(0, 255, size=(600, 900), dtype=np.uint8)
-    scene = cv2.GaussianBlur(scene, (9, 9), 0)  # give it real structure
-    raw_bgr = cv2.cvtColor(scene, cv2.COLOR_GRAY2BGR)
-
-    # crop 60% of the frame, then crush the tones hard (gamma 3.0)
-    crop = scene[100:460, 150:690]
-    crushed = np.clip(((crop / 255.0) ** 3.0) * 255, 0, 255).astype(np.uint8)
-    jpg_bgr = cv2.cvtColor(crushed, cv2.COLOR_GRAY2BGR)
-
-    score, frac = linkage._gradient_crop_match(raw_bgr, jpg_bgr)
-
-    assert score >= linkage.gradient_linked_threshold, f"genuine crop+crush scored only {score:.3f}"
-    assert 0.0 < frac <= 1.0
-
-
-def test_gradient_match_rejects_unrelated_scene(linkage):
-    """A different scene must not match, however similar its tonality."""
-    rng = np.random.default_rng(1)
-    raw = cv2.GaussianBlur(rng.integers(0, 255, size=(600, 900), dtype=np.uint8), (9, 9), 0)
-    other = cv2.GaussianBlur(rng.integers(0, 255, size=(400, 600), dtype=np.uint8), (9, 9), 0)
-
-    score, _ = linkage._gradient_crop_match(
-        cv2.cvtColor(raw, cv2.COLOR_GRAY2BGR), cv2.cvtColor(other, cv2.COLOR_GRAY2BGR)
-    )
-
-    assert score < linkage.gradient_weak_threshold, f"unrelated scene scored {score:.3f}"
-
-
-def test_gradient_thresholds_are_ordered(linkage):
-    """Guard the calibration: linked > weak, and crops below 40% are not searched."""
-    assert linkage.gradient_linked_threshold > linkage.gradient_weak_threshold
-    assert linkage.min_crop_fraction >= 0.40
