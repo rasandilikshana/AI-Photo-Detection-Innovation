@@ -28,10 +28,13 @@ def scorer():
     return AuthenticityScorer()
 
 
-def _l1(verdict="PASS", confidence=1.0, forensic=0, source="RAW", fields=8, ai_sigs=0):
+def _l1(verdict="PASS", confidence=1.0, forensic=0, source="RAW", fields=8, ai_sigs=0,
+        decisive=None, hygiene=0):
     return {"verdict": verdict, "confidence": confidence, "forensic_indicators": forensic,
             "metadata_source": source, "camera_fields_found": fields,
-            "ai_signatures_found": ai_sigs}
+            "ai_signatures_found": ai_sigs,
+            "decisive_indicators": forensic if decisive is None else decisive,
+            "hygiene_indicators": hygiene}
 
 
 def _l2(prnu=1.0, ela=1.0, fft=1.0, **extra):
@@ -150,6 +153,56 @@ def test_a_failed_signal_keeps_its_weight_and_scores_zero(scorer):
 
     assert "geometric_linkage" not in failed["missing"]
     assert any(s["name"] == "geometric_linkage" and s["score"] == 0.0 for s in failed["signals"])
+
+
+def test_metadata_hygiene_alone_does_not_reject_a_genuine_edit(scorer):
+    """Production submissions 33 and 36. A photographer exports from Photoshop (which
+    strips EXIF), copies their own metadata back, and trips three hygiene checks: stale
+    dimensions, an exiftool XMP toolkit, and RAW-sensor tags. The RAW passes provenance
+    and geometry confirms the crop, so this is honest work.
+
+    Caught by a backfill dry run, which would have written REJECTED onto both."""
+    result = scorer.score(
+        _l1(verdict="SUSPICIOUS", confidence=0.4, forensic=3, decisive=0, hygiene=3),
+        _l2(), None, _linkage(inliers=462, ratio=0.93),
+    )
+
+    assert result["verdict"] != "REJECT", result
+    assert result["score"] >= 50, result
+
+
+def test_hygiene_still_costs_points_and_is_visible(scorer):
+    """It must not be free either - a judge should see it in the evidence."""
+    clean = scorer.score(_l1(), _l2(), None, _linkage())
+    dirty = scorer.score(_l1(forensic=3, decisive=0, hygiene=3), _l2(), None, _linkage())
+
+    assert dirty["score"] < clean["score"]
+    metadata_signal = next(s for s in dirty["signals"] if s["name"] == "metadata")
+    assert "hygiene" in metadata_signal["evidence"]
+
+
+def test_a_decisive_indicator_still_rejects(scorer):
+    """The separation must not weaken the real detection: three decisive indicators on
+    the RAW is submission 45, and it stays rejected."""
+    result = scorer.score(
+        _l1(verdict="SUSPICIOUS", confidence=0.4, forensic=4, decisive=4, hygiene=0),
+        _l2(), None, _linkage(),
+    )
+
+    assert result["score"] <= 24, result
+    assert result["verdict"] == "REJECT"
+
+
+def test_an_old_payload_without_separated_counts_is_not_scored_as_clean(scorer):
+    """Records written before the counts were separated have only
+    forensic_indicators. Falling back to it prevents an old payload from being
+    silently treated as having zero decisive indicators."""
+    legacy = {"verdict": "SUSPICIOUS", "confidence": 0.4, "forensic_indicators": 4,
+              "metadata_source": "RAW", "camera_fields_found": 8, "ai_signatures_found": 0}
+
+    result = scorer.score(legacy, _l2(), None, _linkage())
+
+    assert result["score"] <= 24, result
 
 
 def test_a_decisive_critical_failure_cannot_be_outvoted_by_averaging(scorer):
