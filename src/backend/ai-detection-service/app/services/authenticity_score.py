@@ -90,9 +90,18 @@ class AuthenticityScorer:
     ]
 
     def score(self, layer1: Optional[Dict], layer2: Optional[Dict],
-              layer3: Optional[Dict], linkage: Optional[Dict]) -> Dict:
+              layer3: Optional[Dict], linkage: Optional[Dict],
+              layer_reject_reason: Optional[str] = None) -> Dict:
         """Aggregate the layer results. Returns score, band, verdict, action, and the
-        per-signal breakdown a judge can read."""
+        per-signal breakdown a judge can read.
+
+        layer_reject_reason: set when a layer positively identified fraud, which the
+            pipeline honours over the average. The score is then capped into the
+            auto-reject band so the number a judge reads agrees with the verdict.
+            Production submission 27 showed why: Hive AI rejected it at over 90%
+            AI-generated confidence, but third_party carries only 5 points, so the panel
+            displayed "84/100 - Approve" next to a status of REJECTED.
+        """
         layer1 = layer1 or {}
 
         # A file that names its own generator is not a weighing exercise.
@@ -151,7 +160,9 @@ class AuthenticityScorer:
         fatal = [s["name"] for s in critical if s["score"] == 0.0]
         unconfirmed = [s["name"] for s in critical if 0.0 < s["score"] < self.CONFIRMED_FLOOR]
 
-        if fatal:
+        if layer_reject_reason:
+            ceiling, reason = self.BANDS[-1][1], layer_reject_reason
+        elif fatal:
             ceiling, reason = self.BANDS[-1][1], f"{', '.join(fatal)} failed decisively"
         elif unconfirmed:
             # Top of the judge-review band.
@@ -163,7 +174,10 @@ class AuthenticityScorer:
             logger.info(f"Authenticity score capped {score} -> {ceiling}: {reason}")
             score = ceiling
 
-        return self._result(score, signals, missing)
+        return self._result(
+            score, signals, missing,
+            note=f"Auto-reject: {layer_reject_reason}" if layer_reject_reason else "",
+        )
 
     # ------------------------------------------------------------------
 
