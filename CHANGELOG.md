@@ -5,6 +5,15 @@ All notable changes to the A.V.A.R. (Aura Verification and Authentication for RA
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2026-08-07
+
+### Fixed - Analysis crashed on large RAW files (out of memory)
+- Submissions failed with *"Analysis error: Server disconnected without sending a response"*: the kernel OOM-killed the detection worker (1.19 GB RSS on a 1967 MB host with no swap)
+- **The RAW was demosaiced twice at full resolution** — once for SSIM/histogram and again inside the pHash comparison, peaking at 389 MB per request. It is now demosaiced **once at half resolution** and the decoded array is reused by every comparison; every downstream method resizes far below sensor resolution anyway, so the measurements are unchanged (verified: pHash 14 and 130 identical before/after)
+- Large working copies are released before the gradient search allocates
+- Peak worker memory: **1.19 GB → 176 MB**; analysis time ~4.5s
+- Added a 2 GB swap file (`vm.swappiness=10`) on the production host so future memory spikes degrade rather than kill the service
+
 ## [2.3.1] - 2026-08-07
 
 ### Fixed - False rejection of genuine cropped / black-and-white edits

@@ -96,8 +96,10 @@ class RAWJPGLinkageAnalyzer:
 
             flags = []
 
-            # Method 1: Perceptual Hash Comparison
-            phash_match, phash_distance = self._compare_phash(raw_path, jpg_path)
+            # Method 1: Perceptual Hash Comparison (reuses the demosaiced array —
+            # re-reading the RAW here previously doubled peak memory and OOM-killed
+            # the worker on the 2GB production host)
+            phash_match, phash_distance = self._compare_phash(raw_image, jpg_image)
             flags.append(f"pHash distance: {phash_distance}")
 
             # Method 2: SSIM Comparison
@@ -107,6 +109,9 @@ class RAWJPGLinkageAnalyzer:
             # Method 3: Color Histogram Correlation
             hist_corr = self._compare_histograms(raw_resized, jpg_resized)
             flags.append(f"Histogram correlation: {hist_corr:.4f}")
+
+            # Release the 1920x1080 working copies before the gradient search allocates
+            del raw_resized, jpg_resized
 
             # Determine verdict based on all three methods
             verdict, confidence = self._determine_verdict(phash_match, phash_distance, ssim_score, hist_corr)
@@ -168,41 +173,44 @@ class RAWJPGLinkageAnalyzer:
         """
         Load and demosaic RAW file to RGB image
 
+        Uses half-resolution demosaicing: every comparison downstream (pHash, SSIM,
+        histogram, gradient search) resizes well below full sensor resolution anyway,
+        while a full-size demosaic peaks at ~284MB and exhausts the production host.
+
         Args:
             raw_path: Path to RAW file
 
         Returns:
-            RGB numpy array
+            BGR numpy array
         """
         try:
             with rawpy.imread(raw_path) as raw:
-                # Demosaic RAW to RGB using default settings
-                rgb = raw.postprocess(use_camera_wb=True, half_size=False, no_auto_bright=True, output_bps=8)
-            return cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+                rgb = raw.postprocess(use_camera_wb=True, half_size=True, no_auto_bright=True, output_bps=8)
+            bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+            del rgb
+            return bgr
 
         except Exception as e:
             logger.error(f"Failed to load RAW image: {str(e)}")
             return None
 
-    def _compare_phash(self, raw_path: str, jpg_path: str) -> Tuple[bool, int]:
+    def _compare_phash(self, raw_image: np.ndarray, jpg_image: np.ndarray) -> Tuple[bool, int]:
         """
-        Compare perceptual hashes of RAW and JPG
+        Compare perceptual hashes of the already-decoded RAW and JPG.
+
+        pHash downsamples internally, so it is unaffected by the half-resolution
+        demosaic and does not need a second read of the RAW file.
 
         Args:
-            raw_path: Path to RAW file
-            jpg_path: Path to JPG file
+            raw_image: Demosaiced RAW as a BGR array
+            jpg_image: JPG as a BGR array
 
         Returns:
             (match: bool, hamming_distance: int)
         """
         try:
-            # Load RAW file using rawpy (PIL cannot read RAW files!)
-            with rawpy.imread(raw_path) as raw:
-                rgb = raw.postprocess(use_camera_wb=True, half_size=False, no_auto_bright=True, output_bps=8)
-                raw_img = Image.fromarray(rgb)
-
-            # Load JPG with PIL
-            jpg_img = Image.open(jpg_path)
+            raw_img = Image.fromarray(cv2.cvtColor(raw_image, cv2.COLOR_BGR2RGB))
+            jpg_img = Image.fromarray(cv2.cvtColor(jpg_image, cv2.COLOR_BGR2RGB))
 
             # Calculate perceptual hashes
             raw_hash = imagehash.phash(raw_img, hash_size=16)
