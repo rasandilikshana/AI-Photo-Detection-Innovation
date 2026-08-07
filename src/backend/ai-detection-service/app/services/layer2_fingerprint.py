@@ -80,16 +80,20 @@ class DigitalFingerprintAnalyzer:
             # Calculate overall confidence and verdict
             verdict, confidence = self._calculate_verdict(scores)
 
+            def finite(value: float) -> float:
+                """NaN/Inf is not JSON-serializable and must never reach the API response"""
+                return float(value) if np.isfinite(value) else 0.0
+
             return {
                 "verdict": verdict,
-                "confidence": confidence,
+                "confidence": finite(confidence),
                 "flags": flags,
-                "prnu_score": scores["prnu"],
-                "ela_score": scores["ela"],
-                "fft_score": scores["fft"],
-                "prnu_energy": prnu_result.get("energy", 0.0),
-                "ela_uniformity": ela_result.get("uniformity", 0.0),
-                "fft_high_freq_ratio": fft_result.get("high_freq_ratio", 0.0),
+                "prnu_score": finite(scores["prnu"]),
+                "ela_score": finite(scores["ela"]),
+                "fft_score": finite(scores["fft"]),
+                "prnu_energy": finite(prnu_result.get("energy", 0.0)),
+                "ela_uniformity": finite(ela_result.get("uniformity", 0.0)),
+                "fft_high_freq_ratio": finite(fft_result.get("high_freq_ratio", 0.0)),
                 "analysis": self._generate_summary(verdict, scores),
             }
 
@@ -148,6 +152,22 @@ class DigitalFingerprintAnalyzer:
 
             # Calculate PRNU energy (variance of noise pattern)
             prnu_energy = np.var(prnu)
+
+            # Wavelet soft-thresholding divides by the coefficient magnitude, which is
+            # zero across the flat regions of a heavily crushed image (e.g. a 90%-black
+            # monochrome conversion), producing NaN. Every comparison against NaN is
+            # False, so an unguarded NaN would fall through to a perfect PRNU score.
+            if not np.isfinite(prnu_energy):
+                logger.warning("PRNU energy non-finite (flat/crushed image) - treating as inconclusive")
+                return {
+                    "score": 0.5,
+                    "flags": [
+                        "PRNU inconclusive: image too flat for sensor-noise analysis "
+                        "(heavy tonal crush or large uniform areas)"
+                    ],
+                    "energy": 0.0,
+                    "pattern_valid": False,
+                }
 
             # Analyze PRNU pattern
             # Real camera photos typically have PRNU energy between 0.0001 and 0.01

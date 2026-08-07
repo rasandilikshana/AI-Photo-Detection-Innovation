@@ -5,6 +5,15 @@ All notable changes to the A.V.A.R. (Aura Verification and Authentication for RA
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2026-08-07
+
+### Fixed - False rejection of genuine cropped / black-and-white edits
+- **Crop-aware, tone-invariant RAW-JPG matching.** Whole-frame luminance comparison (pHash/SSIM/histogram) collapses when a photographer legitimately crops and converts to black and white: a verified-genuine submission scored pHash 130, SSIM 0.06, histogram 0.11 and was auto-rejected as forgery. When whole-frame comparison fails, the analyzer now searches the RAW for the crop window whose **edge structure** matches the JPEG — edges survive tonal remapping, but not scene substitution. Calibrated on real files: genuine crops+heavy edits score 0.79–0.93, AI substitution and unrelated pairs 0.19–0.33
+- **A linkage failure no longer auto-rejects.** It escalates to Layer 3 pixel analysis and, at worst, quarantines for judge review — a genuine photo can no longer be rejected without a human seeing it
+- **PRNU NaN guard (security).** Wavelet denoising divides by zero on heavily crushed images (90%+ pure black), producing NaN. Every comparison against NaN is False, so the value fell through to a *perfect* PRNU score — and separately made the API response non-serializable (HTTP 500). Non-finite energy is now reported as inconclusive
+- SSIM and histogram correlation are likewise guarded against non-finite results
+- 4 new regression tests (22 total in the detection suite)
+
 ## [2.3.0] - 2026-08-07
 
 ### Added - Metadata Transplant & AI Substitution Detection

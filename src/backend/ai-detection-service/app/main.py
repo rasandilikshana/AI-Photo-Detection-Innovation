@@ -209,27 +209,15 @@ async def analyze_submission(
             raw_jpg_linkage = await linkage_analyzer.analyze_linkage(raw_path, jpg_path)
 
             if raw_jpg_linkage["verdict"] == "REJECT":
-                verdict = "REJECT"
+                # Do NOT auto-reject here. A linkage failure means either substitution
+                # (fraud) or an edit our matcher could not follow (genuine). Let Layer 3
+                # examine the pixels and decide — quarantine is the safe failure mode.
+                raw_linkage_suspicious = True
+                verdict = "QUARANTINE"
                 confidence_score = 0.0
-                flags.append("RAW-JPG mismatch detected - files are not linked")
-
-                processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
-
-                if background_tasks:
-                    background_tasks.add_task(file_handler.cleanup_files, jpg_path, raw_path)
-
-                return AnalysisResult(
-                    submission_id=submission_id,
-                    timestamp=datetime.utcnow(),
-                    verdict=verdict,
-                    confidence_score=confidence_score,
-                    layer1_result=layer1_result,
-                    layer2_result=None,
-                    layer3_result=None,
-                    raw_jpg_linkage=raw_jpg_linkage,
-                    flags=flags,
-                    processing_time_ms=processing_time,
-                )
+                flags.append("RAW-JPG mismatch detected - files do not appear to be linked")
+                flags.extend(raw_jpg_linkage.get("flags", []))
+                logger.warning(f"[{submission_id}] RAW-JPG linkage failed - escalating for pixel analysis")
 
             # SECURITY FIX: Handle SUSPICIOUS RAW linkage (metadata spoofing attack detection)
             # When metadata passes but RAW-JPG linkage is weak, this indicates possible spoofing
