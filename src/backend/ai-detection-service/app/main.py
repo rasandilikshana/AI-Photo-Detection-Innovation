@@ -246,8 +246,18 @@ async def analyze_submission(
             flags.extend(layer2_result.get("flags", []))
 
         # === LAYER 3: THIRD-PARTY API VERIFICATION ===
+        # Escalated for quarantined submissions, and additionally whenever the RAW is a
+        # DNG. A DNG is the one RAW container an attacker can readily author, and a
+        # fabricated one that is internally consistent with its JPEG passes every
+        # metadata and linkage check by construction — that is exactly how production
+        # submission 45 reached AUTHENTIC without this layer ever running. Sending those
+        # pixels to a detector costs one API call and closes the blind spot.
         layer3_result = None
-        if verdict == "QUARANTINE":
+        raw_needs_pixel_review = layer1_result.get("raw_needs_pixel_review", False)
+        if raw_needs_pixel_review and verdict != "QUARANTINE":
+            logger.info(f"[{submission_id}] RAW is a DNG - escalating to Layer 3 for pixel analysis")
+
+        if verdict == "QUARANTINE" or raw_needs_pixel_review:
             logger.info(f"[{submission_id}] Running Layer 3: Third-Party API Verification")
             layer3_result = await api_verifier.verify(jpg_path)
 
