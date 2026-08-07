@@ -151,8 +151,14 @@ const reviewAction = ref<'approve' | 'reject'>('approve')
 const reviewReason = ref('')
 const isSubmittingReview = ref(false)
 
+// RAW preview state (browsers cannot render RAW — a derived JPEG is fetched from the API)
+const rawPreviewUrl = ref<string | null>(null)
+const rawPreviewStatus = ref<'idle' | 'loading' | 'ready' | 'unavailable'>('idle')
+
 // Image lightbox state
 const showImageLightbox = ref(false)
+const lightboxSrc = ref('')
+const lightboxLabel = ref('')
 const imageZoom = ref(1)
 const imageRotation = ref(0)
 const isDragging = ref(false)
@@ -242,6 +248,9 @@ onMounted(async () => {
       creativityScore.value = response.data.my_score.creativity_score
       comments.value = response.data.my_score.comments || ''
     }
+
+    // Kick off RAW preview generation in the background (non-blocking)
+    loadRawPreview()
   } catch (err) {
     error.value = 'Failed to load submission details'
     console.error('Failed to load submission:', err)
@@ -459,8 +468,31 @@ const submitReview = async () => {
   }
 }
 
+// RAW preview loading
+const rawExtension = computed(() => {
+  const url = submission.value?.raw_file_url
+  if (!url) return ''
+  const ext = url.split('.').pop() || ''
+  return ext.toUpperCase()
+})
+
+const loadRawPreview = async () => {
+  if (!submission.value?.raw_file_url) return
+  rawPreviewStatus.value = 'loading'
+  try {
+    const response = await apiClient.get(`/scores/raw-preview/${submissionId}`)
+    rawPreviewUrl.value = response.data.preview_url
+    rawPreviewStatus.value = 'ready'
+  } catch (err) {
+    console.error('Failed to load RAW preview:', err)
+    rawPreviewStatus.value = 'unavailable'
+  }
+}
+
 // Image lightbox functions
-const openImageLightbox = () => {
+const openImageLightbox = (src: string, label: string) => {
+  lightboxSrc.value = src
+  lightboxLabel.value = label
   showImageLightbox.value = true
   imageZoom.value = 1
   imageRotation.value = 0
@@ -705,7 +737,7 @@ if (typeof window !== 'undefined') {
                   :alt="submission.title"
                   class="w-full h-auto object-contain cursor-zoom-in transition-transform hover:scale-[1.02]"
                   style="max-height: 500px;"
-                  @click="openImageLightbox"
+                  @click="openImageLightbox(getImageUrl(submission.jpg_file_url), 'JPG')"
                   @error="(e) => { (e.target as HTMLImageElement).style.display = 'none' }"
                 />
                 <div v-else class="h-64 flex items-center justify-center">
@@ -718,11 +750,51 @@ if (typeof window !== 'undefined') {
                     variant="secondary"
                     size="sm"
                     class="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto shadow-lg"
-                    @click="openImageLightbox"
+                    @click="openImageLightbox(getImageUrl(submission.jpg_file_url), 'JPG')"
                   >
                     <Maximize2 class="w-4 h-4 mr-2" />
                     View full size
                   </Button>
+                </div>
+              </div>
+
+              <!-- RAW file preview (derived server-side; browsers cannot render RAW) -->
+              <div v-if="submission.raw_file_url" class="mb-6">
+                <div class="flex items-center gap-3 rounded-2xl border bg-muted/30 p-3">
+                  <button
+                    v-if="rawPreviewStatus === 'ready' && rawPreviewUrl"
+                    type="button"
+                    class="relative shrink-0 cursor-zoom-in rounded-lg overflow-hidden border group/raw focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    aria-label="View RAW preview full size"
+                    @click="openImageLightbox(rawPreviewUrl, 'RAW preview')"
+                  >
+                    <img
+                      :src="rawPreviewUrl"
+                      :alt="`RAW preview of ${submission.title}`"
+                      class="h-16 w-24 object-cover transition-transform group-hover/raw:scale-105"
+                      @error="rawPreviewStatus = 'unavailable'"
+                    />
+                    <span class="absolute inset-0 bg-black/0 group-hover/raw:bg-black/25 transition-colors flex items-center justify-center">
+                      <Maximize2 class="w-4 h-4 text-white opacity-0 group-hover/raw:opacity-100 transition-opacity" />
+                    </span>
+                  </button>
+                  <div v-else class="h-16 w-24 shrink-0 rounded-lg border bg-muted flex items-center justify-center">
+                    <Loader2 v-if="rawPreviewStatus === 'loading'" class="w-4 h-4 animate-spin text-muted-foreground" />
+                    <FileImage v-else class="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium flex items-center gap-2">
+                      RAW file
+                      <Badge v-if="rawExtension" variant="outline" class="text-[10px]">{{ rawExtension }}</Badge>
+                    </p>
+                    <p class="text-xs text-muted-foreground">
+                      {{ rawPreviewStatus === 'ready'
+                        ? 'Click the thumbnail to inspect the RAW render'
+                        : rawPreviewStatus === 'loading'
+                        ? 'Generating preview…'
+                        : 'Preview unavailable for this RAW file' }}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -1504,7 +1576,7 @@ if (typeof window !== 'undefined') {
     <Teleport to="body">
       <Transition name="lightbox">
         <div
-          v-if="showImageLightbox && submission?.jpg_file_url"
+          v-if="showImageLightbox && lightboxSrc && submission"
           class="fixed inset-0 z-50 bg-black/95 flex flex-col"
           @wheel.prevent="handleWheel"
           @mouseup="handleMouseUp"
@@ -1514,7 +1586,9 @@ if (typeof window !== 'undefined') {
           <div class="flex items-center justify-between p-4 bg-black/50">
             <div class="text-white">
               <h3 class="font-semibold">{{ submission.title }}</h3>
-              <p class="text-sm text-ink-muted">{{ cameraDisplayName }}</p>
+              <p class="text-sm text-ink-muted">
+                {{ cameraDisplayName }}<span v-if="lightboxLabel"> · {{ lightboxLabel }}</span>
+              </p>
             </div>
             <div class="flex items-center gap-2">
               <!-- Zoom Controls -->
@@ -1550,8 +1624,8 @@ if (typeof window !== 'undefined') {
             @mousemove="handleMouseMove"
           >
             <img
-              :src="getImageUrl(submission.jpg_file_url)"
-              :alt="submission.title"
+              :src="lightboxSrc"
+              :alt="`${submission.title} — ${lightboxLabel}`"
               class="max-w-none select-none transition-transform duration-150"
               :style="{
                 transform: `translate(${imagePosition.x}px, ${imagePosition.y}px) scale(${imageZoom}) rotate(${imageRotation}deg)`,
