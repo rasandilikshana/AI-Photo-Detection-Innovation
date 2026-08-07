@@ -57,9 +57,10 @@ class MetadataAnalyzer:
         "grok",
     ]
 
-    # Tags that describe undemosaiced sensor state — written by cameras into RAW
-    # files. Their presence in a JPEG whose dimensions contradict the declared
-    # metadata is a strong indicator of a bulk exiftool metadata transplant.
+    # Tags describing undemosaiced sensor state. Canon (and other) cameras do write
+    # these into full-size JPEGs via MakerNotes, so their presence alone proves
+    # nothing — they only corroborate a transplant when the file's declared
+    # dimensions also contradict its actual pixels (verified empirically 2026-08-07).
     RAW_ONLY_TAGS = [
         "WB_RGGBLevelsAsShot",
         "PerChannelBlackLevel",
@@ -351,17 +352,19 @@ class MetadataAnalyzer:
                 "metadata laundering indicator"
             )
 
-        # Check C: RAW-sensor-only tags inside a JPEG. These describe undemosaiced
-        # sensor state and arrive in a JPEG only via a bulk metadata copy from a RAW.
+        # Check C: RAW-sensor tags in a JPEG whose dimensions already contradict its
+        # pixels. Cameras legitimately write these into full-size JPEGs, so this only
+        # corroborates a transplant — it is never a standalone indicator.
         raw_only_found = [
             tag for tag in self.RAW_ONLY_TAGS
             if any(key.split(":")[-1] == tag for key in grouped_metadata)
         ]
-        if len(raw_only_found) >= 3:
+        if len(raw_only_found) >= 3 and dim_mismatch:
             strong += 1
             flags.append(
-                f"FORENSIC: {len(raw_only_found)} RAW-sensor-only tags present in JPEG "
-                f"({', '.join(raw_only_found[:4])}…) — consistent with bulk metadata transplant from a RAW file"
+                f"FORENSIC: {len(raw_only_found)} RAW-sensor tags present in a JPEG whose declared "
+                f"dimensions do not match its pixels ({', '.join(raw_only_found[:4])}…) — "
+                "consistent with a bulk metadata transplant from a RAW file"
             )
 
         return strong, flags

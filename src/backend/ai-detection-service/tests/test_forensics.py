@@ -46,7 +46,7 @@ def test_forensics_detects_transplanted_metadata(analyzer):
     assert strong >= 3
     assert any("does not belong to this file" in f for f in flags)
     assert any("exiftool CLI" in f for f in flags)
-    assert any("RAW-sensor-only" in f for f in flags)
+    assert any("RAW-sensor tags" in f for f in flags)
 
 
 def test_forensics_passes_genuine_camera_jpeg(analyzer):
@@ -98,6 +98,28 @@ def test_forensics_ignores_few_raw_tags(analyzer):
     strong, flags = analyzer.forensic_integrity_checks((5184, 3456), grouped)
 
     assert strong == 0
+
+
+def test_genuine_camera_jpeg_with_sensor_tags_is_clean(analyzer):
+    """Regression: real Canon JPEGs carry the full MakerNotes sensor block. With
+    dimensions matching the pixels, that must NOT be flagged (verified against
+    IMG_1083.JPG, 5184x3456, Hive AI score 0.0005)."""
+    grouped = {
+        "ExifIFD:ExifImageWidth": 5184,
+        "ExifIFD:ExifImageHeight": 3456,
+        "MakerNotes:WB_RGGBLevelsAsShot": "2087 1024 1024 1656",
+        "MakerNotes:PerChannelBlackLevel": "2048 2048 2048 2048",
+        "MakerNotes:NormalWhiteLevel": 12279,
+        "MakerNotes:SpecularWhiteLevel": 13000,
+        "MakerNotes:SensorLeftBorder": 168,
+        "MakerNotes:SensorTopBorder": 56,
+        "MakerNotes:DustRemovalData": "(Binary data 1024 bytes)",
+        "MakerNotes:RawMeasuredRGGB": "1 2 3 4",
+        "MakerNotes:VignettingCorrVersion": 0,
+    }
+    strong, flags = analyzer.forensic_integrity_checks((5184, 3456), grouped)
+
+    assert strong == 0, f"genuine camera JPEG must not be flagged, got: {flags}"
 
 
 # ---------------------------------------------------------------------------
