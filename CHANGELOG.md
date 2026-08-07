@@ -5,6 +5,21 @@ All notable changes to the A.V.A.R. (Aura Verification and Authentication for RA
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-08-07
+
+### Added - Metadata Transplant & AI Substitution Detection
+- **Layer 1 forensic integrity checks** — detects metadata copied from a genuine RAW onto an unrelated (AI-generated) JPEG:
+  - Declared EXIF/XMP dimensions vs the actual decoded bitstream (rotation-tolerant)
+  - XMP toolkit written by the exiftool CLI (metadata laundering)
+  - RAW-sensor tags in a JPEG whose declared dimensions contradict its pixels (corroborating signal only — genuine camera JPEGs carry these legitimately)
+- **Layer 1 SUSPICIOUS now escalates to QUARANTINE**, which triggers Layer 3 (Hive AI) pixel analysis; a Hive AUTHENTIC verdict can no longer clear transplant indicators
+- **Catastrophic pHash guard** in RAW-JPG linkage: a Hamming distance above 45/256 bits means the files depict different scenes and can no longer be outvoted by SSIM/histogram similarity
+- AI signature list extended: Gemini, Imagen, Google AI, SynthID, Flux, ComfyUI, Ideogram, Recraft, Grok
+- 11 regression tests covering the incident signature and authentic-file false positives
+
+### Fixed
+- A Gemini-generated image with exiftool-transplanted Canon metadata was approved as AUTHENTIC at 90% confidence; the same files now return REJECT at 99.8% confidence
+
 ## [2.2.2] - 2026-08-06
 
 ### Fixed
