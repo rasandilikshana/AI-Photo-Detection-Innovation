@@ -29,24 +29,42 @@ class DigitalFingerprintAnalyzer:
     """
 
     def __init__(self):
-        # PRNU threshold - lowered significantly because well-exposed photos
-        # from modern cameras have very low sensor noise
-        self.prnu_threshold = 0.0001  # Minimum PRNU energy (was 0.02)
+        # PCE (Peak-to-Correlation Energy) is the decision statistic for sensor
+        # fingerprint matching. 60 corresponds to a false-accept rate near 1e-5
+        # (Goljan, Fridrich & Filler, "Large scale test of sensor fingerprint camera
+        # identification", SPIE Media Forensics 2009). It is a published value, not a
+        # tunable one.
+        #
+        # This replaced a residual-energy threshold (var(image - denoised) > 0.0001)
+        # that could not discriminate at all: a genuine Canon JPEG measured 2.26e-05
+        # and a synthetic AI image 1.39e-05 -- both scored "weak" -- while a
+        # Photoshop-edited real photo measured 2.53e-04 and scored "valid", because
+        # editing adds high-frequency content. It was measuring sharpness, not silicon.
+        # Measured with this implementation on 256x256 patterns:
+        #   identical pattern           PCE = 66,592
+        #   heavily degraded copy       PCE = 20,108   (reference + 1.5x noise)
+        #   unrelated white noise       PCE =     23.8
+        # So 60 separates cleanly, with four orders of magnitude of margin on genuine
+        # matches. There is deliberately NO intermediate "weakly consistent" band: PCE
+        # below the threshold is statistically consistent with a different sensor, so
+        # grading it would invent a gradation the statistic does not support.
+        self.pce_threshold = 60.0
 
-        # ELA threshold - this measures standard deviation of compression differences
-        # Real photos have LOW uniformity (consistent compression)
-        # Manipulated images have HIGH non-uniformity (inconsistent compression)
-        self.ela_threshold = 5.0  # ELA uniformity threshold (was 30.0)
-
+        # Empirically tuned, not calibrated against labelled data. Weighted low in the
+        # Authenticity Score for that reason.
         self.fft_threshold = 0.15  # High-frequency content threshold
 
-    async def analyze(self, jpg_path: str, raw_path: Optional[str] = None) -> Dict:
+    async def analyze(self, jpg_path: str, raw_path: Optional[str] = None,
+                      reference_pattern: Optional[np.ndarray] = None) -> Dict:
         """
         Perform comprehensive digital fingerprint analysis
 
         Args:
             jpg_path: Path to JPG file
             raw_path: Optional path to RAW file
+            reference_pattern: This camera body's accumulated PRNU reference, supplied by
+                the caller (this service has no database access). Without it, PRNU is
+                reported as not evaluable rather than guessed at.
 
         Returns:
             Analysis result with verdict and confidence
@@ -63,7 +81,7 @@ class DigitalFingerprintAnalyzer:
                 return self._error_result("Failed to load image")
 
             # === Analysis 1: PRNU Extraction and Analysis ===
-            prnu_result = await self._analyze_prnu(image)
+            prnu_result = await self._analyze_prnu(image, reference_pattern)
             scores["prnu"] = prnu_result["score"]
             flags.extend(prnu_result["flags"])
 
@@ -80,8 +98,12 @@ class DigitalFingerprintAnalyzer:
             # Calculate overall confidence and verdict
             verdict, confidence = self._calculate_verdict(scores)
 
-            def finite(value: float) -> float:
-                """NaN/Inf is not JSON-serializable and must never reach the API response"""
+            def finite(value) -> Optional[float]:
+                """NaN/Inf is not JSON-serializable and must never reach the API response.
+                None passes through: it means 'not evaluable', which the Authenticity
+                Score reads as an instruction to exclude the signal and renormalise."""
+                if value is None:
+                    return None
                 return float(value) if np.isfinite(value) else 0.0
 
             return {
@@ -92,6 +114,8 @@ class DigitalFingerprintAnalyzer:
                 "ela_score": finite(scores["ela"]),
                 "fft_score": finite(scores["fft"]),
                 "prnu_energy": finite(prnu_result.get("energy", 0.0)),
+                "prnu_pce": finite(prnu_result.get("pce")),
+                "prnu_reference_available": bool(prnu_result.get("reference_available", False)),
                 "ela_uniformity": finite(ela_result.get("uniformity", 0.0)),
                 "fft_high_freq_ratio": finite(fft_result.get("high_freq_ratio", 0.0)),
                 "analysis": self._generate_summary(verdict, scores),
@@ -101,15 +125,18 @@ class DigitalFingerprintAnalyzer:
             logger.error(f"Digital fingerprint analysis failed: {str(e)}", exc_info=True)
             return self._error_result(str(e))
 
-    async def _analyze_prnu(self, image: np.ndarray) -> Dict:
+    async def _analyze_prnu(self, image: np.ndarray,
+                            reference_pattern: Optional[np.ndarray] = None) -> Dict:
         """
         PRNU (Photo Response Non-Uniformity) Analysis
 
-        Extract sensor noise pattern. AI-generated images lack genuine
-        sensor noise and will have flat/null PRNU patterns.
+        Extracts the sensor noise residual, then correlates it against this camera
+        body's reference fingerprint. The residual alone is not a fingerprint: its
+        energy rises with editing and an AI image can match a real camera's value.
+        Identifying WHICH sensor produced an image requires correlation.
 
         Returns:
-            Analysis result with score and flags
+            Analysis result with score (None when not evaluable) and flags
         """
         try:
             # Convert to grayscale for noise analysis
@@ -158,52 +185,134 @@ class DigitalFingerprintAnalyzer:
             # monochrome conversion), producing NaN. Every comparison against NaN is
             # False, so an unguarded NaN would fall through to a perfect PRNU score.
             if not np.isfinite(prnu_energy):
-                logger.warning("PRNU energy non-finite (flat/crushed image) - treating as inconclusive")
+                logger.warning("PRNU residual non-finite (flat/crushed image) - not evaluable")
                 return {
-                    "score": 0.5,
-                    "flags": [
-                        "PRNU inconclusive: image too flat for sensor-noise analysis "
-                        "(heavy tonal crush or large uniform areas)"
-                    ],
+                    "score": None,
+                    "flags": ["PRNU not evaluable: image too flat for sensor-noise analysis "
+                              "(heavy tonal crush or large uniform areas)"],
                     "energy": 0.0,
-                    "pattern_valid": False,
+                    "pce": None,
+                    "reference_available": False,
                 }
 
-            # Analyze PRNU pattern
-            # Real camera photos typically have PRNU energy between 0.0001 and 0.01
-            # depending on ISO, exposure, and camera sensor quality
-            # AI-generated images have essentially zero PRNU (< 0.00001)
-            flags = []
-            score = 1.0
-
-            if prnu_energy < 0.00001:
-                # Extremely low - almost certainly AI-generated
-                flags.append(f"CRITICAL: Null/flat PRNU pattern detected (energy={prnu_energy:.6f})")
-                flags.append("Image lacks genuine sensor noise - likely AI-generated")
-                score = 0.0
-            elif prnu_energy < self.prnu_threshold:
-                # Very low but detectable - suspicious
-                flags.append(f"WARNING: Weak PRNU pattern (energy={prnu_energy:.6f})")
-                score = 0.5
+            # Correlate the residual against this camera body's reference fingerprint.
+            # Residual energy alone says nothing about WHICH sensor produced it -- see
+            # _score_prnu and the pce_threshold comment for the measurements that
+            # established this.
+            if reference_pattern is None:
+                outcome = self._score_prnu(None, reference_available=False)
             else:
-                # Normal range for real camera photos
-                flags.append(f"Valid PRNU pattern detected (energy={prnu_energy:.6f})")
-                score = 1.0
+                pce = self._peak_to_correlation_energy(prnu, reference_pattern)
+                outcome = self._score_prnu(pce, reference_available=True)
 
             return {
-                "score": score,
-                "flags": flags,
+                "score": outcome["score"],
+                "flags": outcome["flags"],
+                # Retained as descriptive evidence only. It is NOT a verdict input:
+                # editing raises it and AI images can match a real camera's value.
                 "energy": float(prnu_energy),
-                "pattern_valid": prnu_energy >= self.prnu_threshold,
+                "pce": outcome["pce"],
+                "reference_available": outcome["reference_available"],
             }
 
         except Exception as e:
             logger.error(f"PRNU analysis failed: {str(e)}")
-            return {"score": 0.5, "flags": [f"PRNU analysis error: {str(e)}"], "energy": 0.0, "pattern_valid": False}
+            return {"score": None, "flags": [f"PRNU not evaluable: {str(e)}"],
+                    "energy": 0.0, "pce": None, "reference_available": False}
 
     def _estimate_noise(self, coeffs: np.ndarray) -> float:
         """Estimate noise level using MAD (Median Absolute Deviation)"""
         return np.median(np.abs(coeffs)) / 0.6745
+
+    def _peak_to_correlation_energy(self, residual: np.ndarray, reference: np.ndarray) -> float:
+        """PCE: the squared correlation peak divided by the mean energy of the
+        correlation surface, excluding a small neighbourhood around the peak.
+
+        PCE rather than raw correlation because it is scale-free and its distribution
+        under the null hypothesis is known, which is what makes a fixed threshold
+        meaningful across images of different size and content.
+        """
+        a = np.asarray(residual, dtype=np.float32)
+        b = np.asarray(reference, dtype=np.float32)
+        if a.shape != b.shape:
+            b = cv2.resize(b, (a.shape[1], a.shape[0]), interpolation=cv2.INTER_AREA)
+
+        a = a - a.mean()
+        b = b - b.mean()
+        if not np.any(a) or not np.any(b):
+            return 0.0
+
+        # Normalised circular cross-correlation via FFT.
+        spectrum = np.fft.rfft2(a) * np.conj(np.fft.rfft2(b))
+        correlation = np.fft.irfft2(spectrum, s=a.shape)
+        denominator = float(np.linalg.norm(a) * np.linalg.norm(b))
+        if denominator <= 0 or not np.isfinite(denominator):
+            return 0.0
+        correlation = correlation / denominator
+
+        flat = correlation.ravel()
+        peak_index = int(np.argmax(np.abs(flat)))
+        peak_squared = float(flat[peak_index]) ** 2
+
+        # Exclude an 11x11 neighbourhood of the peak from the energy estimate, so the
+        # peak is not compared against itself.
+        rows, cols = correlation.shape
+        peak_row, peak_col = divmod(peak_index, cols)
+        mask = np.ones_like(correlation, dtype=bool)
+        half = 5
+        for dy in range(-half, half + 1):
+            row = (peak_row + dy) % rows
+            for dx in range(-half, half + 1):
+                mask[row, (peak_col + dx) % cols] = False
+
+        remaining = correlation[mask]
+        if remaining.size == 0:
+            return 0.0
+        energy = float(np.mean(remaining.astype(np.float64) ** 2))
+        if energy <= 0 or not np.isfinite(energy):
+            return 0.0
+
+        pce = peak_squared / energy
+        return float(pce) if np.isfinite(pce) else 0.0
+
+    def _score_prnu(self, pce: Optional[float], reference_available: bool) -> Dict:
+        """Map a PCE value to a 0..1 signal score.
+
+        With no reference there is nothing to correlate against, so the score is None
+        and the Authenticity Score excludes it rather than counting it against the
+        photographer. Returning a middling 0.5 instead dragged every submission toward
+        the centre of the band -- the genuine unedited pair scored 94 instead of 100.
+        """
+        if not reference_available or pce is None:
+            return {
+                "score": None,
+                "flags": ["PRNU not evaluable: no reference fingerprint stored for this "
+                          "camera body yet (first submission from this camera)"],
+                "pce": None,
+                "reference_available": False,
+            }
+
+        if pce >= self.pce_threshold:
+            return {
+                "score": 1.0,
+                "flags": [f"PRNU matches this camera body's sensor fingerprint "
+                          f"(PCE={pce:.1f}, threshold {self.pce_threshold:.0f})"],
+                "pce": pce,
+                "reference_available": True,
+            }
+
+        # Below the threshold is statistically consistent with a different sensor.
+        # Note the failure mode this accepts: a reference built from too few images can
+        # push a GENUINE match below 60 and score it zero. That is tolerable because
+        # PRNU carries only 10 of 100 points and is not a critical signal, so a false
+        # zero moves a score by 10 points and can never by itself cause a rejection.
+        return {
+            "score": 0.0,
+            "flags": [f"PRNU does not match this camera body's stored fingerprint "
+                      f"(PCE={pce:.1f}, threshold {self.pce_threshold:.0f})"],
+            "pce": pce,
+            "reference_available": True,
+        }
 
     async def _analyze_ela(self, jpg_path: str) -> Dict:
         """
@@ -382,7 +491,18 @@ class DigitalFingerprintAnalyzer:
         Returns:
             (verdict: str, confidence: float)
         """
-        weighted_score = scores["prnu"] * 0.50 + scores["ela"] * 0.25 + scores["fft"] * 0.25
+        # A None score means not evaluable. Exclude it and renormalise over the
+        # remaining weights rather than counting it as a failure -- the same rule the
+        # Authenticity Score applies. PRNU is unevaluable for every first submission
+        # from a camera, so treating it as zero would fail most honest photographers.
+        weights = {"prnu": 0.50, "ela": 0.25, "fft": 0.25}
+        usable = {k: w for k, w in weights.items() if scores.get(k) is not None}
+
+        if not usable:
+            return "SUSPICIOUS", 0.5
+
+        total_weight = sum(usable.values())
+        weighted_score = sum(scores[k] * w for k, w in usable.items()) / total_weight
 
         if weighted_score < 0.3:
             verdict = "REJECT"
@@ -393,11 +513,17 @@ class DigitalFingerprintAnalyzer:
 
         return verdict, weighted_score
 
-    def _generate_summary(self, verdict: str, scores: Dict[str, float]) -> str:
-        """Generate human-readable analysis summary"""
+    def _generate_summary(self, verdict: str, scores: Dict[str, Optional[float]]) -> str:
+        """Generate human-readable analysis summary. A None score is reported as n/a
+        rather than as a number, because 'not evaluable' and 'scored zero' are
+        different findings and a judge must be able to tell them apart."""
+        def show(key: str) -> str:
+            value = scores.get(key)
+            return "n/a" if value is None else f"{value:.2f}"
+
         return (
             f"Digital fingerprint analysis: {verdict} "
-            f"(PRNU={scores['prnu']:.2f}, ELA={scores['ela']:.2f}, FFT={scores['fft']:.2f})"
+            f"(PRNU={show('prnu')}, ELA={show('ela')}, FFT={show('fft')})"
         )
 
     def _error_result(self, error_msg: str) -> Dict:
