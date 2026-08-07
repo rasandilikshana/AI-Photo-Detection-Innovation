@@ -46,6 +46,17 @@ PROMPT = (
     "Set confidence below 0.6 if you are unsure."
 )
 
+# Verified against the live API on 2026-08-07 with the exact request this module sends
+# (two inline JPEGs + responseSchema): gemini-3.6-flash, gemini-3.5-flash,
+# gemini-3.1-flash-lite and the gemini-flash-latest alias all honour the schema.
+#
+# Pinned rather than pointing at gemini-flash-latest on purpose: the arbiter's reasoning
+# text is shown to judges, so the model behind it should not change without someone
+# choosing to change it. The cost is that this default will eventually be retired — when
+# it is, the 404 handler below says exactly what to do, and GEMINI_MODEL overrides it
+# without a code deploy.
+DEFAULT_MODEL = "gemini-3.6-flash"
+
 # Gemini's Schema proto: type names are the uppercase enum values, not JSON Schema's
 # lowercase ones.
 RESPONSE_SCHEMA = {
@@ -78,7 +89,7 @@ class VisionArbiter:
         timeout: float = 30.0,
     ):
         self.api_key = api_key if api_key is not None else os.getenv("GEMINI_API_KEY", "")
-        self.model = model or os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        self.model = model or os.getenv("GEMINI_MODEL") or DEFAULT_MODEL
         self.timeout = timeout
         self._transport = transport
         self.enabled = bool(self.api_key)
@@ -168,6 +179,27 @@ class VisionArbiter:
                     self.endpoint,
                     headers={"x-goog-api-key": self.api_key, "Content-Type": "application/json"},
                     json=body,
+                )
+
+            if response.status_code == 404:
+                # Google retires models. Because this component fails open, a stale model
+                # name would otherwise disable it permanently with only "HTTP 404" in the
+                # log — which is what happened to the shipped gemini-2.5-flash default on
+                # 2026-08-07. A 404 is a configuration fault, not a transient one, so say
+                # what to change. ListModels does not help on its own: retired models are
+                # still listed there, they only fail on use.
+                detail = ""
+                try:
+                    detail = response.json().get("error", {}).get("message", "")
+                except ValueError:
+                    pass
+                logger.error(
+                    f"Vision arbiter model '{self.model}' rejected with 404 - set GEMINI_MODEL "
+                    f"to a current vision model and restart. Google said: {detail}"
+                )
+                return self._unavailable(
+                    f"model '{self.model}' is not usable - set GEMINI_MODEL to a current "
+                    f"vision model and restart ({detail or 'HTTP 404'})"
                 )
 
             if response.status_code != 200:

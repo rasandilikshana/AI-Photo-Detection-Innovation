@@ -135,6 +135,41 @@ async def test_fails_open_on_http_error():
 
 
 @pytest.mark.asyncio
+async def test_retired_model_reports_an_actionable_configuration_error():
+    """Google retires models and answers 404 with an explanation. Because the arbiter
+    fails open, a stale model name would silently disable the feature forever with only
+    'HTTP 404' in the log. This happened in production on 2026-08-07: the shipped
+    default gemini-2.5-flash was already retired for new users. A 404 means fix the
+    configuration, not retry later, so it must say so and name the model."""
+    def handler(request):
+        return httpx.Response(404, json={"error": {"code": 404, "status": "NOT_FOUND", "message":
+            "This model models/gemini-2.5-flash is no longer available to new users. "
+            "Please update your code to use a newer model."}})
+
+    result = await _arbiter(handler, model="gemini-2.5-flash").arbitrate(
+        _image(1), _image(2), _geometry(low_texture=True)
+    )
+
+    assert result["verdict"] == "UNDETERMINED"
+    assert result["available"] is False
+    flags = " ".join(result["flags"])
+    assert "gemini-2.5-flash" in flags, f"must name the offending model: {flags}"
+    assert "GEMINI_MODEL" in flags, f"must name the setting to change: {flags}"
+    assert "no longer available" in flags, f"must relay Google's reason: {flags}"
+
+
+@pytest.mark.asyncio
+async def test_transient_server_error_is_not_reported_as_misconfiguration():
+    """A 500 is worth retrying; it must not send an operator hunting through config."""
+    def handler(request):
+        return httpx.Response(500, text="upstream exploded")
+
+    result = await _arbiter(handler).arbitrate(_image(1), _image(2), _geometry(low_texture=True))
+
+    assert "GEMINI_MODEL" not in " ".join(result["flags"])
+
+
+@pytest.mark.asyncio
 async def test_fails_open_on_timeout():
     def handler(request):
         raise httpx.ReadTimeout("too slow", request=request)
