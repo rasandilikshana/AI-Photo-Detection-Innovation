@@ -12,6 +12,8 @@ from typing import Dict, List, Optional
 from PIL import Image
 from PIL.ExifTags import TAGS
 
+from app.services.raw_provenance import RawProvenanceAnalyzer
+
 logger = logging.getLogger(__name__)
 
 
@@ -101,6 +103,7 @@ class MetadataAnalyzer:
 
     def __init__(self):
         self.exiftool_available = self._check_exiftool()
+        self.raw_provenance = RawProvenanceAnalyzer()
 
     def _check_exiftool(self) -> bool:
         """Check if exiftool is available in system"""
@@ -211,6 +214,18 @@ class MetadataAnalyzer:
                 except Exception as e:
                     logger.warning(f"Forensic integrity checks failed: {str(e)}")
 
+            # Check 3d: RAW provenance. Everything above tests whether the files are
+            # CONSISTENT with each other, which an attacker defeats by fabricating both
+            # together — production submission 45 was approved AUTHENTIC that way. This
+            # asks whether the RAW is a camera's own record at all.
+            raw_needs_pixel_review = False
+            if raw_path and self.exiftool_available:
+                raw_grouped = self._extract_metadata_grouped(raw_path)
+                provenance_strong, provenance_flags = self.raw_provenance.analyze(raw_grouped)
+                forensic_strong += provenance_strong
+                flags.extend(provenance_flags)
+                raw_needs_pixel_review = self.raw_provenance.needs_pixel_review(raw_grouped)
+
             # Check 3c: Cross-check the JPEG's own claims against the RAW. Two
             # independent records of the same capture disagreeing is far stronger
             # evidence of a transplant than anything inferable from the JPEG alone.
@@ -272,6 +287,9 @@ class MetadataAnalyzer:
                 "metadata_present": bool(jpg_metadata),
                 "metadata": extracted_metadata,  # Include actual metadata for V2 features
                 "metadata_source": metadata_source,  # Which file the camera fields came from
+                # A DNG is the one RAW container an attacker can author, so Layer 3 should
+                # see the pixels even when the metadata looks clean.
+                "raw_needs_pixel_review": raw_needs_pixel_review,
                 "camera_fields_found": camera_fields_found,
                 "ai_signatures_found": 0,
                 "camera_score": camera_score,

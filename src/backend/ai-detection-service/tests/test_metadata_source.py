@@ -14,6 +14,13 @@ transplant signal.
 
 Layer 1 reads the RAW through exiftool only (it never demosaics), so a
 metadata-equivalent stand-in exercises the production code path exactly.
+
+The fixtures declare a Canon EOS 250D on purpose: it is absent from
+RawProvenanceAnalyzer.SENSOR_SIZES, so the sensor-geometry check abstains and these
+tests stay about metadata SOURCING. Using a body with a known sensor size would make
+these small stand-in images fail provenance for declaring a resolution they do not have
+— correctly, but for reasons these tests are not about. Sensor geometry is covered in
+tests/test_raw_provenance.py.
 """
 
 import subprocess
@@ -25,7 +32,7 @@ from app.services.layer1_metadata import MetadataAnalyzer
 
 CANON_TAGS = {
     "EXIF:Make": "Canon",
-    "EXIF:Model": "Canon EOS 600D",
+    "EXIF:Model": "Canon EOS 250D",
     "EXIF:LensModel": "EF-S55-250mm f/4-5.6 IS II",
     "EXIF:ExposureTime": "1/100",
     "EXIF:FNumber": "5.6",
@@ -100,7 +107,7 @@ async def test_camera_metadata_is_read_from_the_raw(analyzer, stripped_jpg, cano
     result = await analyzer.analyze(stripped_jpg, canon_raw)
 
     assert result["metadata"]["Make"] == "Canon"
-    assert result["metadata"]["Model"] == "Canon EOS 600D"
+    assert result["metadata"]["Model"] == "Canon EOS 250D"
     assert result["metadata"]["DateTimeOriginal"] == "2025:09:21 08:18:50"
 
 
@@ -132,7 +139,7 @@ async def test_jpeg_declaring_a_different_camera_than_the_raw_is_flagged(
     result = await analyzer.analyze(str(jpg), canon_raw)
 
     assert result["verdict"] in ("SUSPICIOUS", "REJECT"), f"got {result['verdict']}"
-    assert any("Canon EOS 5D Mark IV" in f and "Canon EOS 600D" in f for f in result["flags"]), (
+    assert any("Canon EOS 5D Mark IV" in f and "Canon EOS 250D" in f for f in result["flags"]), (
         f"disagreement not reported: {result['flags']}"
     )
 
@@ -155,7 +162,7 @@ async def test_matching_camera_jpeg_and_raw_still_pass(analyzer, camera_jpg, can
     result = await analyzer.analyze(camera_jpg, canon_raw)
 
     assert result["verdict"] == "PASS"
-    assert result["metadata"]["Model"] == "Canon EOS 600D"
+    assert result["metadata"]["Model"] == "Canon EOS 250D"
 
 
 # ---------------------------------------------------------------------------
