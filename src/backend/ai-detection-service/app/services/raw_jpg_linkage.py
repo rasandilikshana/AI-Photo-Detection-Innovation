@@ -40,6 +40,11 @@ class RAWJPGLinkageAnalyzer:
         self.ssim_threshold = 0.45  # SSIM similarity threshold (was 0.85)
         self.histogram_threshold = 0.40  # Histogram correlation threshold (was 0.90)
 
+        # Above this Hamming distance the images are effectively different scenes
+        # (256-bit hash: unrelated images average ~128). SSIM/histogram votes must
+        # not outvote a failure this decisive — heavy editing lands well below it.
+        self.phash_catastrophic = 45
+
     async def analyze_linkage(self, raw_path: str, jpg_path: str) -> Dict:
         """
         Analyze if JPG is derived from RAW file
@@ -98,6 +103,11 @@ class RAWJPGLinkageAnalyzer:
 
             if verdict == "REJECT":
                 flags.append("CRITICAL: RAW and JPG files are not linked - possible submission forgery")
+            elif verdict == "SUSPICIOUS" and phash_distance > self.phash_catastrophic:
+                flags.append(
+                    f"CRITICAL: perceptual hash distance {phash_distance} indicates the JPG depicts a "
+                    "different scene than the RAW - possible AI substitution with transplanted metadata"
+                )
 
             return {
                 "verdict": verdict,
@@ -278,6 +288,12 @@ class RAWJPGLinkageAnalyzer:
             # No methods agree - reject
             verdict = "REJECT"
             confidence = 0.0
+
+        # A catastrophic pHash failure means the images depict different scenes —
+        # global color/structure similarity (SSIM, histograms) must not outvote it.
+        if phash_distance > self.phash_catastrophic and verdict == "PASS":
+            verdict = "SUSPICIOUS"
+            confidence = min(confidence, 0.4)
 
         return verdict, confidence
 

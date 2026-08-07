@@ -45,6 +45,31 @@ class MetadataAnalyzer:
         "playground ai",
         "craiyon",
         "nightcafe",
+        "gemini",
+        "imagen",
+        "google ai",
+        "made with google",
+        "synthid",
+        "flux",
+        "comfyui",
+        "ideogram",
+        "recraft",
+        "grok",
+    ]
+
+    # Tags that describe undemosaiced sensor state — written by cameras into RAW
+    # files. Their presence in a JPEG whose dimensions contradict the declared
+    # metadata is a strong indicator of a bulk exiftool metadata transplant.
+    RAW_ONLY_TAGS = [
+        "WB_RGGBLevelsAsShot",
+        "PerChannelBlackLevel",
+        "NormalWhiteLevel",
+        "SpecularWhiteLevel",
+        "SensorLeftBorder",
+        "SensorTopBorder",
+        "DustRemovalData",
+        "RawMeasuredRGGB",
+        "VignettingCorrVersion",
     ]
 
     # Essential camera metadata fields
@@ -130,6 +155,18 @@ class MetadataAnalyzer:
             consistency_score, consistency_flags = self._check_metadata_consistency(jpg_metadata)
             flags.extend(consistency_flags)
 
+            # Check 3b: Forensic integrity (metadata transplant detection)
+            forensic_strong = 0
+            if self.exiftool_available:
+                try:
+                    with Image.open(jpg_path) as img:
+                        actual_size = img.size
+                    grouped = self._extract_metadata_grouped(jpg_path)
+                    forensic_strong, forensic_flags = self.forensic_integrity_checks(actual_size, grouped)
+                    flags.extend(forensic_flags)
+                except Exception as e:
+                    logger.warning(f"Forensic integrity checks failed: {str(e)}")
+
             # Check 4: RAW-JPG Metadata Correlation (if RAW provided)
             if raw_metadata:
                 correlation_score, correlation_flags = self._check_raw_jpg_correlation(jpg_metadata, raw_metadata)
@@ -151,6 +188,13 @@ class MetadataAnalyzer:
                 verdict = "SUSPICIOUS"
             else:
                 verdict = "PASS"
+
+            # Forensic transplant indicators override a metadata-quality PASS:
+            # perfect camera fields prove nothing when the metadata block itself
+            # does not belong to the pixels it travels with.
+            if forensic_strong >= 1 and verdict == "PASS":
+                verdict = "SUSPICIOUS"
+                confidence_score = min(confidence_score, 0.4)
 
             camera_fields_found = sum(1 for field in self.CAMERA_FIELDS if field in jpg_metadata)
 
@@ -176,6 +220,7 @@ class MetadataAnalyzer:
                 "ai_signatures_found": 0,
                 "camera_score": camera_score,
                 "consistency_score": consistency_score,
+                "forensic_indicators": forensic_strong,
                 "analysis": self._generate_analysis_summary(verdict, camera_fields_found, flags),
             }
 
@@ -233,6 +278,93 @@ class MetadataAnalyzer:
         except Exception as e:
             logger.warning(f"exiftool extraction failed: {str(e)}")
             return {}
+
+    def _extract_metadata_grouped(self, file_path: str) -> Dict:
+        """Extract metadata keeping exiftool group prefixes (e.g. 'XMP-tiff:ImageWidth').
+
+        Flattened extraction lets same-named tags from different groups overwrite
+        each other, which hides declared-vs-actual contradictions. Forensic checks
+        need the grouped view."""
+        try:
+            result = subprocess.run(
+                ["exiftool", "-j", "-a", "-G1", file_path], capture_output=True, text=True, timeout=30
+            )
+            if result.returncode == 0:
+                data = json.loads(result.stdout)
+                if data and len(data) > 0:
+                    return data[0]
+            return {}
+        except Exception as e:
+            logger.warning(f"exiftool grouped extraction failed: {str(e)}")
+            return {}
+
+    def forensic_integrity_checks(self, actual_size: tuple, grouped_metadata: Dict) -> tuple[int, List[str]]:
+        """Detect metadata transplantation (e.g. exiftool -TagsFromFile from a real RAW
+        onto an AI-generated JPEG).
+
+        Args:
+            actual_size: (width, height) decoded from the actual image bitstream
+            grouped_metadata: exiftool -G1 output with group prefixes intact
+
+        Returns:
+            (strong_indicator_count, flags)
+        """
+        flags = []
+        strong = 0
+
+        # Check A: declared dimensions vs the actual bitstream.
+        # Metadata written by the camera (or updated by a real editor) matches the
+        # pixel data; transplanted metadata declares the donor file's dimensions.
+        actual_w, actual_h = actual_size
+        declared_dim_tags = [
+            ("ExifIFD:ExifImageWidth", "ExifIFD:ExifImageHeight"),
+            ("IFD0:ImageWidth", "IFD0:ImageHeight"),
+            ("XMP-tiff:ImageWidth", "XMP-tiff:ImageHeight"),
+            ("XMP-exif:ExifImageWidth", "XMP-exif:ExifImageHeight"),
+        ]
+        dim_mismatch = False
+        for w_tag, h_tag in declared_dim_tags:
+            dw, dh = grouped_metadata.get(w_tag), grouped_metadata.get(h_tag)
+            if dw and dh:
+                try:
+                    dw, dh = int(dw), int(dh)
+                except (TypeError, ValueError):
+                    continue
+                # Accept rotated orientation; flag anything else that differs
+                if (dw, dh) != (actual_w, actual_h) and (dw, dh) != (actual_h, actual_w):
+                    dim_mismatch = True
+                    flags.append(
+                        f"FORENSIC: metadata declares {dw}x{dh} ({w_tag}) but actual image is "
+                        f"{actual_w}x{actual_h} — metadata does not belong to this file"
+                    )
+        if dim_mismatch:
+            strong += 1
+
+        # Check B: XMP toolkit written by the exiftool CLI. Cameras and real photo
+        # editors write their own toolkit strings (e.g. 'Adobe XMP Core'); a CLI
+        # toolkit string means the metadata block was rewritten wholesale.
+        xmp_toolkit = str(grouped_metadata.get("XMP-x:XMPToolkit", grouped_metadata.get("XMPToolkit", "")))
+        if "exiftool" in xmp_toolkit.lower():
+            strong += 1
+            flags.append(
+                f"FORENSIC: XMP metadata written by exiftool CLI ('{xmp_toolkit}') — "
+                "metadata laundering indicator"
+            )
+
+        # Check C: RAW-sensor-only tags inside a JPEG. These describe undemosaiced
+        # sensor state and arrive in a JPEG only via a bulk metadata copy from a RAW.
+        raw_only_found = [
+            tag for tag in self.RAW_ONLY_TAGS
+            if any(key.split(":")[-1] == tag for key in grouped_metadata)
+        ]
+        if len(raw_only_found) >= 3:
+            strong += 1
+            flags.append(
+                f"FORENSIC: {len(raw_only_found)} RAW-sensor-only tags present in JPEG "
+                f"({', '.join(raw_only_found[:4])}…) — consistent with bulk metadata transplant from a RAW file"
+            )
+
+        return strong, flags
 
     def _detect_ai_signatures(self, metadata: Dict) -> tuple[bool, List[str]]:
         """

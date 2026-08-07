@@ -162,6 +162,7 @@ async def analyze_submission(
         verdict = "AUTHENTIC"
         confidence_score = 1.0
         raw_linkage_suspicious = False  # Track if RAW-JPG linkage is suspicious (spoofing detection)
+        layer1_suspicious = False  # Track metadata transplant/laundering indicators
 
         # === LAYER 1: METADATA ANALYSIS ===
         logger.info(f"[{submission_id}] Running Layer 1: Metadata Analysis")
@@ -191,6 +192,15 @@ async def analyze_submission(
                 flags=flags,
                 processing_time_ms=processing_time,
             )
+
+        elif layer1_result["verdict"] == "SUSPICIOUS":
+            # Metadata forensics found transplant/laundering indicators — force
+            # QUARANTINE so Layer 3 (third-party AI detection) gets to examine the pixels
+            verdict = "QUARANTINE"
+            layer1_suspicious = True
+            confidence_score = min(confidence_score, layer1_result["confidence"])
+            flags.extend(layer1_result.get("flags", []))
+            logger.warning(f"[{submission_id}] Layer 1 SUSPICIOUS - escalating to quarantine")
 
         # === RAW-JPG LINKAGE ANALYSIS ===
         raw_jpg_linkage = None
@@ -258,13 +268,14 @@ async def analyze_submission(
                 confidence_score = layer3_result["confidence"]
                 flags.extend(layer3_result.get("flags", []))
             elif layer3_result["verdict"] == "AUTHENTIC":
-                # SECURITY: If RAW linkage was suspicious, don't upgrade to AUTHENTIC
-                # This prevents metadata spoofing attacks from bypassing detection
-                if raw_linkage_suspicious:
+                # SECURITY: If RAW linkage was suspicious or metadata transplant indicators
+                # were found, don't upgrade to AUTHENTIC — spoofed provenance stays quarantined
+                if raw_linkage_suspicious or layer1_suspicious:
                     verdict = "QUARANTINE"
                     confidence_score = min(confidence_score, 0.5)
-                    flags.append("Verdict kept as QUARANTINE due to suspicious RAW-JPG linkage")
-                    logger.warning(f"[{submission_id}] Prevented upgrade to AUTHENTIC due to suspicious RAW linkage")
+                    reason = "suspicious RAW-JPG linkage" if raw_linkage_suspicious else "metadata transplant indicators"
+                    flags.append(f"Verdict kept as QUARANTINE due to {reason}")
+                    logger.warning(f"[{submission_id}] Prevented upgrade to AUTHENTIC due to {reason}")
                 else:
                     verdict = "AUTHENTIC"
                     confidence_score = layer3_result["confidence"]

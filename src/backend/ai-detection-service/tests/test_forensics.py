@@ -1,0 +1,147 @@
+"""
+Tests for metadata transplant forensics and catastrophic pHash handling.
+
+Regression suite for the Gemini-image incident: an AI-generated JPEG carrying
+metadata copied verbatim (via exiftool) from a genuine CR2 was approved as
+AUTHENTIC because every layer scored the transplanted metadata at face value.
+"""
+
+import pytest
+
+from app.services.layer1_metadata import MetadataAnalyzer
+from app.services.raw_jpg_linkage import RAWJPGLinkageAnalyzer
+
+
+@pytest.fixture
+def analyzer():
+    return MetadataAnalyzer()
+
+
+@pytest.fixture
+def linkage():
+    return RAWJPGLinkageAnalyzer()
+
+
+# ---------------------------------------------------------------------------
+# Layer 1: forensic integrity checks
+# ---------------------------------------------------------------------------
+
+def test_forensics_detects_transplanted_metadata(analyzer):
+    """The exact signature of the incident: dims mismatch + exiftool XMP toolkit
+    + RAW-sensor tags inside a small JPEG."""
+    grouped = {
+        "ExifIFD:ExifImageWidth": 5184,
+        "ExifIFD:ExifImageHeight": 3456,
+        "XMP-tiff:ImageWidth": 5184,
+        "XMP-tiff:ImageHeight": 3456,
+        "XMP-x:XMPToolkit": "Image::ExifTool 13.10",
+        "MakerNotes:WB_RGGBLevelsAsShot": "2087 1024 1024 1656",
+        "MakerNotes:PerChannelBlackLevel": "2048 2048 2048 2048",
+        "MakerNotes:NormalWhiteLevel": 12279,
+        "MakerNotes:SensorLeftBorder": 168,
+        "MakerNotes:DustRemovalData": "(Binary data 1024 bytes)",
+    }
+    strong, flags = analyzer.forensic_integrity_checks((1264, 842), grouped)
+
+    assert strong >= 3
+    assert any("does not belong to this file" in f for f in flags)
+    assert any("exiftool CLI" in f for f in flags)
+    assert any("RAW-sensor-only" in f for f in flags)
+
+
+def test_forensics_passes_genuine_camera_jpeg(analyzer):
+    """A straight-out-of-camera JPEG: declared dims match actual, no CLI toolkit."""
+    grouped = {
+        "ExifIFD:ExifImageWidth": 5184,
+        "ExifIFD:ExifImageHeight": 3456,
+        "IFD0:Make": "Canon",
+        "IFD0:Model": "Canon EOS 600D",
+    }
+    strong, flags = analyzer.forensic_integrity_checks((5184, 3456), grouped)
+
+    assert strong == 0
+    assert flags == []
+
+
+def test_forensics_accepts_rotated_orientation(analyzer):
+    """Portrait-orientation files legitimately swap width/height."""
+    grouped = {
+        "ExifIFD:ExifImageWidth": 3456,
+        "ExifIFD:ExifImageHeight": 5184,
+    }
+    strong, flags = analyzer.forensic_integrity_checks((5184, 3456), grouped)
+
+    assert strong == 0
+
+
+def test_forensics_flags_stale_dimensions_only_once(analyzer):
+    """A sloppy resize (stale EXIF dims, no other indicators) is one indicator —
+    enough to quarantine for review, not to hard-reject."""
+    grouped = {
+        "ExifIFD:ExifImageWidth": 5184,
+        "ExifIFD:ExifImageHeight": 3456,
+        "XMP-x:XMPToolkit": "Adobe XMP Core 9.1-c001",
+    }
+    strong, flags = analyzer.forensic_integrity_checks((1264, 842), grouped)
+
+    assert strong == 1
+    assert any("does not belong to this file" in f for f in flags)
+
+
+def test_forensics_ignores_few_raw_tags(analyzer):
+    """Fewer than 3 sensor tags alone should not count as a strong indicator
+    (some cameras write partial MakerNotes into JPEGs)."""
+    grouped = {
+        "MakerNotes:NormalWhiteLevel": 12279,
+        "MakerNotes:SensorLeftBorder": 168,
+    }
+    strong, flags = analyzer.forensic_integrity_checks((5184, 3456), grouped)
+
+    assert strong == 0
+
+
+# ---------------------------------------------------------------------------
+# Layer 1: AI signature list covers Google/Gemini tooling
+# ---------------------------------------------------------------------------
+
+def test_ai_signatures_detect_gemini_and_google(analyzer):
+    for value in ["Made with Google AI", "Gemini 2.0 Flash", "Imagen 3", "SynthID watermarked"]:
+        detected, flags = analyzer._detect_ai_signatures({"Credit": value})
+        assert detected is True, f"should detect: {value}"
+
+
+# ---------------------------------------------------------------------------
+# RAW-JPG linkage: catastrophic pHash cannot be outvoted
+# ---------------------------------------------------------------------------
+
+def test_catastrophic_phash_downgrades_pass(linkage):
+    """The incident's numbers: pHash 118 with passing SSIM/histogram must NOT pass."""
+    verdict, confidence = linkage._determine_verdict(
+        phash_match=False, phash_distance=118, ssim_score=0.64, hist_corr=0.69
+    )
+    assert verdict == "SUSPICIOUS"
+    assert confidence <= 0.4
+
+
+def test_heavy_edit_still_passes(linkage):
+    """A legitimate heavy edit: pHash beyond match threshold but below catastrophic,
+    strong SSIM/histogram agreement -> still PASS."""
+    verdict, _ = linkage._determine_verdict(
+        phash_match=False, phash_distance=30, ssim_score=0.72, hist_corr=0.80
+    )
+    assert verdict == "PASS"
+
+
+def test_full_agreement_passes(linkage):
+    verdict, _ = linkage._determine_verdict(
+        phash_match=True, phash_distance=8, ssim_score=0.9, hist_corr=0.95
+    )
+    assert verdict == "PASS"
+
+
+def test_no_agreement_rejects(linkage):
+    verdict, confidence = linkage._determine_verdict(
+        phash_match=False, phash_distance=120, ssim_score=0.2, hist_corr=0.1
+    )
+    assert verdict == "REJECT"
+    assert confidence == 0.0
