@@ -186,19 +186,34 @@ class AuthenticityScorer:
     # -- individual signals: return (0..1, evidence) or None if unevaluable ----
 
     def _raw_provenance(self, layer1: Dict) -> Optional[Tuple[float, str]]:
-        """RAW is mandatory, so an absent or unusable RAW is evidence, not a gap."""
+        """RAW is mandatory, so an absent or unusable RAW is evidence, not a gap.
+
+        Only DECISIVE indicators count here: the RAW is not a camera file, or the JPEG
+        describes a different capture than the RAW it shipped with. Metadata-hygiene
+        indicators are deliberately excluded -- a photographer who copies their own EXIF
+        back onto a Photoshop export (which strips it) trips three hygiene checks while
+        being entirely honest, and counting those here auto-rejected two legitimate
+        submissions during the backfill dry run.
+        """
         if not layer1:
             return None
         if layer1.get("metadata_source") != "RAW":
             return 0.0, "No usable RAW metadata - camera fields came from the JPEG"
 
-        indicators = int(layer1.get("forensic_indicators", 0) or 0)
-        if indicators == 0:
+        # Fall back to the combined count for records written before the counts were
+        # separated, so an old payload is never scored as though it were clean.
+        decisive = layer1.get("decisive_indicators")
+        if decisive is None:
+            decisive = layer1.get("forensic_indicators", 0)
+        decisive = int(decisive or 0)
+
+        if decisive == 0:
             return 1.0, "RAW passes writer-software, container and sensor-geometry checks"
+
         # Three indicators is a confident forgery call; scale to zero across that range.
-        return max(0.0, 1.0 - indicators / 3.0), (
-            f"{indicators} provenance or transplant indicator"
-            f"{'s' if indicators != 1 else ''} on the RAW"
+        return max(0.0, 1.0 - decisive / 3.0), (
+            f"{decisive} decisive provenance indicator{'s' if decisive != 1 else ''}: "
+            "the RAW is not a camera file, or it records a different capture than this JPG"
         )
 
     def _linkage(self, linkage: Optional[Dict]) -> Optional[Tuple[float, str]]:
@@ -233,10 +248,29 @@ class AuthenticityScorer:
         )
 
     def _metadata(self, layer1: Dict) -> Optional[Tuple[float, str]]:
+        """Camera-field completeness, reduced by metadata-hygiene findings.
+
+        Hygiene lands here rather than on raw_provenance because a rewritten metadata
+        block is a fact about the METADATA, not about whether the photograph is real. It
+        costs points and shows up for the judge, but cannot on its own sink a submission
+        whose RAW and geometry both check out.
+        """
         if not layer1 or layer1.get("camera_fields_found") is None:
             return None
+
         fields = int(layer1["camera_fields_found"])
-        return min(1.0, fields / 8.0), f"{fields}/8 camera fields present and self-consistent"
+        score = min(1.0, fields / 8.0)
+        evidence = f"{fields}/8 camera fields present and self-consistent"
+
+        hygiene = int(layer1.get("hygiene_indicators", 0) or 0)
+        if hygiene:
+            score *= max(0.0, 1.0 - 0.2 * hygiene)
+            evidence += (
+                f"; {hygiene} hygiene indicator{'s' if hygiene != 1 else ''} "
+                "(metadata block rewritten, e.g. EXIF copied back onto an export)"
+            )
+
+        return score, evidence
 
     def _layer2_signal(self, layer2: Optional[Dict], key: str,
                        label: str) -> Optional[Tuple[float, str]]:

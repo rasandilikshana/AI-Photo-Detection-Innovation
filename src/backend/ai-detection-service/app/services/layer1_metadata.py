@@ -211,14 +211,28 @@ class MetadataAnalyzer:
             consistency_score, consistency_flags = self._check_metadata_consistency(authoritative_metadata)
             flags.extend(consistency_flags)
 
-            # Check 3b: Forensic integrity (metadata transplant detection)
-            forensic_strong = 0
+            # Indicator counts are kept SEPARATE, because they carry different weight.
+            #
+            # hygiene indicators say the JPEG's metadata BLOCK was rewritten (stale
+            # dimensions, an exiftool XMP toolkit). A photographer who exports from
+            # Photoshop -- which strips EXIF -- and copies their own metadata back
+            # produces exactly this pattern while being entirely honest. Conflating it
+            # with the decisive counts auto-rejected two legitimate submissions.
+            #
+            # provenance indicators say the RAW is not a camera file at all, and
+            # cross-check indicators say the JPEG describes a different capture than the
+            # RAW it shipped with. Those are decisive.
+            hygiene_indicators = 0
+            provenance_indicators = 0
+            cross_check_indicators = 0
+
+            # Check 3b: metadata hygiene on the JPEG (advisory)
             if self.exiftool_available:
                 try:
                     with Image.open(jpg_path) as img:
                         actual_size = img.size
                     grouped = self._extract_metadata_grouped(jpg_path)
-                    forensic_strong, forensic_flags = self.forensic_integrity_checks(actual_size, grouped)
+                    hygiene_indicators, forensic_flags = self.forensic_integrity_checks(actual_size, grouped)
                     flags.extend(forensic_flags)
                 except Exception as e:
                     logger.warning(f"Forensic integrity checks failed: {str(e)}")
@@ -230,8 +244,7 @@ class MetadataAnalyzer:
             raw_needs_pixel_review = False
             if raw_path and self.exiftool_available:
                 raw_grouped = self._extract_metadata_grouped(raw_path)
-                provenance_strong, provenance_flags = self.raw_provenance.analyze(raw_grouped)
-                forensic_strong += provenance_strong
+                provenance_indicators, provenance_flags = self.raw_provenance.analyze(raw_grouped)
                 flags.extend(provenance_flags)
                 raw_needs_pixel_review = self.raw_provenance.needs_pixel_review(raw_grouped)
 
@@ -239,9 +252,26 @@ class MetadataAnalyzer:
             # independent records of the same capture disagreeing is far stronger
             # evidence of a transplant than anything inferable from the JPEG alone.
             if raw_metadata and jpg_camera_fields:
-                cross_strong, cross_flags = self._cross_check_jpg_against_raw(jpg_metadata, raw_metadata)
-                forensic_strong += cross_strong
+                cross_check_indicators, cross_flags = self._cross_check_jpg_against_raw(
+                    jpg_metadata, raw_metadata
+                )
                 flags.extend(cross_flags)
+
+            # Hygiene alone is not evidence of forgery when the RAW confirms the JPEG's
+            # claims. Say so explicitly, otherwise a judge reads three FORENSIC flags and
+            # concludes fraud on a photographer who simply re-attached their own metadata.
+            if hygiene_indicators and not (provenance_indicators or cross_check_indicators):
+                flags.append(
+                    "INFO: the metadata block above was rewritten (typical of copying EXIF "
+                    "back onto a Photoshop export, which strips it), but it agrees with the "
+                    "submitted RAW and the RAW itself passes provenance — treated as a "
+                    "metadata-hygiene note, not evidence of forgery"
+                )
+
+            # Kept for consumers that read a single number; the separated counts below are
+            # what the Authenticity Score actually weighs.
+            forensic_strong = hygiene_indicators + provenance_indicators + cross_check_indicators
+            decisive_indicators = provenance_indicators + cross_check_indicators
 
             # Check 4: RAW-JPG Metadata Correlation. Only meaningful when the JPEG
             # carries camera metadata of its own; a stripped export has nothing to
@@ -268,9 +298,11 @@ class MetadataAnalyzer:
             else:
                 verdict = "PASS"
 
-            # Forensic transplant indicators override a metadata-quality PASS:
-            # perfect camera fields prove nothing when the metadata block itself
-            # does not belong to the pixels it travels with.
+            # Forensic indicators override a metadata-quality PASS: perfect camera fields
+            # prove nothing when the metadata block does not belong to the pixels it
+            # travels with, or when the RAW is not a camera file. Hygiene alone still
+            # escalates for review -- a judge should see it -- but the Authenticity Score
+            # weighs it far more lightly than the decisive counts.
             if forensic_strong >= 1 and verdict == "PASS":
                 verdict = "SUSPICIOUS"
                 confidence_score = min(confidence_score, 0.4)
@@ -304,6 +336,14 @@ class MetadataAnalyzer:
                 "camera_score": camera_score,
                 "consistency_score": consistency_score,
                 "forensic_indicators": forensic_strong,
+                # Separated because they carry different weight. decisive_indicators means
+                # the RAW is not a camera file, or the JPEG describes a different capture
+                # than the RAW it shipped with. hygiene_indicators means only that the
+                # JPEG's metadata block was rewritten, which honest photographers do.
+                "decisive_indicators": decisive_indicators,
+                "provenance_indicators": provenance_indicators,
+                "cross_check_indicators": cross_check_indicators,
+                "hygiene_indicators": hygiene_indicators,
                 "analysis": self._generate_analysis_summary(verdict, camera_fields_found, flags),
             }
 
