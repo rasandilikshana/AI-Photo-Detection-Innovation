@@ -2,14 +2,18 @@
 Judge scoring routes
 """
 
+import io
 import logging
 import os
+from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from sqlalchemy.orm import selectinload
+from starlette.concurrency import run_in_threadpool
 from typing import List, Optional
 
+from app.config import settings
 from app.database import get_db
 from app.models.user import User, UserRole
 from app.models.submission import Submission, SubmissionStatus, VerificationVerdict
@@ -45,6 +49,42 @@ def path_to_url(file_path: Optional[str]) -> Optional[str]:
         return None
     filename = os.path.basename(file_path)
     return f"/uploads/{filename}"
+
+
+RAW_PREVIEW_MAX_EDGE = 1600
+
+
+def _generate_raw_preview(raw_path: str, preview_path: str) -> None:
+    """Derive a JPEG preview from a RAW file (blocking — run in a threadpool).
+
+    Prefers the camera's embedded thumbnail (fast, no demosaic); falls back to
+    a half-size demosaic render for RAW files without a usable thumbnail.
+    """
+    import rawpy
+    from PIL import Image, ImageOps
+
+    image = None
+    with rawpy.imread(raw_path) as raw:
+        try:
+            thumb = raw.extract_thumb()
+            if thumb.format == rawpy.ThumbFormat.JPEG:
+                image = Image.open(io.BytesIO(thumb.data))
+                image.load()
+            elif thumb.format == rawpy.ThumbFormat.BITMAP:
+                image = Image.fromarray(thumb.data)
+        except (rawpy.LibRawNoThumbnailError, rawpy.LibRawUnsupportedThumbnailError):
+            pass
+        if image is None:
+            rgb = raw.postprocess(use_camera_wb=True, half_size=True, output_bps=8)
+            image = Image.fromarray(rgb)
+
+    image = ImageOps.exif_transpose(image)
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+    image.thumbnail((RAW_PREVIEW_MAX_EDGE, RAW_PREVIEW_MAX_EDGE))
+    tmp_path = f"{preview_path}.tmp"
+    image.save(tmp_path, "JPEG", quality=85)
+    os.replace(tmp_path, preview_path)
 
 
 @router.post("/{submission_id}", response_model=ScoreResponse, status_code=status.HTTP_201_CREATED)
@@ -865,6 +905,82 @@ async def get_submission_detail_for_judge(
         "prnu_fingerprint_id": sub.prnu_fingerprint_id,
         "prnu_extracted_energy": sub.prnu_extracted_energy,
     }
+
+
+@router.get("/raw-preview/{submission_id}")
+async def get_raw_preview_for_judge(
+    submission_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Return a web-viewable JPEG preview of a submission's RAW file.
+
+    Browsers cannot render RAW formats, so the preview is derived once via
+    rawpy, cached under uploads/previews/, and served as a static file the
+    same way the JPG is.
+    """
+    if current_user.role not in [UserRole.JUDGE, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only judges and admins can access this endpoint",
+        )
+
+    result = await db.execute(
+        select(Submission).where(Submission.id == submission_id)
+    )
+    sub = result.scalar_one_or_none()
+
+    if not sub:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Submission not found",
+        )
+
+    # Verify judge is assigned to this competition (or admin)
+    if current_user.role == UserRole.JUDGE:
+        result = await db.execute(
+            select(JudgeAssignment).where(
+                JudgeAssignment.judge_id == current_user.id,
+                JudgeAssignment.competition_id == sub.competition_id,
+                JudgeAssignment.is_active == True,
+            )
+        )
+        if not result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not assigned to judge this competition",
+            )
+
+    if not sub.raw_file_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="This submission has no RAW file",
+        )
+
+    uploads_dir = Path(settings.UPLOAD_DIR)
+    raw_path = uploads_dir / os.path.basename(sub.raw_file_url)
+    if not raw_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="RAW file is missing from storage",
+        )
+
+    previews_dir = uploads_dir / "previews"
+    previews_dir.mkdir(parents=True, exist_ok=True)
+    preview_path = previews_dir / f"{raw_path.stem}_raw_preview.jpg"
+
+    if not preview_path.exists():
+        try:
+            await run_in_threadpool(_generate_raw_preview, str(raw_path), str(preview_path))
+        except Exception as exc:
+            logger.error(f"RAW preview generation failed for submission {submission_id}: {exc}")
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Could not generate a preview from this RAW file",
+            )
+
+    return {"preview_url": f"/uploads/previews/{preview_path.name}"}
 
 
 # ============================================================================
